@@ -131,7 +131,7 @@ fun RecordingScreen(
                           verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                               Text(
-                                  device.info.deviceId,
+                                  device.info.name,
                                   style = MaterialTheme.typography.titleSmall,
                                   color = statusColor)
                               Spacer(modifier = Modifier.height(4.dp))
