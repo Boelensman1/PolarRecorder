@@ -31,6 +31,7 @@ data class DeviceStreamCapabilities(
     val settings: Map<PolarDeviceDataType, Pair<PolarSensorSetting, PolarSensorSetting>>
 )
 
+@Suppress("TooManyFunctions")
 class PolarManager(
     private val context: Context,
     private val deviceViewModel: DeviceViewModel,
@@ -88,23 +89,25 @@ class PolarManager(
                 polarDeviceInfo.deviceId, ConnectionState.FETCHING_CAPABILITIES)
 
             // Fetch capabilities before marking as fully connected
-            fetchDeviceCapabilities(polarDeviceInfo.deviceId)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { capabilities ->
-                      deviceCapabilities[polarDeviceInfo.deviceId] = capabilities
-                      logViewModel.addLogMessage("Device ${polarDeviceInfo.deviceId} Connected")
-                      deviceViewModel.updateConnectionState(
-                          polarDeviceInfo.deviceId, ConnectionState.CONNECTED)
-                    },
-                    { error ->
-                      Log.e(TAG, "Failed to fetch device capabilities", error)
-                      logViewModel.addLogMessage(
-                          "Failed to connect to device ${polarDeviceInfo.deviceId}: ${error.message}")
-                      deviceViewModel.updateConnectionState(
-                          polarDeviceInfo.deviceId, ConnectionState.FAILED)
-                      api.disconnectFromDevice(polarDeviceInfo.deviceId)
-                    })
+            val disposable =
+                fetchDeviceCapabilities(polarDeviceInfo.deviceId)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        { capabilities ->
+                          deviceCapabilities[polarDeviceInfo.deviceId] = capabilities
+                          logViewModel.addLogMessage("Device ${polarDeviceInfo.deviceId} Connected")
+                          deviceViewModel.updateConnectionState(
+                              polarDeviceInfo.deviceId, ConnectionState.CONNECTED)
+                        },
+                        { error ->
+                          Log.e(TAG, "Failed to fetch device capabilities", error)
+                          logViewModel.addLogMessage(
+                              "Failed to connect to device ${polarDeviceInfo.deviceId}: ${error.message}")
+                          deviceViewModel.updateConnectionState(
+                              polarDeviceInfo.deviceId, ConnectionState.FAILED)
+                          api.disconnectFromDevice(polarDeviceInfo.deviceId)
+                        })
+            disposables.add(disposable)
           }
 
           override fun deviceConnecting(polarDeviceInfo: PolarDeviceInfo) {
@@ -189,7 +192,7 @@ class PolarManager(
     }
   }
 
-  fun disConnectDevice(deviceId: String) {
+  fun disconnectDevice(deviceId: String) {
     try {
       api.disconnectFromDevice(deviceId)
       deviceViewModel.updateConnectionState(deviceId, ConnectionState.DISCONNECTED)
@@ -200,7 +203,7 @@ class PolarManager(
 
   fun disconnectAllDevices() {
     deviceViewModel.connectedDevices.value?.forEach { device ->
-      disConnectDevice(device.info.deviceId)
+      disconnectDevice(device.info.deviceId)
     }
   }
 
