@@ -1,5 +1,6 @@
 package com.wboelens.polarrecorder.dataSavers
 
+import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,10 +55,13 @@ abstract class DataSaver(
   )
 
   // Initialise if needed
-  open fun initSaving(recordingName: String, deviceIdsWithDataTypes: Map<String, Set<String>>) {
+  open fun initSaving(
+      recordingName: String,
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+  ) {
     firstMessageSaved.clear()
-    for ((deviceId, dataTypes) in deviceIdsWithDataTypes) {
-      for (dataType in dataTypes) {
+    for ((deviceId, info) in deviceIdsWithInfo) {
+      for (dataType in info.dataTypes) {
         firstMessageSaved["$deviceId/$dataType"] = false
       }
     }

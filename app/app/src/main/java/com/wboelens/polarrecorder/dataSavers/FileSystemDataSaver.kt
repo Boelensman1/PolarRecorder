@@ -3,6 +3,7 @@ package com.wboelens.polarrecorder.dataSavers
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 import java.io.IOException
@@ -146,8 +147,11 @@ class FileSystemDataSaver(
   }
 
   @Suppress("NestedBlockDepth", "ReturnCount")
-  override fun initSaving(recordingName: String, deviceIdsWithDataTypes: Map<String, Set<String>>) {
-    super.initSaving(recordingName, deviceIdsWithDataTypes)
+  override fun initSaving(
+      recordingName: String,
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+  ) {
+    super.initSaving(recordingName, deviceIdsWithInfo)
     filePartNumbers.clear()
 
     if (config.splitAtSizeMb > 0) {
@@ -167,15 +171,15 @@ class FileSystemDataSaver(
 
     recordingDir = pickedDir?.createDirectory(recordingName)
 
-    for ((deviceId, dataTypes) in deviceIdsWithDataTypes) {
-      val currentRecordingDir = recordingDir?.createDirectory(deviceId)
+    for ((deviceId, info) in deviceIdsWithInfo) {
+      val currentRecordingDir = recordingDir?.createDirectory(info.deviceName)
 
       if (recordingDir == null) {
         logViewModel.addLogError("recordingDir is null")
         return
       }
 
-      for (dataType in dataTypes) {
+      for (dataType in info.dataTypes) {
         val fileName = "$dataType.jsonl"
 
         if (currentRecordingDir == null) {

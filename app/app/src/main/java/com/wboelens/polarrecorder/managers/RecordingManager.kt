@@ -22,6 +22,8 @@ import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+public data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
+
 class RecordingManager(
     private val context: Context,
     private val polarManager: PolarManager,
@@ -136,7 +138,7 @@ class RecordingManager(
           "${currentRecordingName}_$timestamp"
         } else currentRecordingName
 
-    val deviceIdsWithDataTypes: Map<String, Set<String>> =
+    val deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver> =
         connectedDevices.associate { device ->
           val dataTypesWithLog =
               deviceViewModel
@@ -146,14 +148,14 @@ class RecordingManager(
           // add LOG datatype
           dataTypesWithLog.add("LOG")
 
-          device.info.deviceId to dataTypesWithLog.toSet()
+          device.info.deviceId to DeviceInfoForDataSaver(device.info.name, dataTypesWithLog.toSet())
         }
 
     // tell dataSavers to initialise saving
     dataSavers
         .asList()
         .filter { it.isEnabled.value }
-        .forEach { saver -> saver.initSaving(recordingNameWithTimestamp, deviceIdsWithDataTypes) }
+        .forEach { saver -> saver.initSaving(recordingNameWithTimestamp, deviceIdsWithInfo) }
 
     _isRecording.value = true
 
