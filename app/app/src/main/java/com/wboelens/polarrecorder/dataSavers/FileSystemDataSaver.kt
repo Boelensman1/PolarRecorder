@@ -99,20 +99,35 @@ class FileSystemDataSaver(
 
       @Suppress("MagicNumber")
       if (currentFile.length() > config.splitAtSizeMb * 1024 * 1024) {
-        streamPair.second.close()
+        try {
+          streamPair.second.close()
+        } catch (e: IOException) {
+          logViewModel.addLogError("Error closing old stream: ${e.message}")
+        }
 
         filePartNumbers[dataType] = (filePartNumbers[dataType] ?: 1) + 1
 
         val fileName = getNextFileName("$dataType.jsonl", dataType)
         val currentRecordingDir = currentFile.parentFile
 
-        val newFile = currentRecordingDir?.createFile("application/json", fileName)
-        if (newFile != null) {
-          val newStream = context.contentResolver.openOutputStream(newFile.uri, "wa")
-          if (newStream != null) {
-            outputStreams[dataType] = Pair(newFile, newStream)
-            logViewModel.addLogMessage("Created new file part for $dataType: $fileName")
+        try {
+          val newFile = currentRecordingDir?.createFile("application/json", fileName)
+          if (newFile != null) {
+            val newStream = context.contentResolver.openOutputStream(newFile.uri, "wa")
+            if (newStream != null) {
+              outputStreams[dataType] = Pair(newFile, newStream)
+              logViewModel.addLogMessage("Created new file part for $dataType: $fileName")
+            }
           }
+        } catch (e: SecurityException) {
+          logViewModel.addLogError("Permission denied while creating new file part: ${e.message}")
+          outputStreams.remove(dataType)
+        } catch (e: IOException) {
+          logViewModel.addLogError("I/O error while creating new file part: ${e.message}")
+          outputStreams.remove(dataType)
+        } catch (e: IllegalArgumentException) {
+          logViewModel.addLogError("Invalid arguments while creating new file part: ${e.message}")
+          outputStreams.remove(dataType)
         }
       }
     }
@@ -125,24 +140,30 @@ class FileSystemDataSaver(
       dataType: String,
       payload: String
   ) {
-    try {
-      val streamPair = outputStreams[dataType]
-      check(streamPair != null) { "No output stream initialized for data type: $dataType" }
+    val lock = rotationLocks.getOrPut(dataType) { Any() }
 
-      val payloadAsByteArray = (payload + "\n").toByteArray()
+    synchronized(lock) {
+      try {
+        // Get fresh reference to stream after synchronization
+        val streamPair = outputStreams[dataType]
+        check(streamPair != null) { "No output stream initialized for data type: $dataType" }
 
-      val currentStreamPair = outputStreams[dataType]!!
-      currentStreamPair.second.write(payloadAsByteArray)
+        val payloadAsByteArray = (payload + "\n").toByteArray()
+        streamPair.second.write(payloadAsByteArray)
 
-      if (!firstMessageSaved["$deviceId/$dataType"]!!) {
-        logViewModel.addLogMessage(
-            "Successfully saved $dataType first data to: ${Uri.decode(currentStreamPair.first.uri.toString())}")
-        firstMessageSaved["$deviceId/$dataType"] = true
+        if (!firstMessageSaved["$deviceId/$dataType"]!!) {
+          logViewModel.addLogMessage(
+              "Successfully saved $dataType first data to: ${Uri.decode(streamPair.first.uri.toString())}")
+          firstMessageSaved["$deviceId/$dataType"] = true
+        }
+      } catch (e: IOException) {
+        // If stream was closed, try to rotate file immediately
+        logViewModel.addLogError(
+            "Failed to write data to file: ${e.message}. Attempting emergency rotation")
+        checkAndRotateFile(dataType)
+      } catch (e: IllegalStateException) {
+        logViewModel.addLogError("Failed to save data to file system: ${e.message}")
       }
-    } catch (e: IOException) {
-      logViewModel.addLogError("Failed to write data to file: ${e.message}")
-    } catch (e: IllegalStateException) {
-      logViewModel.addLogError("Failed to save data to file system: ${e.message}")
     }
   }
 
