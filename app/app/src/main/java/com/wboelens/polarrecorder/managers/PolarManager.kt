@@ -70,6 +70,8 @@ class PolarManager(
   private var _isBLEEnabled = mutableStateOf(false)
   val isBLEEnabled: State<Boolean> = _isBLEEnabled
 
+  private val deviceBatteryLevels = mutableMapOf<String, Int>()
+
   init {
     setupPolarApi()
   }
@@ -137,6 +139,8 @@ class PolarManager(
 
           override fun batteryLevelReceived(identifier: String, level: Int) {
             Log.d(TAG, "Battery level for device $identifier: $level")
+            deviceBatteryLevels[identifier] = level
+            deviceViewModel.updateBatteryLevel(identifier, level)
           }
         })
   }
@@ -304,5 +308,9 @@ class PolarManager(
       PolarDeviceDataType.MAGNETOMETER -> api.startMagnetometerStreaming(deviceId, sensorSettings)
       else -> throw IllegalArgumentException("Unsupported data type: $dataType")
     }
+  }
+
+  fun getBatteryLevel(deviceId: String): Int? {
+    return deviceBatteryLevels[deviceId]
   }
 }

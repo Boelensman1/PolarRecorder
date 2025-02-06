@@ -1,5 +1,6 @@
 package com.wboelens.polarrecorder.viewModels
 
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -37,6 +38,9 @@ class DeviceViewModel : ViewModel() {
       _devices.map { devices ->
         devices.filter { device -> device.connectionState == ConnectionState.CONNECTED }
       }
+
+  private val _batteryLevels = mutableStateMapOf<String, Int>()
+  val batteryLevels: LiveData<Map<String, Int>> = MutableLiveData(_batteryLevels)
 
   fun addDevice(device: PolarDeviceInfo) {
     val currentDevices = _devices.value?.toMutableList() ?: mutableListOf()
@@ -94,5 +98,9 @@ class DeviceViewModel : ViewModel() {
   ): PolarSensorSetting {
     return _devices.value?.find { it.info.deviceId == deviceId }?.sensorSettings?.get(dataType)
         ?: PolarSensorSetting(emptyMap())
+  }
+
+  fun updateBatteryLevel(deviceId: String, level: Int) {
+    _batteryLevels[deviceId] = level
   }
 }

@@ -61,6 +61,8 @@ fun RecordingScreen(
   val isRecording by recordingManager.isRecording.collectAsState(initial = false)
   val connectedDevices = deviceViewModel.connectedDevices.observeAsState(emptyList()).value
   val lastDataTimestamps by recordingManager.lastDataTimestamps.collectAsState()
+  val batteryLevels by deviceViewModel.batteryLevels.observeAsState(emptyMap())
+  val isFileSystemEnabled by dataSavers.fileSystem.isEnabled.collectAsState()
 
   MaterialTheme {
     Scaffold(
@@ -81,7 +83,7 @@ fun RecordingScreen(
                   Text(if (isRecording) "Stop Recording" else "Start Recording")
                 }
 
-            if (!isRecording && dataSavers.fileSystem.isEnabled.value) {
+            if (!isRecording && isFileSystemEnabled) {
               @Suppress("SwallowedException")
               dataSavers.fileSystem.recordingDir?.let { dir ->
                 Button(
@@ -112,6 +114,7 @@ fun RecordingScreen(
                 val lastTimestamp = lastDataTimestamps[device.info.deviceId]
                 val timeSinceLastData =
                     if (lastTimestamp != null) System.currentTimeMillis() - lastTimestamp else null
+                val batteryLevel = batteryLevels[device.info.deviceId]
 
                 val statusColor =
                     when {
@@ -150,6 +153,12 @@ fun RecordingScreen(
                                         .format(lastTimestamp)
                                 Text(
                                     "Last update: $lastTimestampFormatted",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = statusColor.copy(alpha = 0.7f))
+                              }
+                              if (batteryLevel != null) {
+                                Text(
+                                    "Battery: $batteryLevel%",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = statusColor.copy(alpha = 0.7f))
                               }
