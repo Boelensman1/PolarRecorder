@@ -1,4 +1,4 @@
-package com.wboelens.polarrecorder.ui
+package com.wboelens.polarrecorder.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +24,8 @@ import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.dataSavers.FileSystemDataSaverConfig
 import com.wboelens.polarrecorder.dataSavers.MQTTConfig
 import com.wboelens.polarrecorder.managers.PreferencesManager
+import com.wboelens.polarrecorder.ui.dialogs.FileSystemSettingsDialog
+import com.wboelens.polarrecorder.ui.dialogs.MQTTSettingsDialog
 import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 
 @Composable

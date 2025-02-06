@@ -29,7 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.managers.PolarManager
-import com.wboelens.polarrecorder.ui.DeviceSettingsDialog
+import com.wboelens.polarrecorder.ui.dialogs.DeviceSettingsDialog
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

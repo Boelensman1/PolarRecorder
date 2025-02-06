@@ -1,4 +1,4 @@
-package com.wboelens.polarrecorder.ui
+package com.wboelens.polarrecorder.ui.dialogs
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +33,7 @@ import androidx.compose.ui.window.Dialog
 import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
 import com.polar.sdk.api.model.PolarSensorSetting
 import com.wboelens.polarrecorder.managers.PolarManager
+import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
 
 @Composable
 fun DeviceSettingsDialog(

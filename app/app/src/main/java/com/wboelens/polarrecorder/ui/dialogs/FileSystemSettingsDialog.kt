@@ -1,4 +1,4 @@
-package com.wboelens.polarrecorder.ui
+package com.wboelens.polarrecorder.ui.dialogs
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts

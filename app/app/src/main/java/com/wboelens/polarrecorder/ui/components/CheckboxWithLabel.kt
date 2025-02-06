@@ -1,4 +1,4 @@
-package com.wboelens.polarrecorder.ui
+package com.wboelens.polarrecorder.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row

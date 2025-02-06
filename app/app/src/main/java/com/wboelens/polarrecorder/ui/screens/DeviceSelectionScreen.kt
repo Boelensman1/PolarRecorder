@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.managers.PolarManager
-import com.wboelens.polarrecorder.ui.DeviceList
+import com.wboelens.polarrecorder.ui.components.DeviceList
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import kotlinx.coroutines.launch
 
