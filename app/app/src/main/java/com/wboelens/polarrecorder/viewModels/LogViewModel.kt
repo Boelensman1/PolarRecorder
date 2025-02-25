@@ -1,5 +1,7 @@
 package com.wboelens.polarrecorder.viewModels
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -22,11 +24,12 @@ class LogViewModel : ViewModel() {
   private val _logMessages = MutableLiveData<List<LogEntry>>(emptyList())
   val logMessages: LiveData<List<LogEntry>> = _logMessages
 
+  private val logQueue = java.util.concurrent.ConcurrentLinkedQueue<LogEntry>()
+
   private fun add(message: String, type: LogType) {
     val entry = LogEntry(message, type, System.currentTimeMillis())
-
-    // use postValue as this function can be called from outside the main thread
-    _logMessages.postValue((_logMessages.value.orEmpty() + entry).takeLast(MAX_LOG_MESSAGES))
+    logQueue.offer(entry)
+    flushQueue()
   }
 
   fun addLogMessage(message: String) {
@@ -40,11 +43,31 @@ class LogViewModel : ViewModel() {
   }
 
   fun addLogSuccess(message: String) {
-    Log.e(TAG, message)
+    Log.d(TAG, message)
     this.add(message, LogType.SUCCESS)
   }
 
+  private fun flushQueue() {
+    Handler(Looper.getMainLooper()).post { flushQueueInternal() }
+  }
+
+  // Merge all queued items into the LiveData once
+  private fun flushQueueInternal() {
+    // Drain everything currently in the queue
+    val newEntries = mutableListOf<LogEntry>()
+    while (true) {
+      val entry = logQueue.poll() ?: break
+      newEntries.add(entry)
+    }
+    if (newEntries.isNotEmpty()) {
+      val currentList = _logMessages.value.orEmpty()
+      val updatedList = (currentList + newEntries).takeLast(MAX_LOG_MESSAGES)
+      _logMessages.value = updatedList
+    }
+  }
+
   fun clearLogs() {
+    logQueue.clear()
     _logMessages.value = emptyList()
   }
 }
