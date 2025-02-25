@@ -1,5 +1,6 @@
 package com.wboelens.polarrecorder.dataSavers
 
+import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 import java.util.UUID
@@ -61,19 +62,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       return
     }
 
-    try {
-      mqttClient = MqttClient(config.brokerUrl, config.clientId, MemoryPersistence())
-      mqttClient.setCallback(this)
-      val connOpts = brokerOptions ?: MqttConnectOptions().apply { isCleanSession = true }
-
-      mqttClient.connect(connOpts)
-
-      setEnabled(true)
-      logViewModel.addLogMessage("Connected to MQTT broker")
-    } catch (e: MqttException) {
-      _isEnabled.value = false
-      this.addErrorMessage("Failed to connect to MQTT broker: ${e.message}")
-    }
+    setEnabled(true)
   }
 
   override fun disable() {
@@ -86,6 +75,25 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       } catch (e: MqttException) {
         logViewModel.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
       }
+    }
+  }
+
+  override fun initSaving(
+      recordingName: String,
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+  ) {
+    super.initSaving(recordingName, deviceIdsWithInfo)
+
+    try {
+      mqttClient = MqttClient(config.brokerUrl, config.clientId, MemoryPersistence())
+      mqttClient.setCallback(this)
+      val connOpts = brokerOptions ?: MqttConnectOptions().apply { isCleanSession = true }
+
+      mqttClient.connect(connOpts)
+
+      logViewModel.addLogMessage("Connected to MQTT broker")
+    } catch (e: MqttException) {
+      this.addErrorMessage("Failed to connect to MQTT broker: ${e.message}")
     }
   }
 
