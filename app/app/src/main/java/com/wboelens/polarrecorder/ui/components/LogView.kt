@@ -34,7 +34,7 @@ fun LogView(logMessages: List<LogViewModel.LogEntry>) {
             style = MaterialTheme.typography.bodySmall,
             color =
                 when (message.type) {
-                  LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.onPrimary
+                  LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.primary
                   LogViewModel.LogType.NORMAL -> MaterialTheme.colorScheme.onBackground
                   LogViewModel.LogType.ERROR -> MaterialTheme.colorScheme.error
                 })

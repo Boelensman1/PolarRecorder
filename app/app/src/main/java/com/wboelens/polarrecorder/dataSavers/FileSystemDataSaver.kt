@@ -192,7 +192,7 @@ class FileSystemDataSaver(
 
     recordingDir = pickedDir?.createDirectory(recordingName)
 
-    for ((deviceId, info) in deviceIdsWithInfo) {
+    for ((_, info) in deviceIdsWithInfo) {
       val currentRecordingDir = recordingDir?.createDirectory(info.deviceName)
 
       if (recordingDir == null) {
