@@ -35,3 +35,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Disclaimer
 
 Polar Recorder is an independent open-source project and is not affiliated with, endorsed by, or officially connected to Polar Electro or any of its products. "Polar" and associated device names are trademarks of their respective owners. This app is intended for research and development purposes only and comes with no guarantees regarding data accuracy or medical reliability.
+
+## Citing This Project
+
+If you use Polar Recorder in your research, please cite it using the information provided in the repository's `citation.cff` file. You can cite this project directly from GitHub by:
+
+1. Navigating to the repository's main page
+2. Clicking on the "Cite this repository" button in the sidebar
+3. Using either the APA or BibTeX format provided
+
+Alternatively, you can generate citations in various formats using tools that support the Citation File Format (CFF) standard.

@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+title: Polar Recorder
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Wigger Willem
+    family-names: Boelens
+    email: polarrecorder@wboelens.com
+    orcid: "https://orcid.org/0000-0002-6187-7768"
+repository-code: "https://github.com/Boelensman1/PolarRecorder"
+url: "https://github.com/Boelensman1/PolarRecorder"
+abstract: >-
+  Polar Recorder is an open-source application designed for
+  researchers, developers, and enthusiasts who need to
+  capture raw biometric signals from Polar devices. It
+  provides a simple way to record, store, and stream
+  physiological data.
+keywords:
+  - polar
+  - biometrics
+  - ECG
+  - PPG
+  - heart-rate
+  - physiological-data
+  - health-monitoring
+  - research-tool
+  - data-collection
+  - wearable-sensors
+license: MIT
+version: "1.0.0"
+date-released: "2025-02-25"
