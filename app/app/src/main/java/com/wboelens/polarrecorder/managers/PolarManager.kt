@@ -113,8 +113,8 @@ class PolarManager(
                                 polarDeviceInfo.deviceId, ConnectionState.FAILED)
                             logViewModel.addLogMessage(
                                 "Failed to connect to device ${polarDeviceInfo.deviceId}: ${error.message}")
+                            api.disconnectFromDevice(polarDeviceInfo.deviceId)
                           }
-                          api.disconnectFromDevice(polarDeviceInfo.deviceId)
                         })
             disposables.add(disposable)
           }
