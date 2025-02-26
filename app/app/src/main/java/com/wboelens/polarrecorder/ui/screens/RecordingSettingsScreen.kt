@@ -110,7 +110,12 @@ fun RecordingSettingsScreen(
             label = { Text("Recording Name") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-        )
+            isError = recordingName.isEmpty(),
+            supportingText = {
+              if (recordingName.isEmpty()) {
+                Text("Recording name is required", color = MaterialTheme.colorScheme.error)
+              }
+            })
 
         CheckboxWithLabel(
             label = "Add timestamp to recording name",
