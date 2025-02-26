@@ -6,13 +6,13 @@ import androidx.documentfile.provider.DocumentFile
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
-import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 data class FileSystemDataSaverConfig(val baseDirectory: String = "", val splitAtSizeMb: Int = 0)
 
@@ -79,8 +79,9 @@ class FileSystemDataSaver(
     setEnabled(false)
   }
 
-  private fun getNextFileName(baseFileName: String, dataType: String): String {
-    val partNumber = filePartNumbers.getOrDefault(dataType, 1)
+  private fun getNextFileName(deviceId: String, baseFileName: String, dataType: String): String {
+    val key = "$deviceId/$dataType"
+    val partNumber = filePartNumbers.getOrDefault(key, 1)
     return if (partNumber == 1) {
       baseFileName
     } else {
@@ -88,13 +89,14 @@ class FileSystemDataSaver(
     }
   }
 
-  private fun checkAndRotateFile(dataType: String) {
+  private fun checkAndRotateFile(deviceId: String, dataType: String) {
     if (config.splitAtSizeMb <= 0) return
 
-    val lock = rotationLocks.getOrPut(dataType) { Any() }
+    val key = "$deviceId/$dataType"
+    val lock = rotationLocks.getOrPut(key) { Any() }
 
     synchronized(lock) {
-      val streamPair = outputStreams[dataType] ?: return
+      val streamPair = outputStreams[key] ?: return
       val currentFile = streamPair.first
 
       @Suppress("MagicNumber")
@@ -105,9 +107,9 @@ class FileSystemDataSaver(
           logViewModel.addLogError("Error closing old stream: ${e.message}")
         }
 
-        filePartNumbers[dataType] = (filePartNumbers[dataType] ?: 1) + 1
+        filePartNumbers[key] = (filePartNumbers[key] ?: 1) + 1
 
-        val fileName = getNextFileName("$dataType.jsonl", dataType)
+        val fileName = getNextFileName(deviceId, "$dataType.jsonl", dataType)
         val currentRecordingDir = currentFile.parentFile
 
         try {
@@ -115,19 +117,19 @@ class FileSystemDataSaver(
           if (newFile != null) {
             val newStream = context.contentResolver.openOutputStream(newFile.uri, "wa")
             if (newStream != null) {
-              outputStreams[dataType] = Pair(newFile, newStream)
-              logViewModel.addLogMessage("Created new file part for $dataType: $fileName")
+              outputStreams[key] = Pair(newFile, newStream)
+              logViewModel.addLogMessage("Created new file part for $deviceId/$dataType: $fileName")
             }
           }
         } catch (e: SecurityException) {
           logViewModel.addLogError("Permission denied while creating new file part: ${e.message}")
-          outputStreams.remove(dataType)
+          outputStreams.remove(key)
         } catch (e: IOException) {
           logViewModel.addLogError("I/O error while creating new file part: ${e.message}")
-          outputStreams.remove(dataType)
+          outputStreams.remove(key)
         } catch (e: IllegalArgumentException) {
           logViewModel.addLogError("Invalid arguments while creating new file part: ${e.message}")
-          outputStreams.remove(dataType)
+          outputStreams.remove(key)
         }
       }
     }
@@ -140,27 +142,30 @@ class FileSystemDataSaver(
       dataType: String,
       payload: String
   ) {
-    val lock = rotationLocks.getOrPut(dataType) { Any() }
+    val key = "$deviceId/$dataType"
+    val lock = rotationLocks.getOrPut(key) { Any() }
 
     synchronized(lock) {
       try {
         // Get fresh reference to stream after synchronization
-        val streamPair = outputStreams[dataType]
-        check(streamPair != null) { "No output stream initialized for data type: $dataType" }
+        val streamPair = outputStreams[key]
+        check(streamPair != null) {
+          "No output stream initialized for data type: $deviceId/$dataType"
+        }
 
         val payloadAsByteArray = (payload + "\n").toByteArray()
         streamPair.second.write(payloadAsByteArray)
 
-        if (!firstMessageSaved["$deviceId/$dataType"]!!) {
+        if (!firstMessageSaved[key]!!) {
           logViewModel.addLogMessage(
               "Successfully saved $dataType first data to: ${Uri.decode(streamPair.first.uri.toString())}")
-          firstMessageSaved["$deviceId/$dataType"] = true
+          firstMessageSaved[key] = true
         }
       } catch (e: IOException) {
         // If stream was closed, try to rotate file immediately
         logViewModel.addLogError(
             "Failed to write data to file: ${e.message}. Attempting emergency rotation")
-        checkAndRotateFile(dataType)
+        checkAndRotateFile(deviceId, dataType)
       } catch (e: IllegalStateException) {
         logViewModel.addLogError("Failed to save data to file system: ${e.message}")
       }
@@ -180,7 +185,14 @@ class FileSystemDataSaver(
           scope.launch {
             while (true) {
               delay(FILE_ROTATION_CHECK_INTERVAL)
-              outputStreams.keys.forEach { dataType -> checkAndRotateFile(dataType) }
+              outputStreams.keys.forEach { key ->
+                val parts = key.split("/")
+                if (parts.size == 2) {
+                  checkAndRotateFile(parts[0], parts[1])
+                } else {
+                  logViewModel.addLogError("Invalid key format: $key, expected deviceId/dataType")
+                }
+              }
             }
           }
     }
@@ -192,7 +204,7 @@ class FileSystemDataSaver(
 
     recordingDir = pickedDir?.createDirectory(recordingName)
 
-    for ((_, info) in deviceIdsWithInfo) {
+    for ((deviceId, info) in deviceIdsWithInfo) {
       val currentRecordingDir = recordingDir?.createDirectory(info.deviceName)
 
       if (recordingDir == null) {
@@ -202,6 +214,7 @@ class FileSystemDataSaver(
 
       for (dataType in info.dataTypes) {
         val fileName = "$dataType.jsonl"
+        val key = "$deviceId/$dataType"
 
         if (currentRecordingDir == null) {
           logViewModel.addLogError("currentRecordingDir is null")
@@ -224,7 +237,8 @@ class FileSystemDataSaver(
           return
         }
         val streamPair = Pair(file, stream)
-        outputStreams[dataType] = streamPair
+        outputStreams[key] = streamPair
+        firstMessageSaved[key] = false
       }
     }
   }
