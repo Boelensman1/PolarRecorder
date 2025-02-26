@@ -13,6 +13,7 @@ import com.polar.sdk.api.PolarBleApiCallback
 import com.polar.sdk.api.PolarBleApiDefaultImpl
 import com.polar.sdk.api.errors.PolarInvalidArgument
 import com.polar.sdk.api.model.PolarDeviceInfo
+import com.polar.sdk.api.model.PolarHealthThermometerData
 import com.polar.sdk.api.model.PolarSensorSetting
 import com.wboelens.polarrecorder.viewModels.ConnectionState
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
@@ -142,6 +143,13 @@ class PolarManager(
 
           override fun disInformationReceived(identifier: String, disInfo: DisInfo) {
             Log.d(TAG, "DIS info received for device $identifier: $disInfo")
+          }
+
+          override fun htsNotificationReceived(
+              identifier: String,
+              data: PolarHealthThermometerData
+          ) {
+            Log.d(TAG, "PolarHealthThermometer Data info received for device $identifier: $data")
           }
 
           override fun batteryLevelReceived(identifier: String, level: Int) {
