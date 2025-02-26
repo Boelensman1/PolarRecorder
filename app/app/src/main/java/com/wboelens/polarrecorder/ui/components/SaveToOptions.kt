@@ -114,8 +114,8 @@ fun SaveToOptions(
           fileSystemConfig = FileSystemDataSaverConfig(baseDirectory, splitAtSizeMb)
           dataSavers.fileSystem.configure(fileSystemConfig)
 
-          if (dataSavers.mqtt.isConfigured) {
-            dataSavers.mqtt.enable()
+          if (dataSavers.fileSystem.isConfigured) {
+            dataSavers.fileSystem.enable()
           }
           showFilesystemSettings = false
         },
