@@ -353,8 +353,4 @@ class PolarManager(
       else -> throw IllegalArgumentException("Unsupported data type: $dataType")
     }
   }
-
-  fun getBatteryLevel(deviceId: String): Int? {
-    return deviceBatteryLevels[deviceId]
-  }
 }

@@ -26,11 +26,15 @@ class RecordingService : Service() {
   }
 
   private fun createNotificationChannel() {
-    val channel =
-        NotificationChannel(
-            CHANNEL_ID, "Recording Service Channel", NotificationManager.IMPORTANCE_LOW)
-    val manager = getSystemService(NotificationManager::class.java)
-    manager.createNotificationChannel(channel)
+    // Create notification channel only on Android 8.0 (API 26) and higher
+    // as NotificationChannel was introduced in this version
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      val channel =
+          NotificationChannel(
+              CHANNEL_ID, "Recording Service Channel", NotificationManager.IMPORTANCE_LOW)
+      val manager = getSystemService(NotificationManager::class.java)
+      manager.createNotificationChannel(channel)
+    }
   }
 
   private fun createNotification(): Notification {

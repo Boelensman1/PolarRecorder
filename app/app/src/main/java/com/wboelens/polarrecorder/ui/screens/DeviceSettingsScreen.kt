@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,7 +42,7 @@ fun DeviceSettingsScreen(
     onContinue: () -> Unit
 ) {
   val connectedDevices by deviceViewModel.connectedDevices.observeAsState(emptyList())
-  var currentDeviceIndex by remember { mutableStateOf(0) }
+  var currentDeviceIndex by remember { mutableIntStateOf(0) }
   var showSettingsDialog by remember { mutableStateOf(false) }
 
   MaterialTheme {
