@@ -47,8 +47,8 @@ class RecordingManager(
   private val connectedDevicesObserver =
       Observer<List<DeviceViewModel.Device>> { devices ->
         if (devices.isEmpty() && _isRecording.value) {
-          stopRecording()
           logViewModel.addLogError("Recording stopped: No devices connected")
+          stopRecording()
         }
       }
 
