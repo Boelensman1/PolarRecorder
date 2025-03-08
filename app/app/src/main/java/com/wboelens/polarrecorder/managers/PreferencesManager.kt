@@ -21,7 +21,7 @@ object Preferences {
       PreferenceConfig("file_system_recording_split_at_size_mb", 20)
   val FILE_SYSTEM_ENABLED = PreferenceConfig("file_system_enabled", false)
 
-  val RECORDING_NAME = PreferenceConfig("recording_name", "")
+  val RECORDING_NAME = PreferenceConfig("recording_name", "Recording")
   val RECORDING_NAME_APPEND_TIMESTAMP = PreferenceConfig("recording_name_append_timestamp", true)
 }
 
