@@ -353,4 +353,8 @@ class PolarManager(
       else -> throw IllegalArgumentException("Unsupported data type: $dataType")
     }
   }
+
+  fun getSdkVersion(): String {
+    return PolarBleApiDefaultImpl.versionInfo()
+  }
 }

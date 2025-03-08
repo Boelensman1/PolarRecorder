@@ -159,6 +159,9 @@ class RecordingManager(
 
     _isRecording.value = true
 
+    // Log app version information
+    logDeviceAndAppInfo()
+
     logViewModel.addLogSuccess("Recording $recordingNameWithTimestamp started")
     Log.d(TAG, "Saving data to ${dataSavers.enabledCount} data saver(s)")
 
@@ -256,6 +259,31 @@ class RecordingManager(
               logViewModel.addLogError(
                   "${dataType.name} recording failed for device $deviceId: ${error.message}")
             })
+  }
+
+  private fun logDeviceAndAppInfo() {
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    val versionName = packageInfo.versionName
+    val versionCode =
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+          packageInfo.longVersionCode
+        } else {
+          @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
+        }
+    logViewModel.addLogMessage("App version: $versionName (code: $versionCode)")
+
+    // Add Polar SDK version information
+    val polarSdkVersion = polarManager.getSdkVersion()
+    logViewModel.addLogMessage("Polar SDK version: $polarSdkVersion")
+
+    // Add Android version information
+    val androidVersion =
+        "Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})"
+    logViewModel.addLogMessage("OS version: $androidVersion")
+
+    // Add device information
+    val deviceInfo = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+    logViewModel.addLogMessage("Phone: $deviceInfo")
   }
 
   fun stopRecording() {
