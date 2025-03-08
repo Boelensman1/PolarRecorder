@@ -784,3 +784,4 @@ style:
     active: true
     excludeImports:
       - 'java.util.*'
+      - 'org.junit.Assert.*'
