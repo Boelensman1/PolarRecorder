@@ -39,7 +39,7 @@ fun FileSystemSettingsDialog(
   val context = LocalContext.current
 
   var baseDirectory by remember { mutableStateOf(initialConfig.baseDirectory) }
-  var splitSizeMb by remember { mutableStateOf((initialConfig.splitAtSizeMb).toString()) }
+  var splitAtSizeMb by remember { mutableStateOf((initialConfig.splitAtSizeMb).toString()) }
 
   // Collect the directory from ViewModel
   val selectedDir by fileSystemSettingsViewModel.selectedDirectory.collectAsState()
@@ -87,13 +87,13 @@ fun FileSystemSettingsDialog(
           Spacer(modifier = Modifier.height(8.dp))
 
           TextField(
-              value = splitSizeMb,
+              value = splitAtSizeMb,
               onValueChange = { newValue ->
                 // Only allow positive numeric input
                 if (newValue.isEmpty() ||
                     (newValue.all { it.isDigit() } &&
                         newValue.toIntOrNull()?.let { it >= 0 } == true)) {
-                  splitSizeMb = newValue
+                  splitAtSizeMb = newValue
                 }
               },
               label = { Text("Split Recording Size (MB)") },
@@ -114,7 +114,7 @@ fun FileSystemSettingsDialog(
       confirmButton = {
         Button(
             onClick = {
-              onSave(baseDirectory, splitSizeMb.toIntOrNull() ?: 0)
+              onSave(baseDirectory, splitAtSizeMb.toIntOrNull() ?: 0)
               onDismiss()
             }) {
               Text("Save")

@@ -217,7 +217,7 @@ class RecordingManager(
               val phoneTimestamp = System.currentTimeMillis()
 
               // Update last data timestamp for this device
-              _lastDataTimestamps.value = _lastDataTimestamps.value + (deviceId to phoneTimestamp)
+              _lastDataTimestamps.value += (deviceId to phoneTimestamp)
 
               val batchData =
                   when (dataType) {
