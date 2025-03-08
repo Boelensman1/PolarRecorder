@@ -71,11 +71,11 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
         mqttClient.disconnect()
         mqttClient.close()
 
-        setEnabled(false)
       } catch (e: MqttException) {
         logViewModel.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
       }
     }
+    setEnabled(false)
   }
 
   override fun initSaving(
