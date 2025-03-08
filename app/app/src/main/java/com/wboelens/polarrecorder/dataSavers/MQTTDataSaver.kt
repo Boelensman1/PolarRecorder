@@ -3,7 +3,6 @@ package com.wboelens.polarrecorder.dataSavers
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
-import java.util.UUID
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.MqttCallback
 import org.eclipse.paho.client.mqttv3.MqttClient
@@ -11,6 +10,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import java.util.UUID
 
 data class MQTTConfig(
     val brokerUrl: String = "",
@@ -57,8 +57,10 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
   }
 
   override fun enable() {
-    if (config.brokerUrl.isEmpty()) {
-      this.addErrorMessage("Broker URL must be configured before starting")
+    if (config.brokerUrl.isEmpty() ||
+        config.brokerUrl == "mqtt://" ||
+        config.brokerUrl == "tcp://") {
+      logViewModel.addLogError("Broker URL must be configured before starting")
       return
     }
 
@@ -70,7 +72,6 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       try {
         mqttClient.disconnect()
         mqttClient.close()
-
       } catch (e: MqttException) {
         logViewModel.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
       }
@@ -93,7 +94,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
 
       logViewModel.addLogMessage("Connected to MQTT broker")
     } catch (e: MqttException) {
-      this.addErrorMessage("Failed to connect to MQTT broker: ${e.message}")
+      logViewModel.addLogError("Failed to connect to MQTT broker: ${e.message}")
     }
   }
 
@@ -131,7 +132,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
 
   // MqttCallbacks
   override fun connectionLost(cause: Throwable?) {
-    this.addErrorMessage("MQTT connection lost: ${cause?.message}")
+    logViewModel.addLogError("MQTT connection lost: ${cause?.message}")
   }
 
   override fun messageArrived(topic: String?, message: MqttMessage?) {

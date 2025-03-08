@@ -2,7 +2,8 @@ package com.wboelens.polarrecorder.managers
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.Observer
 import com.google.gson.Gson
 import com.polar.sdk.api.PolarBleApi
@@ -32,7 +33,6 @@ class RecordingManager(
     private val dataSavers: DataSavers
 ) {
   companion object {
-    private const val TAG = "RecordingManager"
     private const val RETRY_COUNT = 3L
   }
 
@@ -47,20 +47,23 @@ class RecordingManager(
   private val connectedDevicesObserver =
       Observer<List<DeviceViewModel.Device>> { devices ->
         if (devices.isEmpty() && _isRecording.value) {
-          logViewModel.addLogError("Recording stopped: No devices connected")
+          logViewModel.addLogError("No devices connected, stopping recording")
           stopRecording()
         }
       }
 
   private val logMessagesObserver =
       Observer<List<LogViewModel.LogEntry>> { messages ->
-        if (messages.isNotEmpty()) {
-          saveLogEntry(messages.last())
+        if (messages.isNotEmpty() && messages.size > lastSavedLogSize) {
+          saveUnsavedLogMessages(messages)
         }
       }
 
   private val disposables = mutableMapOf<String, MutableMap<String, Disposable>>()
-  private val unsavedLogMessages = mutableListOf<LogViewModel.LogEntry>()
+  private val messagesLock = Any()
+
+  // Track how many log messages we've processed
+  private var lastSavedLogSize = 0
 
   private val _lastDataTimestamps = MutableStateFlow<Map<String, Long>>(emptyMap())
   val lastDataTimestamps: StateFlow<Map<String, Long>> = _lastDataTimestamps
@@ -75,31 +78,29 @@ class RecordingManager(
     currentAppendTimestamp = appendTimestamp
   }
 
-  private fun saveLogEntry(entry: LogViewModel.LogEntry) {
-    val payload =
-        gson.toJson(
-            mapOf(
-                "phoneTimeStamp" to entry.timestamp,
-                "message" to entry.message,
-                "type" to entry.type.name))
-
+  private fun saveUnsavedLogMessages(messages: List<LogViewModel.LogEntry>) {
     val connectedDevices = deviceViewModel.connectedDevices.value
-    if (_isRecording.value && !connectedDevices.isNullOrEmpty()) {
-      connectedDevices.forEach { device ->
-        dataSavers
-            .asList()
-            .filter { it.isEnabled.value }
-            .forEach { saver ->
-              saver.saveData(
-                  System.currentTimeMillis(),
-                  device.info.deviceId,
-                  currentRecordingName,
-                  "LOG",
-                  payload)
-            }
+    val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
+
+    if (!_isRecording.value || connectedDevices.isNullOrEmpty() || enabledDataSavers.isEmpty()) {
+      // Recording is not in progress, or no devices or data savers are enabled
+      // So we can't save the messages
+      return
+    }
+
+    synchronized(messagesLock) {
+      for (i in lastSavedLogSize until messages.size) {
+        val entry = messages[i]
+        val payload = gson.toJson(mapOf("type" to entry.type.name, "message" to entry.message))
+
+        connectedDevices.forEach { device ->
+          enabledDataSavers.forEach { saver ->
+            saver.saveData(
+                entry.timestamp, device.info.deviceId, currentRecordingName, "LOG", payload)
+          }
+        }
       }
-    } else {
-      unsavedLogMessages.add(entry)
+      lastSavedLogSize = messages.size
     }
   }
 
@@ -120,12 +121,6 @@ class RecordingManager(
       return
     }
 
-    // Save all queued log messages
-    val messagesToSave =
-        unsavedLogMessages.toList() // Create a copy of the list as saveLogEntry modifies the list
-    messagesToSave.forEach { saveLogEntry(it) }
-    unsavedLogMessages.clear()
-
     // Clear timestamps when starting new recording
     _lastDataTimestamps.value = emptyMap()
 
@@ -145,7 +140,6 @@ class RecordingManager(
                   .getDeviceDataTypes(device.info.deviceId)
                   .map { it.name }
                   .toMutableList()
-          // add LOG datatype
           dataTypesWithLog.add("LOG")
 
           device.info.deviceId to DeviceInfoForDataSaver(device.info.name, dataTypesWithLog.toSet())
@@ -162,8 +156,10 @@ class RecordingManager(
     // Log app version information
     logDeviceAndAppInfo()
 
-    logViewModel.addLogSuccess("Recording $recordingNameWithTimestamp started")
-    Log.d(TAG, "Saving data to ${dataSavers.enabledCount} data saver(s)")
+    logViewModel.addLogSuccess(
+        "Recording $recordingNameWithTimestamp started, saving to ${
+      dataSavers.enabledCount
+    } data saver(s)")
 
     // Start the foreground service
     val serviceIntent = Intent(context, RecordingService::class.java)
@@ -196,8 +192,6 @@ class RecordingManager(
     val selectedSensorSettings =
         deviceViewModel.getDeviceSensorSettingsForDataType(deviceId, dataType)
 
-    logViewModel.addLogMessage("Starting $dataType stream for $deviceId")
-
     if (!selectedDataTypes.contains(dataType)) {
       return Disposable.empty()
     }
@@ -207,11 +201,13 @@ class RecordingManager(
         .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
         .observeOn(io.reactivex.rxjava3.schedulers.Schedulers.computation())
         .retry(RETRY_COUNT)
-        .doOnSubscribe { Log.d(TAG, "Starting stream for $deviceId - $dataType") }
+        .doOnSubscribe { logViewModel.addLogMessage("Starting $dataType stream for $deviceId") }
         .doOnError { error ->
-          Log.e(TAG, "Stream error for $deviceId - $dataType: ${error.message}", error)
+          logViewModel.addLogError("Stream error for $deviceId - $dataType: ${error.message}")
         }
-        .doOnComplete { Log.w(TAG, "Stream completed unexpectedly for $deviceId - $dataType") }
+        .doOnComplete {
+          logViewModel.addLogError("Stream completed unexpectedly for $deviceId - $dataType")
+        }
         .subscribe(
             { data ->
               val phoneTimestamp = System.currentTimeMillis()
@@ -288,27 +284,37 @@ class RecordingManager(
 
   fun stopRecording() {
     if (!_isRecording.value) {
-      logViewModel.addLogMessage("No recording in progress")
+      logViewModel.addLogError("Trying to stop recording while no recording in progress")
       return
     }
 
-    // Stop the foreground service
-    context.stopService(Intent(context, RecordingService::class.java))
-
-    // Dispose all streams
-    disposables.forEach { (_, deviceDisposables) ->
-      deviceDisposables.forEach { (_, disposable) -> disposable.dispose() }
-    }
-    disposables.clear()
-
-    // tell dataSavers to stop saving
-    dataSavers.asList().filter { it.isEnabled.value }.forEach { saver -> saver.stopSaving() }
-
-    _isRecording.value = false
     logViewModel.addLogMessage("Recording stopped")
+    // Force save the final log message (pt. 1)
+    logViewModel.requestFlushQueue()
 
-    // Clear timestamps when stopping recording
-    _lastDataTimestamps.value = emptyMap()
+    // Wait for the log to be flushed before continuing by posting to the main thread, just like
+    // requestFlushQueue does.
+    Handler(Looper.getMainLooper()).post {
+      // Force save the final log message (pt. 2)
+      saveUnsavedLogMessages(logViewModel.logMessages.value?.toList() ?: emptyList())
+
+      // Stop the foreground service
+      context.stopService(Intent(context, RecordingService::class.java))
+
+      // Dispose all streams
+      disposables.forEach { (_, deviceDisposables) ->
+        deviceDisposables.forEach { (_, disposable) -> disposable.dispose() }
+      }
+      disposables.clear()
+
+      // tell dataSavers to stop saving
+      dataSavers.asList().filter { it.isEnabled.value }.forEach { saver -> saver.stopSaving() }
+
+      _isRecording.value = false
+
+      // Clear timestamps when stopping recording
+      _lastDataTimestamps.value = emptyMap()
+    }
   }
 
   fun cleanup() {

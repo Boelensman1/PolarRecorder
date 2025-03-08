@@ -14,15 +14,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -49,30 +44,10 @@ fun RecordingSettingsScreen(
     onBackPressed: () -> Unit,
     onContinue: () -> Unit
 ) {
-  val snackbarHostState = remember { SnackbarHostState() }
-
   val connectedDevices = deviceViewModel.connectedDevices.observeAsState(emptySet()).value
   var recordingName by remember { mutableStateOf(preferencesManager.recordingName) }
   var appendTimestamp by remember {
     mutableStateOf(preferencesManager.recordingNameAppendTimestamp)
-  }
-
-  // For each saver, collect errors in a side-effect
-  dataSavers.asList().forEach { saver ->
-    LaunchedEffect(saver.errorMessagesQueue.hashCode()) {
-      saver.errorMessagesQueue.collect { _ ->
-        while (saver.errorMessagesQueue.value.isNotEmpty()) {
-          val error = saver.popErrorMessage()
-          if (error != null) {
-            snackbarHostState.showSnackbar(
-                message = error,
-                duration = SnackbarDuration.Short,
-                withDismissAction = true,
-            )
-          }
-        }
-      }
-    }
   }
 
   MaterialTheme {
@@ -83,14 +58,6 @@ fun RecordingSettingsScreen(
               navigationIcon = {
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               })
-        },
-        snackbarHost = {
-          SnackbarHost(hostState = snackbarHostState) { data ->
-            Snackbar(
-                snackbarData = data,
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError)
-          }
         },
     ) { paddingValues ->
       Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {

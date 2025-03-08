@@ -6,13 +6,13 @@ import androidx.documentfile.provider.DocumentFile
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
-import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 data class FileSystemDataSaverConfig(val baseDirectory: String = "", val splitAtSizeMb: Int = 0)
 
@@ -50,7 +50,7 @@ class FileSystemDataSaver(
 
   override fun enable() {
     if (config.baseDirectory.isEmpty()) {
-      addErrorMessage("Base directory must be configured before starting")
+      logViewModel.addLogError("Base directory must be configured before starting")
       return
     }
 
@@ -68,10 +68,10 @@ class FileSystemDataSaver(
       logViewModel.addLogMessage("File system recording enabled at: ${userPickedDir.uri}")
     } catch (e: SecurityException) {
       _isEnabled.value = false
-      addErrorMessage("Permission denied accessing directory: ${e.message}")
+      logViewModel.addLogError("Permission denied accessing directory: ${e.message}")
     } catch (e: IllegalArgumentException) {
       _isEnabled.value = false
-      addErrorMessage("Invalid directory URI: ${e.message}")
+      logViewModel.addLogError("Invalid directory URI: ${e.message}")
     }
   }
 
@@ -230,7 +230,9 @@ class FileSystemDataSaver(
 
         if (file == null) {
           logViewModel.addLogError(
-              "[$deviceId/$dataType] Failed to create or access file $fileName in ${Uri.decode(currentRecordingDir.uri.toString())}")
+              "[$deviceId/$dataType] Failed to create or access file $fileName in ${
+                Uri.decode(currentRecordingDir.uri.toString())
+              }")
           return
         }
 

@@ -17,28 +17,9 @@ abstract class DataSaver(
   // Property to check if a saver is configured
   abstract val isConfigured: Boolean
 
-  // Property to hold the error messages queue
-  private val _errorMessagesQueue = MutableStateFlow<List<String>>(emptyList())
-  val errorMessagesQueue: StateFlow<List<String>> = _errorMessagesQueue.asStateFlow()
-
   // Property to check if a saver is enabled
   @Suppress("VariableNaming") protected val _isEnabled = MutableStateFlow(false)
   val isEnabled: StateFlow<Boolean> = _isEnabled.asStateFlow()
-
-  // Method to add an error message to the queue
-  protected fun addErrorMessage(errorMessage: String) {
-    logViewModel.addLogError("Broker URL must be configured before starting")
-    _errorMessagesQueue.value = _errorMessagesQueue.value + errorMessage
-  }
-
-  // Method to pop the first error message from the queue
-  fun popErrorMessage(): String? {
-    return if (_errorMessagesQueue.value.isNotEmpty()) {
-      val firstMessage = _errorMessagesQueue.value.first()
-      _errorMessagesQueue.value = _errorMessagesQueue.value.drop(1)
-      firstMessage
-    } else null
-  }
 
   // Abstract methods that must be implemented by children
   abstract fun enable()

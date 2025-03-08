@@ -7,7 +7,10 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -16,6 +19,8 @@ import com.wboelens.polarrecorder.managers.PermissionManager
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.managers.RecordingManager
+import com.wboelens.polarrecorder.ui.components.ErrorMessageDisplayer
+import com.wboelens.polarrecorder.ui.components.ErrorSnackbarHost
 import com.wboelens.polarrecorder.ui.screens.DeviceConnectionScreen
 import com.wboelens.polarrecorder.ui.screens.DeviceSelectionScreen
 import com.wboelens.polarrecorder.ui.screens.DeviceSettingsScreen
@@ -67,6 +72,9 @@ class MainActivity : ComponentActivity() {
       AppTheme {
         val navController = rememberNavController()
 
+        // Get the snackbarHostState from the ErrorHandler
+        val snackbarHostState = ErrorMessageDisplayer(logViewModel = logViewModel)
+
         LaunchedEffect(Unit) {
           permissionManager.checkAndRequestPermissions {
             Log.d(TAG, "Necessary permissions for scanning granted")
@@ -76,53 +84,59 @@ class MainActivity : ComponentActivity() {
           }
         }
 
-        NavHost(navController = navController, startDestination = "deviceSelection") {
-          composable("deviceSelection") {
-            DeviceSelectionScreen(
-                deviceViewModel = deviceViewModel,
-                polarManager = polarManager,
-                onContinue = { navController.navigate("deviceConnection") })
-          }
-          composable("deviceConnection") {
-            DeviceConnectionScreen(
-                deviceViewModel = deviceViewModel,
-                polarManager = polarManager,
-                onBackPressed = { navController.navigateUp() },
-                onContinue = { navController.navigate("deviceSettings") })
-          }
-          composable("deviceSettings") {
-            val backAction = {
-              polarManager.disconnectAllDevices()
-              navController.navigate("deviceSelection") {
-                popUpTo("deviceSelection") { inclusive = true }
-              }
-            }
+        Scaffold(snackbarHost = { ErrorSnackbarHost(snackbarHostState = snackbarHostState) }) {
+            paddingValues ->
+          NavHost(
+              navController = navController,
+              startDestination = "deviceSelection",
+              modifier = Modifier.padding(paddingValues)) {
+                composable("deviceSelection") {
+                  DeviceSelectionScreen(
+                      deviceViewModel = deviceViewModel,
+                      polarManager = polarManager,
+                      onContinue = { navController.navigate("deviceConnection") })
+                }
+                composable("deviceConnection") {
+                  DeviceConnectionScreen(
+                      deviceViewModel = deviceViewModel,
+                      polarManager = polarManager,
+                      onBackPressed = { navController.navigateUp() },
+                      onContinue = { navController.navigate("deviceSettings") })
+                }
+                composable("deviceSettings") {
+                  val backAction = {
+                    polarManager.disconnectAllDevices()
+                    navController.navigate("deviceSelection") {
+                      popUpTo("deviceSelection") { inclusive = true }
+                    }
+                  }
 
-            BackHandler(onBack = backAction)
-            DeviceSettingsScreen(
-                deviceViewModel = deviceViewModel,
-                polarManager = polarManager,
-                onBackPressed = backAction,
-                onContinue = { navController.navigate("recordingSettings") })
-          }
-          composable("recordingSettings") {
-            RecordingSettingsScreen(
-                deviceViewModel = deviceViewModel,
-                fileSystemSettingsViewModel = fileSystemViewModel,
-                recordingManager = recordingManager,
-                dataSavers = dataSavers,
-                preferencesManager = preferencesManager,
-                onBackPressed = { navController.navigateUp() },
-                onContinue = { navController.navigate("recording") })
-          }
-          composable("recording") {
-            RecordingScreen(
-                deviceViewModel = deviceViewModel,
-                logViewModel = logViewModel,
-                recordingManager = recordingManager,
-                dataSavers = dataSavers,
-                onBackPressed = { navController.navigateUp() })
-          }
+                  BackHandler(onBack = backAction)
+                  DeviceSettingsScreen(
+                      deviceViewModel = deviceViewModel,
+                      polarManager = polarManager,
+                      onBackPressed = backAction,
+                      onContinue = { navController.navigate("recordingSettings") })
+                }
+                composable("recordingSettings") {
+                  RecordingSettingsScreen(
+                      deviceViewModel = deviceViewModel,
+                      fileSystemSettingsViewModel = fileSystemViewModel,
+                      recordingManager = recordingManager,
+                      dataSavers = dataSavers,
+                      preferencesManager = preferencesManager,
+                      onBackPressed = { navController.navigateUp() },
+                      onContinue = { navController.navigate("recording") })
+                }
+                composable("recording") {
+                  RecordingScreen(
+                      deviceViewModel = deviceViewModel,
+                      logViewModel = logViewModel,
+                      recordingManager = recordingManager,
+                      dataSavers = dataSavers,
+                      onBackPressed = { navController.navigateUp() })
+                }
+              }
         }
       }
     }

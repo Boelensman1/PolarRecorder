@@ -6,6 +6,9 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class LogViewModel : ViewModel() {
   companion object {
@@ -26,10 +29,23 @@ class LogViewModel : ViewModel() {
 
   private val logQueue = java.util.concurrent.ConcurrentLinkedQueue<LogEntry>()
 
+  // Property to hold the error messages queue, used to display snackbars with the errors
+  private val _errorMessagesQueue = MutableStateFlow<List<String>>(emptyList())
+  val errorMessagesQueue: StateFlow<List<String>> = _errorMessagesQueue.asStateFlow()
+
+  // Method to pop the first error message from the queue
+  fun popErrorMessage(): String? {
+    return if (_errorMessagesQueue.value.isNotEmpty()) {
+      val firstMessage = _errorMessagesQueue.value.first()
+      _errorMessagesQueue.value = _errorMessagesQueue.value.drop(1)
+      firstMessage
+    } else null
+  }
+
   private fun add(message: String, type: LogType) {
     val entry = LogEntry(message, type, System.currentTimeMillis())
     logQueue.offer(entry)
-    flushQueue()
+    requestFlushQueue()
   }
 
   fun addLogMessage(message: String) {
@@ -40,6 +56,7 @@ class LogViewModel : ViewModel() {
   fun addLogError(message: String) {
     Log.e(TAG, message)
     this.add(message, LogType.ERROR)
+    _errorMessagesQueue.value += message
   }
 
   fun addLogSuccess(message: String) {
@@ -47,12 +64,12 @@ class LogViewModel : ViewModel() {
     this.add(message, LogType.SUCCESS)
   }
 
-  private fun flushQueue() {
-    Handler(Looper.getMainLooper()).post { flushQueueInternal() }
+  fun requestFlushQueue() {
+    Handler(Looper.getMainLooper()).post { flushQueue() }
   }
 
   // Merge all queued items into the LiveData once
-  private fun flushQueueInternal() {
+  fun flushQueue() {
     // Drain everything currently in the queue
     val newEntries = mutableListOf<LogEntry>()
     while (true) {
