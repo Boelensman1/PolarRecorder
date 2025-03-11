@@ -22,9 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.managers.RecordingManager
-import com.wboelens.polarrecorder.ui.components.ConnectedDevicesSection
 import com.wboelens.polarrecorder.ui.components.LogView
 import com.wboelens.polarrecorder.ui.components.RecordingControls
+import com.wboelens.polarrecorder.ui.components.SelectedDevicesSection
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 
@@ -38,7 +38,7 @@ fun RecordingScreen(
     onBackPressed: () -> Unit
 ) {
   val isRecording by recordingManager.isRecording.collectAsState(initial = false)
-  val connectedDevices = deviceViewModel.connectedDevices.observeAsState(emptyList()).value
+  val selectedDevices = deviceViewModel.selectedDevices.observeAsState(emptyList()).value
   val lastDataTimestamps by recordingManager.lastDataTimestamps.collectAsState()
   val batteryLevels by deviceViewModel.batteryLevels.observeAsState(emptyMap())
   val isFileSystemEnabled by dataSavers.fileSystem.isEnabled.collectAsState()
@@ -61,8 +61,8 @@ fun RecordingScreen(
 
             if (isRecording) {
               Spacer(modifier = Modifier.height(8.dp))
-              ConnectedDevicesSection(
-                  connectedDevices = connectedDevices,
+              SelectedDevicesSection(
+                  selectedDevices = selectedDevices,
                   lastDataTimestamps = lastDataTimestamps,
                   batteryLevels = batteryLevels)
             }

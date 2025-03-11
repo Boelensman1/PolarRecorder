@@ -22,14 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
 private const val STALLED_AFTER = 5000
 private const val WARNING_AFTER = 2000
 
 @Composable
 fun DeviceStatusCard(
-    device: DeviceViewModel.Device,
+    deviceName: String,
+    connected: Boolean,
     timeSinceLastData: Long?,
     lastTimestamp: Long?,
     batteryLevel: Int?,
@@ -43,13 +43,11 @@ fun DeviceStatusCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
               Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    device.info.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = statusColor)
+                Text(deviceName, style = MaterialTheme.typography.titleSmall, color = statusColor)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     when {
+                      !connected -> "Disconnected"
                       timeSinceLastData == null -> "No data received"
                       timeSinceLastData > STALLED_AFTER -> "Data stalled"
                       else -> "Receiving data"

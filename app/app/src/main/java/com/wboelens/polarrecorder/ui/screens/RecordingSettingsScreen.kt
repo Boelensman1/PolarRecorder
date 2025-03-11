@@ -49,6 +49,9 @@ fun RecordingSettingsScreen(
   var appendTimestamp by remember {
     mutableStateOf(preferencesManager.recordingNameAppendTimestamp)
   }
+  var recordingStopOnDisconnect by remember {
+    mutableStateOf(preferencesManager.recordingStopOnDisconnect)
+  }
 
   MaterialTheme {
     Scaffold(
@@ -91,6 +94,17 @@ fun RecordingSettingsScreen(
             onCheckedChange = {
               appendTimestamp = it
               preferencesManager.recordingNameAppendTimestamp = it
+            })
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        CheckboxWithLabel(
+            label = "Stop recording when no devices are connected",
+            checked = recordingStopOnDisconnect,
+            fullWidth = true,
+            onCheckedChange = {
+              recordingStopOnDisconnect = it
+              preferencesManager.recordingStopOnDisconnect = it
             })
 
         Spacer(modifier = Modifier.height(16.dp))

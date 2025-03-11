@@ -42,11 +42,42 @@ class RecordingManager(
   private val _isRecording = MutableStateFlow(false)
   val isRecording: StateFlow<Boolean> = _isRecording
 
+  var currentRecordingName: String = ""
+
   private val connectedDevicesObserver =
       Observer<List<DeviceViewModel.Device>> { devices ->
-        if (devices.isEmpty() && _isRecording.value) {
+        if (!_isRecording.value) {
+          return@Observer
+        }
+
+        if (devices.isEmpty() && preferencesManager.recordingStopOnDisconnect) {
           logViewModel.addLogError("No devices connected, stopping recording")
           stopRecording()
+        } else {
+          val selectedDevices = deviceViewModel.selectedDevices.value ?: emptyList()
+          val connectedDeviceIds = devices.map { it.info.deviceId }
+
+          // Process devices that were selected but are no longer connected
+          selectedDevices.forEach { selectedDevice ->
+            if (!connectedDeviceIds.contains(selectedDevice.info.deviceId)) {
+              // Clean up by disposing all active streams for this device
+              disposables[selectedDevice.info.deviceId]?.forEach { (_, disposable) ->
+                disposable.dispose()
+              }
+              // Remove the device from our tracking map to prevent memory leaks
+              disposables.remove(selectedDevice.info.deviceId)
+            }
+          }
+
+          // Handle devices that have reconnected
+          devices.forEach { device ->
+            // Check if this device has no active streams (it was disconnected previously)
+            // Note: isEmpty() != false checks for null, empty, or non-existent map
+            if (disposables[device.info.deviceId]?.isEmpty() != false) {
+              // Restart data streams for this device
+              startStreamsForDevice(device)
+            }
+          }
         }
       }
 
@@ -72,10 +103,10 @@ class RecordingManager(
   }
 
   private fun saveUnsavedLogMessages(messages: List<LogViewModel.LogEntry>) {
-    val connectedDevices = deviceViewModel.connectedDevices.value
     val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
+    val selectedDevices = deviceViewModel.selectedDevices.value
 
-    if (!_isRecording.value || connectedDevices.isNullOrEmpty() || enabledDataSavers.isEmpty()) {
+    if (!_isRecording.value || selectedDevices.isNullOrEmpty() || enabledDataSavers.isEmpty()) {
       // Recording is not in progress, or no devices or data savers are enabled
       // So we can't save the messages
       return
@@ -86,14 +117,10 @@ class RecordingManager(
         val entry = messages[i]
         val payload = gson.toJson(mapOf("type" to entry.type.name, "message" to entry.message))
 
-        connectedDevices.forEach { device ->
+        selectedDevices.forEach { device ->
           enabledDataSavers.forEach { saver ->
             saver.saveData(
-                entry.timestamp,
-                device.info.deviceId,
-                preferencesManager.recordingName,
-                "LOG",
-                payload)
+                entry.timestamp, device.info.deviceId, currentRecordingName, "LOG", payload)
           }
         }
       }
@@ -112,8 +139,8 @@ class RecordingManager(
       return
     }
 
-    val connectedDevices = deviceViewModel.connectedDevices.value
-    if (connectedDevices.isNullOrEmpty()) {
+    val selectedDevices = deviceViewModel.selectedDevices.value
+    if (selectedDevices.isNullOrEmpty()) {
       logViewModel.addLogError("Cannot start recording: No devices connected")
       return
     }
@@ -121,7 +148,7 @@ class RecordingManager(
     // Clear timestamps when starting new recording
     _lastDataTimestamps.value = emptyMap()
 
-    val recordingNameWithTimestamp =
+    currentRecordingName =
         if (preferencesManager.recordingNameAppendTimestamp) {
           val timestamp =
               java.text
@@ -131,7 +158,7 @@ class RecordingManager(
         } else preferencesManager.recordingName
 
     val deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver> =
-        connectedDevices.associate { device ->
+        selectedDevices.associate { device ->
           val dataTypesWithLog =
               deviceViewModel
                   .getDeviceDataTypes(device.info.deviceId)
@@ -146,7 +173,7 @@ class RecordingManager(
     dataSavers
         .asList()
         .filter { it.isEnabled.value }
-        .forEach { saver -> saver.initSaving(recordingNameWithTimestamp, deviceIdsWithInfo) }
+        .forEach { saver -> saver.initSaving(currentRecordingName, deviceIdsWithInfo) }
 
     _isRecording.value = true
 
@@ -154,7 +181,7 @@ class RecordingManager(
     logDeviceAndAppInfo()
 
     logViewModel.addLogSuccess(
-        "Recording $recordingNameWithTimestamp started, saving to ${
+        "Recording $currentRecordingName started, saving to ${
       dataSavers.enabledCount
     } data saver(s)")
 
@@ -166,32 +193,27 @@ class RecordingManager(
       context.startService(serviceIntent)
     }
 
-    // Start streams for each connected device
-    connectedDevices.forEach { device ->
-      val deviceId = device.info.deviceId
-      disposables[deviceId] = mutableMapOf()
-      disposables[deviceId]?.let { deviceDisposables ->
-        val selectedDataTypes = deviceViewModel.getDeviceDataTypes(deviceId)
-        selectedDataTypes.forEach { dataType ->
-          deviceDisposables[dataType.name.lowercase()] =
-              startStreamForDevice(deviceId, recordingNameWithTimestamp, dataType)
-        }
+    selectedDevices.forEach { device -> startStreamsForDevice(device) }
+  }
+
+  private fun startStreamsForDevice(device: DeviceViewModel.Device) {
+    val deviceId = device.info.deviceId
+
+    disposables[deviceId] = mutableMapOf()
+    disposables[deviceId]?.let { deviceDisposables ->
+      val selectedDataTypes = deviceViewModel.getDeviceDataTypes(deviceId)
+      selectedDataTypes.forEach { dataType ->
+        deviceDisposables[dataType.name.lowercase()] = startStreamForDevice(deviceId, dataType)
       }
     }
   }
 
   private fun startStreamForDevice(
       deviceId: String,
-      recordingNameWithTimestamp: String,
       dataType: PolarBleApi.PolarDeviceDataType
   ): Disposable {
-    val selectedDataTypes = deviceViewModel.getDeviceDataTypes(deviceId)
     val selectedSensorSettings =
         deviceViewModel.getDeviceSensorSettingsForDataType(deviceId, dataType)
-
-    if (!selectedDataTypes.contains(dataType)) {
-      return Disposable.empty()
-    }
 
     return polarManager
         .startStreaming(deviceId, dataType, selectedSensorSettings)
@@ -232,7 +254,7 @@ class RecordingManager(
                       mapOf(
                           "phoneTimeStamp" to phoneTimestamp,
                           "deviceId" to deviceId,
-                          "recordingName" to recordingNameWithTimestamp,
+                          "recordingName" to currentRecordingName,
                           "dataType" to dataType,
                           "data" to batchData))
 
@@ -241,11 +263,7 @@ class RecordingManager(
                   .filter { it.isEnabled.value }
                   .forEach { saver ->
                     saver.saveData(
-                        phoneTimestamp,
-                        deviceId,
-                        recordingNameWithTimestamp,
-                        dataType.name,
-                        payload)
+                        phoneTimestamp, deviceId, currentRecordingName, dataType.name, payload)
                   }
             },
             { error ->

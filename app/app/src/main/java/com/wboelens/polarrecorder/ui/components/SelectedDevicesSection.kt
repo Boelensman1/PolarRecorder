@@ -7,31 +7,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.ui.theme.LocalExtendedColorScheme
+import com.wboelens.polarrecorder.viewModels.ConnectionState
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
 private const val STALLED_AFTER = 5000
 private const val WARNING_AFTER = 2000
 
 @Composable
-fun ConnectedDevicesSection(
-    connectedDevices: List<DeviceViewModel.Device>,
+fun SelectedDevicesSection(
+    selectedDevices: List<DeviceViewModel.Device>,
     lastDataTimestamps: Map<String, Long>,
     batteryLevels: Map<String, Int>
 ) {
   val extendedColorScheme = LocalExtendedColorScheme.current
 
   Text(
-      "Connected Devices:",
+      "Selected Devices:",
       style = MaterialTheme.typography.titleMedium,
       modifier = Modifier.padding(bottom = 8.dp))
 
-  connectedDevices.forEach { device ->
+  selectedDevices.forEach { device ->
     val lastTimestamp = lastDataTimestamps[device.info.deviceId]
     val timeSinceLastData = lastTimestamp?.let { System.currentTimeMillis() - it }
     val batteryLevel = batteryLevels[device.info.deviceId]
+    val connected = device.connectionState == ConnectionState.CONNECTED
 
     val statusColor =
         when {
+          !connected -> MaterialTheme.colorScheme.error
           timeSinceLastData == null -> MaterialTheme.colorScheme.error
           timeSinceLastData > STALLED_AFTER -> MaterialTheme.colorScheme.error
           timeSinceLastData > WARNING_AFTER -> extendedColorScheme.warning.onColor
@@ -39,7 +42,8 @@ fun ConnectedDevicesSection(
         }
 
     DeviceStatusCard(
-        device = device,
+        deviceName = device.info.name,
+        connected = connected,
         timeSinceLastData = timeSinceLastData,
         lastTimestamp = lastTimestamp,
         batteryLevel = batteryLevel,
