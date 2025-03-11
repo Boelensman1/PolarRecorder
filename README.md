@@ -7,7 +7,8 @@ Polar Recorder is an open-source application designed for researchers, developer
 - **Records Raw Data** – Capture signals such as ECG, PPG, and heart rate from Polar sensors
 - **Supports All Polar Devices** – Compatible with all Polar hardware capable of streaming raw data (tested with H10, H7, and OH1+)
 - **Flexible Data Storage** – Save recordings to a file for offline analysis
-- **Live Data Streaming** – Transmit data in real-time via MQTT for integration with other systems
+- **Live Data Streaming** – Transmit data in real-time via MQTT
+- **Resilient** – Auto-reconnects on connection failures and continues the recording
 - **Fully Open Source** – Developed with transparency and collaboration in mind
 
 ## Beta Testing
