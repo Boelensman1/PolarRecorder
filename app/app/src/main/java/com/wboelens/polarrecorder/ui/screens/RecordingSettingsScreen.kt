@@ -97,7 +97,6 @@ fun RecordingSettingsScreen(
 
         Button(
             onClick = {
-              recordingManager.configure(recordingName, appendTimestamp)
               recordingManager.startRecording()
               onContinue()
             },

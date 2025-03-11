@@ -60,7 +60,12 @@ class MainActivity : ComponentActivity() {
     polarManager = PolarManager(applicationContext, deviceViewModel, logViewModel)
     recordingManager =
         RecordingManager(
-            applicationContext, polarManager, logViewModel, deviceViewModel, dataSavers)
+            applicationContext,
+            polarManager,
+            logViewModel,
+            deviceViewModel,
+            preferencesManager,
+            dataSavers)
 
     registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
       if (result.resultCode == RESULT_OK) {

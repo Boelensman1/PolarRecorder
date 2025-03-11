@@ -23,13 +23,14 @@ import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-public data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
+data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
 
 class RecordingManager(
     private val context: Context,
     private val polarManager: PolarManager,
     private val logViewModel: LogViewModel,
     private val deviceViewModel: DeviceViewModel,
+    private val preferencesManager: PreferencesManager,
     private val dataSavers: DataSavers
 ) {
   companion object {
@@ -40,9 +41,6 @@ class RecordingManager(
 
   private val _isRecording = MutableStateFlow(false)
   val isRecording: StateFlow<Boolean> = _isRecording
-
-  private var currentRecordingName: String = ""
-  private var currentAppendTimestamp: Boolean = false
 
   private val connectedDevicesObserver =
       Observer<List<DeviceViewModel.Device>> { devices ->
@@ -73,11 +71,6 @@ class RecordingManager(
     logViewModel.logMessages.observeForever(logMessagesObserver)
   }
 
-  fun configure(recordingName: String, appendTimestamp: Boolean) {
-    currentRecordingName = recordingName
-    currentAppendTimestamp = appendTimestamp
-  }
-
   private fun saveUnsavedLogMessages(messages: List<LogViewModel.LogEntry>) {
     val connectedDevices = deviceViewModel.connectedDevices.value
     val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
@@ -96,7 +89,11 @@ class RecordingManager(
         connectedDevices.forEach { device ->
           enabledDataSavers.forEach { saver ->
             saver.saveData(
-                entry.timestamp, device.info.deviceId, currentRecordingName, "LOG", payload)
+                entry.timestamp,
+                device.info.deviceId,
+                preferencesManager.recordingName,
+                "LOG",
+                payload)
           }
         }
       }
@@ -105,7 +102,7 @@ class RecordingManager(
   }
 
   fun startRecording() {
-    if (currentRecordingName === "") {
+    if (preferencesManager.recordingName === "") {
       logViewModel.addLogError("Recording name cannot be the empty string")
       return
     }
@@ -125,13 +122,13 @@ class RecordingManager(
     _lastDataTimestamps.value = emptyMap()
 
     val recordingNameWithTimestamp =
-        if (currentAppendTimestamp) {
+        if (preferencesManager.recordingNameAppendTimestamp) {
           val timestamp =
               java.text
                   .SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
                   .format(java.util.Date())
-          "${currentRecordingName}_$timestamp"
-        } else currentRecordingName
+          "${preferencesManager.recordingName}_$timestamp"
+        } else preferencesManager.recordingName
 
     val deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver> =
         connectedDevices.associate { device ->
