@@ -11,19 +11,9 @@ Polar Recorder is an open-source application designed for researchers, developer
 - **Resilient** – Auto-reconnects on connection failures and continues the recording
 - **Fully Open Source** – Developed with transparency and collaboration in mind
 
-## Beta Testing
+## Installing
 
-Polar Recorder is currently in closed beta. I'm looking for testers to help improve the app before its public release.
-
-To join the beta:
-
-1. Join the Google Group: [Polar Recorder Beta Test](https://groups.google.com/g/polar-recorder-beta-test)
-2. After joining the group, join the beta testing program: [Play Store Beta Testing](https://play.google.com/apps/testing/com.wboelens.polarrecorder)
-3. Install the app from the Play Store: [Polar Recorder](https://play.google.com/store/apps/details?id=com.wboelens.polarrecorder)
-
-I need at least 12 beta testers to proceed with the public release on the app store.
-
-If you have any feedback/questions, please let me know via opening an issue or sending me an email at polarrecorderfeedback@wboelens.com.
+Polar Recorder is available on the [Play Store](https://play.google.com/store/apps/details?id=com.wboelens.polarrecorder). You can also download the APK directly from the [Releases](https://github.com/boelensman1/polarrecorder/releases) section and install it manually on your device.
 
 ## Contributing
 
