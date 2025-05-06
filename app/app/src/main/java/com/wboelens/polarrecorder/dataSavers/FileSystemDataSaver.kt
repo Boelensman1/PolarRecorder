@@ -181,71 +181,85 @@ class FileSystemDataSaver(
     super.initSaving(recordingName, deviceIdsWithInfo)
     filePartNumbers.clear()
 
-    if (config.splitAtSizeMb > 0) {
-      rotationCheckJob =
-          scope.launch {
-            while (true) {
-              delay(FILE_ROTATION_CHECK_INTERVAL)
-              outputStreams.keys.forEach { key ->
-                val parts = key.split("/")
-                if (parts.size == 2) {
-                  checkAndRotateFile(parts[0], parts[1])
-                } else {
-                  logViewModel.addLogError(
-                      "[${parts[0]}] Invalid key format: $key, expected deviceId/dataType")
+    try {
+      if (config.splitAtSizeMb > 0) {
+        rotationCheckJob =
+            scope.launch {
+              while (true) {
+                delay(FILE_ROTATION_CHECK_INTERVAL)
+                outputStreams.keys.forEach { key ->
+                  val parts = key.split("/")
+                  if (parts.size == 2) {
+                    checkAndRotateFile(parts[0], parts[1])
+                  } else {
+                    logViewModel.addLogError(
+                        "[${parts[0]}] Invalid key format: $key, expected deviceId/dataType")
+                  }
                 }
               }
             }
-          }
-    }
+      }
 
-    if (pickedDir == null) {
-      logViewModel.addLogError("Cannot init file system saving: pickedDir is null")
-      return
-    }
-
-    recordingDir = pickedDir?.createDirectory(recordingName)
-
-    for ((deviceId, info) in deviceIdsWithInfo) {
-      val currentRecordingDir = recordingDir?.createDirectory(info.deviceName)
-
-      if (recordingDir == null) {
-        logViewModel.addLogError("[$deviceId] Cannot init file system saving: recordingDir is null")
+      if (pickedDir == null) {
+        logViewModel.addLogError("Cannot init file system saving: pickedDir is null")
+        _isInitialized.value = InitializationState.FAILED
         return
       }
 
-      for (dataType in info.dataTypes) {
-        val fileName = "$dataType.jsonl"
-        val key = "$deviceId/$dataType"
+      recordingDir = pickedDir?.createDirectory(recordingName)
 
-        if (currentRecordingDir == null) {
-          logViewModel.addLogError(
-              "[$deviceId/$dataType] Cannot init file system saving: currentRecordingDir is null")
+      for ((deviceId, info) in deviceIdsWithInfo) {
+        val currentRecordingDir = recordingDir?.createDirectory(info.deviceName)
+
+        if (recordingDir == null) {
+          logViewModel.addLogError("[$deviceId] Cannot init file system saving: recordingDir is null")
+          _isInitialized.value = InitializationState.FAILED
           return
         }
 
-        val file =
-            currentRecordingDir.findFile(fileName)
-                ?: currentRecordingDir.createFile("application/jsonl", fileName)
+        for (dataType in info.dataTypes) {
+          val fileName = "$dataType.jsonl"
+          val key = "$deviceId/$dataType"
 
-        if (file == null) {
-          logViewModel.addLogError(
-              "[$deviceId/$dataType] Failed to create or access file $fileName in ${
-                Uri.decode(currentRecordingDir.uri.toString())
-              }")
-          return
-        }
+          if (currentRecordingDir == null) {
+            logViewModel.addLogError(
+                "[$deviceId/$dataType] Cannot init file system saving: currentRecordingDir is null")
+            _isInitialized.value = InitializationState.FAILED
+            return
+          }
 
-        val stream = context.contentResolver.openOutputStream(file.uri, "wa")
-        if (stream == null) {
-          logViewModel.addLogError(
-              "[$deviceId/$dataType] Failed to create or access stream ${file.uri}")
-          return
+          val file =
+              currentRecordingDir.findFile(fileName)
+                  ?: currentRecordingDir.createFile("application/jsonl", fileName)
+
+          if (file == null) {
+            logViewModel.addLogError(
+                "[$deviceId/$dataType] Failed to create or access file $fileName in ${
+                  Uri.decode(currentRecordingDir.uri.toString())
+                }")
+            _isInitialized.value = InitializationState.FAILED
+            return
+          }
+
+          val stream = context.contentResolver.openOutputStream(file.uri, "wa")
+          if (stream == null) {
+            logViewModel.addLogError(
+                "[$deviceId/$dataType] Failed to create or access stream ${file.uri}")
+            _isInitialized.value = InitializationState.FAILED
+            return
+          }
+          val streamPair = Pair(file, stream)
+          outputStreams[key] = streamPair
+          firstMessageSaved[key] = false
         }
-        val streamPair = Pair(file, stream)
-        outputStreams[key] = streamPair
-        firstMessageSaved[key] = false
       }
+      
+      // Set initialization state to SUCCESS if we reach this point
+      _isInitialized.value = InitializationState.SUCCESS
+      logViewModel.addLogMessage("File system data saver initialized successfully")
+    } catch (e: Exception) {
+      logViewModel.addLogError("Failed to initialize file system data saver: ${e.message}")
+      _isInitialized.value = InitializationState.FAILED
     }
   }
 

@@ -95,8 +95,8 @@ fun SaveToOptions(
   if (showMqttSettings) {
     MQTTSettingsDialog(
         onDismiss = { showMqttSettings = false },
-        onSave = { brokerUrl, username, password, topic, clientId ->
-          mqttConfig = MQTTConfig(brokerUrl, username, password, clientId, topic)
+        onSave = { host, port, useSsl, username, password, topic, clientId ->
+          mqttConfig = MQTTConfig(host, port, useSsl, username, password, clientId, topic)
           dataSavers.mqtt.configure(mqttConfig)
 
           if (dataSavers.mqtt.isConfigured) {

@@ -1,19 +1,18 @@
 package com.wboelens.polarrecorder.dataSavers
 
+import com.hivemq.client.mqtt.MqttClient
+import com.hivemq.client.mqtt.datatypes.MqttQos
+import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
-import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttException
-import org.eclipse.paho.client.mqttv3.MqttMessage
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 data class MQTTConfig(
-    val brokerUrl: String = "",
+    val host: String = "",
+    val port: Int,
+    val useSSL: Boolean,
     val username: String? = null,
     val password: String? = null,
     val clientId: String = "PolarRecorder_${UUID.randomUUID()}",
@@ -21,14 +20,13 @@ data class MQTTConfig(
 )
 
 class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesManager) :
-    DataSaver(logViewModel, preferencesManager), MqttCallback {
-  private lateinit var mqttClient: MqttClient
-  private var brokerOptions: MqttConnectOptions? = null
+    DataSaver(logViewModel, preferencesManager) {
+  private var mqttClient: Mqtt3AsyncClient? = null
 
-  private var config: MQTTConfig = MQTTConfig()
+  private lateinit var config: MQTTConfig
 
   override val isConfigured: Boolean
-    get() = config.brokerUrl.isNotEmpty()
+    get() = config.host.isNotEmpty()
 
   private fun setEnabled(enable: Boolean) {
     _isEnabled.value = enable
@@ -42,25 +40,14 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
         config.copy(
             // Convert empty strings to null
             username = config.username?.takeIf { it.isNotEmpty() },
-            password = config.password?.takeIf { it.isNotEmpty() },
-            // Replace mqtt url with tcp
-            brokerUrl = config.brokerUrl.replace("^mqtt://".toRegex(), "tcp://"))
+            password = config.password?.takeIf { it.isNotEmpty() })
 
     this.config = sanitizedConfig
-
-    brokerOptions =
-        MqttConnectOptions().apply {
-          isCleanSession = true
-          sanitizedConfig.username?.let { userName = it }
-          sanitizedConfig.password?.let { password = it.toCharArray() }
-        }
   }
 
   override fun enable() {
-    if (config.brokerUrl.isEmpty() ||
-        config.brokerUrl == "mqtt://" ||
-        config.brokerUrl == "tcp://") {
-      logViewModel.addLogError("Broker URL must be configured before starting")
+    if (config.host.isEmpty()) {
+      logViewModel.addLogError("Broker host must be configured before starting")
       return
     }
 
@@ -68,14 +55,16 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
   }
 
   override fun disable() {
-    if (::mqttClient.isInitialized && mqttClient.isConnected) {
+    mqttClient?.let {
       try {
-        mqttClient.disconnect()
-        mqttClient.close()
-      } catch (e: MqttException) {
+        if (it.state.isConnected) {
+          it.disconnect()
+        }
+      } catch (e: Exception) {
         logViewModel.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
       }
     }
+    mqttClient = null
     setEnabled(false)
   }
 
@@ -86,15 +75,51 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
     super.initSaving(recordingName, deviceIdsWithInfo)
 
     try {
-      mqttClient = MqttClient(config.brokerUrl, config.clientId, MemoryPersistence())
-      mqttClient.setCallback(this)
-      val connOpts = brokerOptions ?: MqttConnectOptions().apply { isCleanSession = true }
+      // Create the MQTT client using the separate host, port and SSL settings
+      val clientBuilder =
+          MqttClient.builder()
+              .identifier(config.clientId)
+              .serverHost(config.host)
+              .serverPort(config.port)
 
-      mqttClient.connect(connOpts)
+      if (config.useSSL) {
+        clientBuilder.sslWithDefaultConfig()
+      }
 
-      logViewModel.addLogMessage("Connected to MQTT broker")
-    } catch (e: MqttException) {
+      val client = clientBuilder.useMqttVersion3().build().toAsync()
+
+      // Connect to the broker asynchronously
+      val connectBuilder = client.connectWith().cleanSession(true).keepAlive(60)
+
+      // Add credentials if provided
+      if (!config.username.isNullOrEmpty()) {
+        connectBuilder
+            .simpleAuth()
+            .username(config.username!!)
+            .password(config.password?.toByteArray(StandardCharsets.UTF_8) ?: byteArrayOf())
+            .applySimpleAuth()
+      }
+
+      // Connect asynchronously
+      connectBuilder.send().whenComplete { connAck, throwable ->
+        if (throwable != null) {
+          logViewModel.addLogError("Failed to connect to MQTT broker: ${throwable.message}")
+          _isInitialized.value = InitializationState.FAILED
+        } else {
+          mqttClient = client
+
+          /*.automaticReconnect(
+          MqttClientAutoReconnect.builder()
+              .initialDelay(1, TimeUnit.SECONDS)
+              .maxDelay(5, TimeUnit.SECONDS)
+              .build())*/
+          logViewModel.addLogMessage("Connected to MQTT broker")
+          _isInitialized.value = InitializationState.SUCCESS
+        }
+      }
+    } catch (e: Exception) {
       logViewModel.addLogError("Failed to connect to MQTT broker: ${e.message}")
+      _isInitialized.value = InitializationState.FAILED
     }
   }
 
@@ -108,38 +133,35 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
     val topic = "${config.topicPrefix}/$dataType/$deviceId"
 
     try {
-      val message =
-          MqttMessage(payload.toByteArray()).apply {
-            qos = 1 // At least once delivery
-            isRetained = false
-          }
-      mqttClient.publish(topic, message)
-      if (!firstMessageSaved["$deviceId/$dataType"]!!) {
-        logViewModel.addLogMessage(
-            "Successfully published $dataType first data to MQTT topic: $topic")
-        firstMessageSaved["$deviceId/$dataType"] = true
-      }
-    } catch (e: MqttException) {
+      mqttClient?.let { client ->
+        client
+            .publishWith()
+            .topic(topic)
+            .qos(MqttQos.AT_LEAST_ONCE)
+            .payload(payload.toByteArray())
+            .send()
+
+        if (!firstMessageSaved["$deviceId/$dataType"]!!) {
+          logViewModel.addLogMessage(
+              "Successfully published $dataType first data to MQTT topic: $topic")
+          firstMessageSaved["$deviceId/$dataType"] = true
+        }
+      } ?: run { logViewModel.addLogError("MQTT client not initialized") }
+    } catch (e: Exception) {
       logViewModel.addLogError("Failed to publish MQTT message: ${e.message}")
     }
   }
 
   override fun cleanup() {
-    if (::mqttClient.isInitialized) {
-      mqttClient.close(true)
+    mqttClient?.let {
+      try {
+        if (it.state.isConnected) {
+          it.disconnect()
+        }
+      } catch (e: Exception) {
+        logViewModel.addLogError("Error during MQTT client cleanup: ${e.message}")
+      }
     }
-  }
-
-  // MqttCallbacks
-  override fun connectionLost(cause: Throwable?) {
-    logViewModel.addLogError("MQTT connection lost: ${cause?.message}")
-  }
-
-  override fun messageArrived(topic: String?, message: MqttMessage?) {
-    // no-op
-  }
-
-  override fun deliveryComplete(token: IMqttDeliveryToken?) {
-    // no-op
+    mqttClient = null
   }
 }

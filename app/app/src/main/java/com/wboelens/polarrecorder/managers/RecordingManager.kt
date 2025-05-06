@@ -16,17 +16,23 @@ import com.polar.sdk.api.model.PolarPpgData
 import com.polar.sdk.api.model.PolarPpiData
 import com.polar.sdk.api.model.PolarTemperatureData
 import com.wboelens.polarrecorder.dataSavers.DataSavers
+import com.wboelens.polarrecorder.dataSavers.InitializationState
 import com.wboelens.polarrecorder.services.RecordingService
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 import io.reactivex.rxjava3.disposables.Disposable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
 data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
 
 class RecordingManager(
     private val context: Context,
+    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main),
     private val polarManager: PolarManager,
     private val logViewModel: LogViewModel,
     private val deviceViewModel: DeviceViewModel,
@@ -120,7 +126,12 @@ class RecordingManager(
         selectedDevices.forEach { device ->
           enabledDataSavers.forEach { saver ->
             saver.saveData(
-                entry.timestamp, device.info.deviceId, currentRecordingName, "LOG", payload)
+                entry.timestamp,
+                device.info.deviceId,
+                currentRecordingName,
+                "LOG",
+                payload,
+            )
           }
         }
       }
@@ -157,33 +168,14 @@ class RecordingManager(
           "${preferencesManager.recordingName}_$timestamp"
         } else preferencesManager.recordingName
 
-    val deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver> =
-        selectedDevices.associate { device ->
-          val dataTypesWithLog =
-              deviceViewModel
-                  .getDeviceDataTypes(device.info.deviceId)
-                  .map { it.name }
-                  .toMutableList()
-          dataTypesWithLog.add("LOG")
-
-          device.info.deviceId to DeviceInfoForDataSaver(device.info.name, dataTypesWithLog.toSet())
-        }
-
-    // tell dataSavers to initialise saving
-    dataSavers
-        .asList()
-        .filter { it.isEnabled.value }
-        .forEach { saver -> saver.initSaving(currentRecordingName, deviceIdsWithInfo) }
-
-    _isRecording.value = true
-
     // Log app version information
     logDeviceAndAppInfo()
 
     logViewModel.addLogSuccess(
         "Recording $currentRecordingName started, saving to ${
-      dataSavers.enabledCount
-    } data saver(s)")
+          dataSavers.enabledCount
+        } data saver(s)",
+    )
 
     // Start the foreground service
     val serviceIntent = Intent(context, RecordingService::class.java)
@@ -193,6 +185,7 @@ class RecordingManager(
       context.startService(serviceIntent)
     }
 
+    _isRecording.value = true
     selectedDevices.forEach { device -> startStreamsForDevice(device) }
   }
 
@@ -244,8 +237,10 @@ class RecordingManager(
                     PolarBleApi.PolarDeviceDataType.GYRO -> (data as PolarGyroData).samples
                     PolarBleApi.PolarDeviceDataType.TEMPERATURE ->
                         (data as PolarTemperatureData).samples
+
                     PolarBleApi.PolarDeviceDataType.MAGNETOMETER ->
                         (data as PolarMagnetometerData).samples
+
                     else -> throw IllegalArgumentException("Unsupported data type: $dataType")
                   }
 
@@ -256,20 +251,29 @@ class RecordingManager(
                           "deviceId" to deviceId,
                           "recordingName" to currentRecordingName,
                           "dataType" to dataType,
-                          "data" to batchData))
+                          "data" to batchData,
+                      ),
+                  )
 
               dataSavers
                   .asList()
                   .filter { it.isEnabled.value }
                   .forEach { saver ->
                     saver.saveData(
-                        phoneTimestamp, deviceId, currentRecordingName, dataType.name, payload)
+                        phoneTimestamp,
+                        deviceId,
+                        currentRecordingName,
+                        dataType.name,
+                        payload,
+                    )
                   }
             },
             { error ->
               logViewModel.addLogError(
-                  "${dataType.name} recording failed for device $deviceId: ${error.message}")
-            })
+                  "${dataType.name} recording failed for device $deviceId: ${error.message}",
+              )
+            },
+        )
   }
 
   private fun logDeviceAndAppInfo() {

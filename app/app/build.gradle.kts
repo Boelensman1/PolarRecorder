@@ -67,6 +67,7 @@ dependencies {
   androidTestImplementation(libs.androidx.espresso.core)
 
   implementation(libs.polar.ble.sdk)
+  implementation(libs.hivemq.mqtt.client.shaded)
   implementation(libs.rxjava)
   implementation(libs.rxandroid)
 
@@ -81,6 +82,4 @@ dependencies {
   implementation(libs.androidx.runtime.livedata)
 
   implementation(libs.gson)
-  implementation(libs.org.eclipse.paho.client.mqttv3)
-  implementation(libs.org.eclipse.paho.android.service)
 }

@@ -21,6 +21,7 @@ import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.managers.RecordingManager
 import com.wboelens.polarrecorder.ui.components.ErrorMessageDisplayer
 import com.wboelens.polarrecorder.ui.components.ErrorSnackbarHost
+import com.wboelens.polarrecorder.ui.screens.DataSaverInitializationScreen
 import com.wboelens.polarrecorder.ui.screens.DeviceConnectionScreen
 import com.wboelens.polarrecorder.ui.screens.DeviceSelectionScreen
 import com.wboelens.polarrecorder.ui.screens.DeviceSettingsScreen
@@ -30,6 +31,7 @@ import com.wboelens.polarrecorder.ui.theme.AppTheme
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
+import kotlinx.coroutines.MainScope
 
 class MainActivity : ComponentActivity() {
   private val deviceViewModel: DeviceViewModel by viewModels()
@@ -61,6 +63,7 @@ class MainActivity : ComponentActivity() {
     recordingManager =
         RecordingManager(
             applicationContext,
+            MainScope(),
             polarManager,
             logViewModel,
             deviceViewModel,
@@ -109,6 +112,7 @@ class MainActivity : ComponentActivity() {
                       onContinue = { navController.navigate("deviceSettings") })
                 }
                 composable("deviceSettings") {
+                  // skip device connection screen
                   val backAction = {
                     polarManager.disconnectAllDevices()
                     navController.navigate("deviceSelection") {
@@ -131,15 +135,31 @@ class MainActivity : ComponentActivity() {
                       dataSavers = dataSavers,
                       preferencesManager = preferencesManager,
                       onBackPressed = { navController.navigateUp() },
+                      onContinue = { navController.navigate("dataSaverInitialization") })
+                }
+                composable("dataSaverInitialization") {
+                  DataSaverInitializationScreen(
+                      dataSavers = dataSavers,
+                      deviceViewModel = deviceViewModel,
+                      recordingManager = recordingManager,
+                      onBackPressed = { navController.navigateUp() },
                       onContinue = { navController.navigate("recording") })
                 }
                 composable("recording") {
+                  // skip data saver initialisation screen
+                  val backAction = {
+                    recordingManager.stopRecording()
+                    navController.navigate("recordingSettings") {
+                      popUpTo("recordingSettings") { inclusive = true }
+                    }
+                  }
+
                   RecordingScreen(
                       deviceViewModel = deviceViewModel,
                       logViewModel = logViewModel,
                       recordingManager = recordingManager,
                       dataSavers = dataSavers,
-                      onBackPressed = { navController.navigateUp() })
+                      onBackPressed = backAction)
                 }
               }
         }

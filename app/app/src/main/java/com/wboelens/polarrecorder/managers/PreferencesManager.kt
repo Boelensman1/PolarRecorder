@@ -8,7 +8,9 @@ import com.wboelens.polarrecorder.dataSavers.MQTTConfig
 data class PreferenceConfig<T>(val key: String, val defaultValue: T)
 
 object Preferences {
-  val MQTT_BROKER_URL = PreferenceConfig("mqtt_broker_url", "")
+  val MQTT_HOST = PreferenceConfig("mqtt_broker_host", "")
+  val MQTT_PORT = PreferenceConfig("mqtt_broker_port", 1883)
+  val MQTT_USE_SSL = PreferenceConfig("mqtt_broker_use_ssl", false)
   val MQTT_USERNAME = PreferenceConfig("mqtt_username", "")
   val MQTT_PASSWORD = PreferenceConfig("mqtt_password", "")
   val MQTT_CLIENT_ID = PreferenceConfig("mqtt_client_id", "")
@@ -37,9 +39,10 @@ class PreferencesManager(context: Context) {
   var mqttConfig: MQTTConfig
     get() {
       return MQTTConfig(
-          brokerUrl =
-              mPref.getString(
-                  Preferences.MQTT_BROKER_URL.key, Preferences.MQTT_BROKER_URL.defaultValue)!!,
+          host = mPref.getString(Preferences.MQTT_HOST.key, Preferences.MQTT_HOST.defaultValue)!!,
+          port = mPref.getInt(Preferences.MQTT_PORT.key, Preferences.MQTT_PORT.defaultValue),
+          useSSL =
+              mPref.getBoolean(Preferences.MQTT_USE_SSL.key, Preferences.MQTT_USE_SSL.defaultValue),
           username =
               mPref.getString(
                   Preferences.MQTT_USERNAME.key, Preferences.MQTT_USERNAME.defaultValue)!!,
@@ -55,7 +58,9 @@ class PreferencesManager(context: Context) {
     }
     set(config) {
       mPref.edit().apply {
-        putString(Preferences.MQTT_BROKER_URL.key, config.brokerUrl)
+        putString(Preferences.MQTT_HOST.key, config.host)
+        putInt(Preferences.MQTT_PORT.key, config.port)
+        putBoolean(Preferences.MQTT_USE_SSL.key, config.useSSL)
         putString(Preferences.MQTT_USERNAME.key, config.username)
         putString(Preferences.MQTT_PASSWORD.key, config.password)
         putString(Preferences.MQTT_TOPIC_PREFIX.key, config.topicPrefix)

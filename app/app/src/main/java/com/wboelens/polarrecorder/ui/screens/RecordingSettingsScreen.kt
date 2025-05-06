@@ -110,10 +110,7 @@ fun RecordingSettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {
-              recordingManager.startRecording()
-              onContinue()
-            },
+            onClick = { onContinue() },
             modifier = Modifier.fillMaxWidth(),
             enabled = connectedDevices.isNotEmpty() && recordingName.isNotEmpty()) {
               Text("Start Recording")
