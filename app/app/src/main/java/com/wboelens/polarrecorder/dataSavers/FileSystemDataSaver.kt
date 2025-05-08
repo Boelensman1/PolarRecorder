@@ -6,13 +6,13 @@ import androidx.documentfile.provider.DocumentFile
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.IOException
 
 data class FileSystemDataSaverConfig(val baseDirectory: String = "", val splitAtSizeMb: Int = 0)
 
@@ -159,7 +159,8 @@ class FileSystemDataSaver(
         streamPair.second.write(payloadAsByteArray)
 
         if (!firstMessageSaved[key]!!) {
-          logViewModel.addLogMessage("[$deviceId] Successfully saved first $dataType data.")
+          logViewModel.addLogMessage(
+              "[$deviceId] Successfully saved first $dataType data to filesystem.")
           firstMessageSaved[key] = true
         }
       } catch (e: IOException) {
@@ -212,7 +213,8 @@ class FileSystemDataSaver(
         val currentRecordingDir = recordingDir?.createDirectory(info.deviceName)
 
         if (recordingDir == null) {
-          logViewModel.addLogError("[$deviceId] Cannot init file system saving: recordingDir is null")
+          logViewModel.addLogError(
+              "[$deviceId] Cannot init file system saving: recordingDir is null")
           _isInitialized.value = InitializationState.FAILED
           return
         }
@@ -253,7 +255,7 @@ class FileSystemDataSaver(
           firstMessageSaved[key] = false
         }
       }
-      
+
       // Set initialization state to SUCCESS if we reach this point
       _isInitialized.value = InitializationState.SUCCESS
       logViewModel.addLogMessage("File system data saver initialized successfully")
