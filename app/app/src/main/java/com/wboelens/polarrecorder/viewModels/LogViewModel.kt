@@ -29,39 +29,41 @@ class LogViewModel : ViewModel() {
 
   private val logQueue = java.util.concurrent.ConcurrentLinkedQueue<LogEntry>()
 
-  // Property to hold the error messages queue, used to display snackbars with the errors
-  private val _errorMessagesQueue = MutableStateFlow<List<String>>(emptyList())
-  val errorMessagesQueue: StateFlow<List<String>> = _errorMessagesQueue.asStateFlow()
+  // Property to hold the snackbar messages queue, used to display snackbars with log messages
+  private val _snackbarMessagesQueue = MutableStateFlow<List<LogEntry>>(emptyList())
+  val snackbarMessagesQueue: StateFlow<List<LogEntry>> = _snackbarMessagesQueue.asStateFlow()
 
-  // Method to pop the first error message from the queue
-  fun popErrorMessage(): String? {
-    return if (_errorMessagesQueue.value.isNotEmpty()) {
-      val firstMessage = _errorMessagesQueue.value.first()
-      _errorMessagesQueue.value = _errorMessagesQueue.value.drop(1)
+  // Method to pop the first snackbar message from the queue
+  fun popSnackbarMessage(): LogEntry? {
+    return if (_snackbarMessagesQueue.value.isNotEmpty()) {
+      val firstMessage = _snackbarMessagesQueue.value.first()
+      _snackbarMessagesQueue.value = _snackbarMessagesQueue.value.drop(1)
       firstMessage
     } else null
   }
 
-  private fun add(message: String, type: LogType) {
+  private fun add(message: String, type: LogType, withSnackbar: Boolean) {
     val entry = LogEntry(message, type, System.currentTimeMillis())
     logQueue.offer(entry)
     requestFlushQueue()
+    if (withSnackbar) {
+      _snackbarMessagesQueue.value += entry
+    }
   }
 
-  fun addLogMessage(message: String) {
+  fun addLogMessage(message: String, withSnackbar: Boolean = false) {
     Log.d(TAG, message)
-    this.add(message, LogType.NORMAL)
+    this.add(message, LogType.NORMAL, withSnackbar)
   }
 
-  fun addLogError(message: String) {
+  fun addLogError(message: String, withSnackbar: Boolean = true) {
     Log.e(TAG, message)
-    this.add(message, LogType.ERROR)
-    _errorMessagesQueue.value += message
+    this.add(message, LogType.ERROR, withSnackbar)
   }
 
-  fun addLogSuccess(message: String) {
+  fun addLogSuccess(message: String, withSnackbar: Boolean = false) {
     Log.d(TAG, message)
-    this.add(message, LogType.SUCCESS)
+    this.add(message, LogType.SUCCESS, withSnackbar)
   }
 
   fun requestFlushQueue() {
@@ -69,7 +71,7 @@ class LogViewModel : ViewModel() {
   }
 
   // Merge all queued items into the LiveData once
-  fun flushQueue() {
+  private fun flushQueue() {
     // Drain everything currently in the queue
     val newEntries = mutableListOf<LogEntry>()
     while (true) {

@@ -19,8 +19,8 @@ import com.wboelens.polarrecorder.managers.PermissionManager
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.managers.RecordingManager
-import com.wboelens.polarrecorder.ui.components.ErrorMessageDisplayer
-import com.wboelens.polarrecorder.ui.components.ErrorSnackbarHost
+import com.wboelens.polarrecorder.ui.components.LogMessageSnackbarHost
+import com.wboelens.polarrecorder.ui.components.SnackbarMessageDisplayer
 import com.wboelens.polarrecorder.ui.screens.DataSaverInitializationScreen
 import com.wboelens.polarrecorder.ui.screens.DeviceConnectionScreen
 import com.wboelens.polarrecorder.ui.screens.DeviceSelectionScreen
@@ -81,7 +81,8 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
 
         // Get the snackbarHostState from the ErrorHandler
-        val snackbarHostState = ErrorMessageDisplayer(logViewModel = logViewModel)
+        val (snackbarHostState, currentLogType) =
+            SnackbarMessageDisplayer(logViewModel = logViewModel)
 
         LaunchedEffect(Unit) {
           permissionManager.checkAndRequestPermissions {
@@ -92,7 +93,7 @@ class MainActivity : ComponentActivity() {
           }
         }
 
-        Scaffold(snackbarHost = { ErrorSnackbarHost(snackbarHostState = snackbarHostState) }) {
+        Scaffold(snackbarHost = { LogMessageSnackbarHost(snackbarHostState, currentLogType) }) {
             paddingValues ->
           NavHost(
               navController = navController,
