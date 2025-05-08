@@ -70,7 +70,8 @@ dependencies {
   implementation(libs.hivemq.mqtt.client.shaded)
   implementation(libs.rxjava)
   implementation(libs.rxandroid)
-
+  implementation(libs.kotlinx.coroutines.android)
+  implementation(libs.kotlinx.coroutines.rx3)
   implementation(libs.androidx.activity.ktx)
   implementation(libs.androidx.fragment.ktx)
 

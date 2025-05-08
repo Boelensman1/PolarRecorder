@@ -149,7 +149,9 @@ class MainActivity : ComponentActivity() {
                 composable("recording") {
                   // skip data saver initialisation screen
                   val backAction = {
-                    recordingManager.stopRecording()
+                    if (recordingManager.isRecording.value) {
+                      recordingManager.stopRecording()
+                    }
                     navController.navigate("recordingSettings") {
                       popUpTo("recordingSettings") { inclusive = true }
                     }

@@ -23,14 +23,28 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
+import java.util.Calendar
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx3.await
+import kotlinx.coroutines.withContext
 
 data class DeviceStreamCapabilities(
     val availableTypes: Set<PolarDeviceDataType>,
     val settings: Map<PolarDeviceDataType, Pair<PolarSensorSetting, PolarSensorSetting>>
 )
+
+data class PolarDeviceSettings(val deviceTimeOnConnect: Calendar?)
+
+sealed class PolarApiResult<out T> {
+  data class Success<out R>(val value: R? = null) : PolarApiResult<R>()
+
+  data class Failure(val message: String, val throwable: Throwable?) : PolarApiResult<Nothing>()
+}
 
 @Suppress("TooManyFunctions")
 class PolarManager(
@@ -65,6 +79,8 @@ class PolarManager(
   private val deviceFeatureReadiness =
       mutableMapOf<String, MutableSet<PolarBleApi.PolarBleSdkFeature>>()
 
+  private val deviceSettings = mutableMapOf<String, PolarDeviceSettings>()
+
   private var _isRefreshing = mutableStateOf(false)
   val isRefreshing: State<Boolean> = _isRefreshing
 
@@ -91,32 +107,39 @@ class PolarManager(
             deviceViewModel.updateConnectionState(
                 polarDeviceInfo.deviceId, ConnectionState.FETCHING_CAPABILITIES)
 
-            // Fetch capabilities before marking as fully connected
             val disposable =
-                fetchDeviceCapabilities(polarDeviceInfo.deviceId)
+                Single.just(Unit)
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        { capabilities -> finishConnectDevice(polarDeviceInfo, capabilities) },
-                        { error ->
+                    .subscribe({ _ -> // Explicitly using Consumer<Unit> overload
+                      MainScope().launch {
+                        var capabilities: DeviceStreamCapabilities?
+                        try {
+                          capabilities = fetchDeviceCapabilities(polarDeviceInfo.deviceId).await()
+                        } catch (error: Throwable) {
                           Log.e(TAG, "Failed to fetch device capabilities", error)
                           logViewModel.addLogError(
-                              "Failed to fetch device capabilities ${
-                                polarDeviceInfo.deviceId
-                              }, falling back to alternative method")
-
-                          val capabilities =
+                              "Failed to fetch device capabilities for ${polarDeviceInfo.deviceId} (${error.message}), falling back to alternative method",
+                              false)
+                          capabilities =
                               fetchDeviceCapabilitiesViaFallback(polarDeviceInfo.deviceId)
-                          if (capabilities.availableTypes.isNotEmpty()) {
-                            finishConnectDevice(polarDeviceInfo, capabilities)
-                          } else {
-                            // alternate method also failed, disconnect
-                            deviceViewModel.updateConnectionState(
-                                polarDeviceInfo.deviceId, ConnectionState.FAILED)
-                            logViewModel.addLogMessage(
-                                "Failed to connect to device ${polarDeviceInfo.deviceId}: ${error.message}")
-                            api.disconnectFromDevice(polarDeviceInfo.deviceId)
-                          }
-                        })
+                        }
+                        logViewModel.addLogMessage(
+                            "Fetching settings for device ${polarDeviceInfo.deviceId}")
+                        deviceViewModel.updateConnectionState(
+                            polarDeviceInfo.deviceId, ConnectionState.FETCHING_SETTINGS)
+                        val settings = fetchDeviceSettings(polarDeviceInfo.deviceId).await()
+                        if (capabilities !== null && capabilities.availableTypes.isNotEmpty()) {
+                          finishConnectDevice(polarDeviceInfo, capabilities, settings)
+                        } else {
+                          // alternate method also failed, disconnect
+                          deviceViewModel.updateConnectionState(
+                              polarDeviceInfo.deviceId, ConnectionState.FAILED)
+                          logViewModel.addLogMessage(
+                              "Failed to connect to device, could not fetch capabilities.")
+                          api.disconnectFromDevice(polarDeviceInfo.deviceId)
+                        }
+                      }
+                    })
             disposables.add(disposable)
           }
 
@@ -225,17 +248,48 @@ class PolarManager(
     return DeviceStreamCapabilities(availableTypes, settings)
   }
 
+  private fun fetchDeviceSettings(deviceId: String): Single<PolarDeviceSettings> {
+    val settings = PolarDeviceSettings(null)
+
+    if (deviceFeatureReadiness[deviceId]?.contains(
+        PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP) == true) {
+      return Single.create { emitter ->
+        MainScope().launch {
+          try {
+            val deviceTime = getTime(deviceId)
+            val updatedSettings = PolarDeviceSettings(deviceTime)
+            emitter.onSuccess(updatedSettings)
+          } catch (e: Exception) {
+            Log.e(TAG, "Failed to fetch device time", e)
+            emitter.onSuccess(settings)
+          }
+        }
+      }
+    } else {
+      // Return a Single with default settings when feature is not available
+      return Single.just(settings)
+    }
+  }
+
   private fun finishConnectDevice(
       polarDeviceInfo: PolarDeviceInfo,
-      capabilities: DeviceStreamCapabilities
+      capabilities: DeviceStreamCapabilities,
+      settings: PolarDeviceSettings
   ) {
     deviceCapabilities[polarDeviceInfo.deviceId] = capabilities
-    logViewModel.addLogMessage("Device ${polarDeviceInfo.deviceId} Connected")
+    deviceSettings[polarDeviceInfo.deviceId] = settings
+    logViewModel.addLogMessage(
+        "Device ${polarDeviceInfo.deviceId} Connected",
+    )
     deviceViewModel.updateConnectionState(polarDeviceInfo.deviceId, ConnectionState.CONNECTED)
   }
 
   fun getDeviceCapabilities(deviceId: String): DeviceStreamCapabilities? {
     return deviceCapabilities[deviceId]
+  }
+
+  fun getDeviceSettings(deviceId: String): PolarDeviceSettings? {
+    return deviceSettings[deviceId]
   }
 
   fun connectToDevice(deviceId: String) {
@@ -336,6 +390,23 @@ class PolarManager(
 
   private fun getAvailableOnlineStreamDataTypes(deviceId: String) =
       api.getAvailableOnlineStreamDataTypes(deviceId)
+
+  private suspend fun getTime(deviceId: String): Calendar {
+    return withContext(Dispatchers.IO) { api.getLocalTime(deviceId).await() }
+  }
+
+  suspend fun setTime(deviceId: String, calendar: Calendar): PolarApiResult<Nothing> =
+      withContext(Dispatchers.IO) {
+        logViewModel.addLogMessage("Setting time for $deviceId to ${calendar.time}")
+        return@withContext try {
+          api.setLocalTime(deviceId, calendar).await()
+          logViewModel.addLogSuccess("Setting time for $deviceId succeeded")
+          PolarApiResult.Success()
+        } catch (e: Exception) {
+          logViewModel.addLogError("Setting time of $deviceId failed: ${e.message}")
+          PolarApiResult.Failure("Set time failed", e)
+        }
+      }
 
   fun cleanup() {
     stopPeriodicScanning()

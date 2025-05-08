@@ -1,6 +1,5 @@
 package com.wboelens.polarrecorder.ui.dialogs
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,14 +26,27 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
 import com.polar.sdk.api.model.PolarSensorSetting
+import com.wboelens.polarrecorder.managers.PolarApiResult
+import com.wboelens.polarrecorder.managers.PolarDeviceSettings
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
+import java.util.Calendar
+import kotlinx.coroutines.launch
+
+val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null)
+
+data class DeviceSettingState(
+    val isLoading: Boolean = false,
+    val resultMessage: String? = null,
+    val isSuccess: Boolean = false
+)
 
 @Composable
 fun DeviceSettingsDialog(
@@ -64,7 +77,10 @@ fun DeviceSettingsDialog(
   var errorMessage by remember { mutableStateOf<String?>(null) }
   var selectedDataTypes by remember { mutableStateOf(initialDataTypes) }
   var availableDataTypes by remember { mutableStateOf<Set<PolarDeviceDataType>>(emptySet()) }
+  var deviceSettings by remember { mutableStateOf(emptyDeviceSettings) }
   var isLoading by remember { mutableStateOf(true) }
+  var timeSetState by remember { mutableStateOf(DeviceSettingState()) }
+  val coroutineScope = rememberCoroutineScope()
 
   LaunchedEffect(deviceId) {
     isLoading = true
@@ -86,19 +102,24 @@ fun DeviceSettingsDialog(
               }
             }
           }
-      isLoading = false
     } else {
       errorMessage = "Device capabilities not available. Please reconnect the device."
-      isLoading = false
     }
+
+    val pmDeviceSettings = polarManager.getDeviceSettings(deviceId)
+    if (pmDeviceSettings != null) {
+      deviceSettings = pmDeviceSettings
+    } else {
+      errorMessage = "Device settings not available. Please reconnect the device."
+    }
+
+    isLoading = false
   }
 
   Dialog(onDismissRequest = onDismiss) {
     Card(modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(max = 600.dp)) {
       Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-        Text(
-            text = "Sensor Settings - Device $deviceId",
-            style = MaterialTheme.typography.titleLarge)
+        Text(text = "Settings - Device $deviceId", style = MaterialTheme.typography.titleLarge)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -114,6 +135,29 @@ fun DeviceSettingsDialog(
               Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
             } else {
               DeviceSettingsContent(
+                  deviceSettings = deviceSettings,
+                  onSetDeviceSettings = {
+                    timeSetState = timeSetState.copy(isLoading = true, resultMessage = null)
+                    coroutineScope.launch {
+                      when (val result = polarManager.setTime(deviceId, Calendar.getInstance())) {
+                        is PolarApiResult.Success -> {
+                          timeSetState =
+                              timeSetState.copy(
+                                  isLoading = false,
+                                  resultMessage = "Device time set successfully",
+                                  isSuccess = true)
+                        }
+                        is PolarApiResult.Failure -> {
+                          timeSetState =
+                              timeSetState.copy(
+                                  isLoading = false,
+                                  resultMessage = "Failed to set time: ${result.message}",
+                                  isSuccess = false)
+                        }
+                      }
+                    }
+                  },
+                  timeSetState = timeSetState,
                   availableDataTypes = availableDataTypes,
                   selectedDataTypes = selectedDataTypes,
                   onDataTypesChanged = { selectedDataTypes = it },
@@ -145,6 +189,9 @@ fun DeviceSettingsDialog(
 
 @Composable
 private fun DeviceSettingsContent(
+    deviceSettings: PolarDeviceSettings,
+    onSetDeviceSettings: () -> Unit,
+    timeSetState: DeviceSettingState,
     availableDataTypes: Set<PolarDeviceDataType>,
     selectedDataTypes: Set<PolarDeviceDataType>,
     onDataTypesChanged: (Set<PolarDeviceDataType>) -> Unit,
@@ -152,6 +199,13 @@ private fun DeviceSettingsContent(
     selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
     onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit
 ) {
+  DeviceSettingsSection(
+      deviceSettings = deviceSettings,
+      onSetDeviceSettings = onSetDeviceSettings,
+      timeSetState = timeSetState)
+
+  Spacer(modifier = Modifier.height(16.dp))
+
   DataTypeSection(
       availableTypes = availableDataTypes,
       selectedTypes = selectedDataTypes,
@@ -216,6 +270,79 @@ private fun SettingSection(
 }
 
 @Composable
+private fun DeviceSettingsSection(
+    deviceSettings: PolarDeviceSettings,
+    onSetDeviceSettings: () -> Unit,
+    timeSetState: DeviceSettingState
+) {
+  Column {
+    deviceSettings.deviceTimeOnConnect?.let { calendar ->
+      SettingItem(
+          title = "Time",
+          content = {
+            val dateFormat =
+                java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+            val deviceTimeText = dateFormat.format(calendar.time)
+
+            Text(
+                text = "Device time on connect: $deviceTimeText",
+                style = MaterialTheme.typography.bodyMedium)
+          },
+          buttonText = "Set device time to phone time",
+          isLoading = timeSetState.isLoading,
+          loadingText = "Setting time...",
+          result = timeSetState.resultMessage,
+          isSuccess = timeSetState.isSuccess,
+          onAction = onSetDeviceSettings)
+    }
+  }
+}
+
+@Composable
+private fun SettingItem(
+    title: String,
+    content: @Composable () -> Unit,
+    buttonText: String,
+    isLoading: Boolean,
+    loadingText: String,
+    result: String?,
+    isSuccess: Boolean,
+    onAction: () -> Unit
+) {
+  Column {
+    Text(text = title, style = MaterialTheme.typography.titleMedium)
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    content()
+
+    Spacer(modifier = Modifier.height(12.dp))
+
+    Button(onClick = onAction, modifier = Modifier.fillMaxWidth(), enabled = !isLoading) {
+      if (isLoading) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            color = MaterialTheme.colorScheme.onPrimary,
+            strokeWidth = 2.dp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(loadingText)
+      } else {
+        Text(buttonText)
+      }
+    }
+
+    result?.let { resultText ->
+      Spacer(modifier = Modifier.height(8.dp))
+      Text(
+          text = resultText,
+          style = MaterialTheme.typography.bodyMedium,
+          color =
+              if (isSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+    }
+  }
+}
+
+@Composable
 private fun DataTypeSection(
     availableTypes: Set<PolarDeviceDataType>,
     selectedTypes: Set<PolarDeviceDataType>,
@@ -223,8 +350,6 @@ private fun DataTypeSection(
 ) {
   Column {
     Text(text = "Data Types", style = MaterialTheme.typography.titleMedium)
-
-    Log.d("DeviceSettingsDialog", "Available types: $availableTypes")
 
     availableTypes.forEach { dataType ->
       CheckboxWithLabel(
