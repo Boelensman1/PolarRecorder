@@ -90,9 +90,11 @@ private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
           Text(
               text =
                   when (device.connectionState) {
+                    ConnectionState.DISCONNECTING -> "Disconnecting..." // should never be displayed
                     ConnectionState.DISCONNECTED -> "Waiting..."
                     ConnectionState.CONNECTING -> "Connecting..."
                     ConnectionState.FETCHING_CAPABILITIES -> "Fetching capabilities..."
+                    ConnectionState.FETCHING_SETTINGS -> "Fetching settings..."
                     ConnectionState.CONNECTED -> "Connected"
                     ConnectionState.FAILED -> "Failed"
                     ConnectionState.NOT_CONNECTABLE -> "Not connectable"

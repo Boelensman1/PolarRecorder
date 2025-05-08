@@ -11,8 +11,10 @@ import com.polar.sdk.api.model.PolarSensorSetting
 
 enum class ConnectionState {
   DISCONNECTED,
+  DISCONNECTING,
   CONNECTING,
   FETCHING_CAPABILITIES,
+  FETCHING_SETTINGS,
   CONNECTED,
   FAILED,
   NOT_CONNECTABLE
@@ -65,6 +67,11 @@ class DeviceViewModel : ViewModel() {
 
   fun updateConnectionState(deviceId: String, state: ConnectionState) {
     updateDevice(deviceId) { device -> device.copy(connectionState = state) }
+  }
+
+  fun getConnectionState(deviceId: String): ConnectionState {
+    return _devices.value?.find { it.info.deviceId == deviceId }?.connectionState
+        ?: ConnectionState.NOT_CONNECTABLE
   }
 
   fun toggleIsSelected(deviceId: String) {

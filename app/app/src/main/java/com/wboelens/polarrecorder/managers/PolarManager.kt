@@ -128,9 +128,16 @@ class PolarManager(
 
           override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
             deviceCapabilities.remove(polarDeviceInfo.deviceId)
+            if (deviceViewModel.getConnectionState(polarDeviceInfo.deviceId) ===
+                ConnectionState.DISCONNECTING) {
+              // a disconnect was requested, so this disconnect is expected
+              logViewModel.addLogMessage("Device ${polarDeviceInfo.deviceId} disconnected")
+            } else {
+              logViewModel.addLogError("Device ${polarDeviceInfo.deviceId} disconnected")
+            }
+
             deviceViewModel.updateConnectionState(
                 polarDeviceInfo.deviceId, ConnectionState.DISCONNECTED)
-            logViewModel.addLogError("Device ${polarDeviceInfo.deviceId} disconnected")
           }
 
           override fun bleSdkFeatureReady(
@@ -243,7 +250,7 @@ class PolarManager(
   fun disconnectDevice(deviceId: String) {
     try {
       api.disconnectFromDevice(deviceId)
-      deviceViewModel.updateConnectionState(deviceId, ConnectionState.DISCONNECTED)
+      deviceViewModel.updateConnectionState(deviceId, ConnectionState.DISCONNECTING)
     } catch (e: PolarInvalidArgument) {
       Log.e(TAG, "Disconnect failed: ${e.message}", e)
     }
