@@ -40,7 +40,7 @@ import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
 import java.util.Calendar
 import kotlinx.coroutines.launch
 
-val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null)
+val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null, sdkModeEnabled = false)
 
 data class DeviceSettingState(
     val isLoading: Boolean = false,
@@ -53,11 +53,11 @@ fun DeviceSettingsDialog(
     deviceId: String,
     polarManager: PolarManager,
     onDismiss: () -> Unit,
-    onSettingsSelected:
+    onDataTypeSettingsSelected:
         (
             Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
             Set<PolarDeviceDataType>) -> Unit,
-    initialSettings: Map<PolarDeviceDataType, PolarSensorSetting>? = emptyMap(),
+    initialDataTypeSettings: Map<PolarDeviceDataType, PolarSensorSetting>? = emptyMap(),
     initialDataTypes: Set<PolarDeviceDataType> = emptySet()
 ) {
   var availableSettingsMap by remember {
@@ -69,7 +69,7 @@ fun DeviceSettingsDialog(
 
   var selectedSettingsMap by remember {
     mutableStateOf(
-        initialSettings?.mapValues { (_, sensorSetting) ->
+        initialDataTypeSettings?.mapValues { (_, sensorSetting) ->
           sensorSetting.settings.mapValues { (_, values) -> values.firstOrNull() ?: 0 }
         } ?: emptyMap())
   }
@@ -80,6 +80,7 @@ fun DeviceSettingsDialog(
   var deviceSettings by remember { mutableStateOf(emptyDeviceSettings) }
   var isLoading by remember { mutableStateOf(true) }
   var timeSetState by remember { mutableStateOf(DeviceSettingState()) }
+  var sdkModeSetState by remember { mutableStateOf(DeviceSettingState()) }
   val coroutineScope = rememberCoroutineScope()
 
   LaunchedEffect(deviceId) {
@@ -116,6 +117,55 @@ fun DeviceSettingsDialog(
     isLoading = false
   }
 
+  // Add this function to handle device settings updates
+  fun updateDeviceSettings(newTime: Calendar? = null, newSdkMode: Boolean? = null) {
+    coroutineScope.launch {
+      // Update time if requested
+      if (newTime != null) {
+        timeSetState = timeSetState.copy(isLoading = true, resultMessage = null)
+        when (val timeResult = polarManager.setTime(deviceId, newTime)) {
+          is PolarApiResult.Success -> {
+            timeSetState =
+                timeSetState.copy(
+                    isLoading = false,
+                    resultMessage = "Device time set successfully",
+                    isSuccess = true)
+          }
+          is PolarApiResult.Failure -> {
+            timeSetState =
+                timeSetState.copy(
+                    isLoading = false,
+                    resultMessage = "Failed to set time: ${timeResult.message}",
+                    isSuccess = false)
+          }
+        }
+      }
+
+      // Update SDK mode if requested
+      if (newSdkMode != null) {
+        sdkModeSetState = sdkModeSetState.copy(isLoading = true, resultMessage = null)
+        when (val sdkModeResult = polarManager.setSdkMode(deviceId, newSdkMode)) {
+          is PolarApiResult.Success -> {
+            deviceSettings = deviceSettings.copy(sdkModeEnabled = newSdkMode)
+            sdkModeSetState =
+                sdkModeSetState.copy(
+                    isLoading = false,
+                    resultMessage =
+                        "SDK mode ${if (newSdkMode) "enabled" else "disabled"} successfully",
+                    isSuccess = true)
+          }
+          is PolarApiResult.Failure -> {
+            sdkModeSetState =
+                sdkModeSetState.copy(
+                    isLoading = false,
+                    resultMessage = "Failed to set SDK mode: ${sdkModeResult.message}",
+                    isSuccess = false)
+          }
+        }
+      }
+    }
+  }
+
   Dialog(onDismissRequest = onDismiss) {
     Card(modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(max = 600.dp)) {
       Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
@@ -136,28 +186,12 @@ fun DeviceSettingsDialog(
             } else {
               DeviceSettingsContent(
                   deviceSettings = deviceSettings,
-                  onSetDeviceSettings = {
-                    timeSetState = timeSetState.copy(isLoading = true, resultMessage = null)
-                    coroutineScope.launch {
-                      when (val result = polarManager.setTime(deviceId, Calendar.getInstance())) {
-                        is PolarApiResult.Success -> {
-                          timeSetState =
-                              timeSetState.copy(
-                                  isLoading = false,
-                                  resultMessage = "Device time set successfully",
-                                  isSuccess = true)
-                        }
-                        is PolarApiResult.Failure -> {
-                          timeSetState =
-                              timeSetState.copy(
-                                  isLoading = false,
-                                  resultMessage = "Failed to set time: ${result.message}",
-                                  isSuccess = false)
-                        }
-                      }
-                    }
+                  onSetTime = { updateDeviceSettings(newTime = Calendar.getInstance()) },
+                  onToggleSdkMode = {
+                    updateDeviceSettings(newSdkMode = deviceSettings.sdkModeEnabled == false)
                   },
                   timeSetState = timeSetState,
+                  sdkModeSetState = sdkModeSetState,
                   availableDataTypes = availableDataTypes,
                   selectedDataTypes = selectedDataTypes,
                   onDataTypesChanged = { selectedDataTypes = it },
@@ -175,7 +209,7 @@ fun DeviceSettingsDialog(
           Spacer(modifier = Modifier.width(8.dp))
           Button(
               onClick = {
-                onSettingsSelected(selectedSettingsMap, selectedDataTypes)
+                onDataTypeSettingsSelected(selectedSettingsMap, selectedDataTypes)
                 onDismiss()
               },
               enabled = selectedDataTypes.isNotEmpty()) {
@@ -190,8 +224,10 @@ fun DeviceSettingsDialog(
 @Composable
 private fun DeviceSettingsContent(
     deviceSettings: PolarDeviceSettings,
-    onSetDeviceSettings: () -> Unit,
+    onSetTime: () -> Unit,
+    onToggleSdkMode: () -> Unit,
     timeSetState: DeviceSettingState,
+    sdkModeSetState: DeviceSettingState,
     availableDataTypes: Set<PolarDeviceDataType>,
     selectedDataTypes: Set<PolarDeviceDataType>,
     onDataTypesChanged: (Set<PolarDeviceDataType>) -> Unit,
@@ -201,10 +237,10 @@ private fun DeviceSettingsContent(
 ) {
   DeviceSettingsSection(
       deviceSettings = deviceSettings,
-      onSetDeviceSettings = onSetDeviceSettings,
-      timeSetState = timeSetState)
-
-  Spacer(modifier = Modifier.height(16.dp))
+      onSetTime = onSetTime,
+      onToggleSdkMode = onToggleSdkMode,
+      timeSetState = timeSetState,
+      sdkModeSetState = sdkModeSetState)
 
   DataTypeSection(
       availableTypes = availableDataTypes,
@@ -272,8 +308,10 @@ private fun SettingSection(
 @Composable
 private fun DeviceSettingsSection(
     deviceSettings: PolarDeviceSettings,
-    onSetDeviceSettings: () -> Unit,
-    timeSetState: DeviceSettingState
+    onSetTime: () -> Unit,
+    onToggleSdkMode: () -> Unit,
+    timeSetState: DeviceSettingState,
+    sdkModeSetState: DeviceSettingState
 ) {
   Column {
     deviceSettings.deviceTimeOnConnect?.let { calendar ->
@@ -293,7 +331,32 @@ private fun DeviceSettingsSection(
           loadingText = "Setting time...",
           result = timeSetState.resultMessage,
           isSuccess = timeSetState.isSuccess,
-          onAction = onSetDeviceSettings)
+          onAction = onSetTime)
+
+      Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    deviceSettings.sdkModeEnabled?.let { sdkModeEnabled ->
+      SettingItem(
+          title = "SDK Mode",
+          content = {
+            Text(
+                text = "Current status: ${if (sdkModeEnabled) "Enabled" else "Disabled"}",
+                style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text =
+                    "The SDK mode is the mode of the device in which a wider range of stream capabilities are offered, i.e higher sampling rates, wider (or narrow) ranges etc.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp))
+          },
+          buttonText = if (sdkModeEnabled) "Disable SDK Mode" else "Enable SDK Mode",
+          isLoading = sdkModeSetState.isLoading,
+          loadingText = "Updating SDK mode...",
+          result = sdkModeSetState.resultMessage,
+          isSuccess = sdkModeSetState.isSuccess,
+          onAction = onToggleSdkMode)
+
+      Spacer(modifier = Modifier.height(16.dp))
     }
   }
 }

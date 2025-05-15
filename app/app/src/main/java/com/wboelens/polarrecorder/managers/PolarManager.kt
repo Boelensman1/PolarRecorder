@@ -38,7 +38,7 @@ data class DeviceStreamCapabilities(
     val settings: Map<PolarDeviceDataType, Pair<PolarSensorSetting, PolarSensorSetting>>
 )
 
-data class PolarDeviceSettings(val deviceTimeOnConnect: Calendar?)
+data class PolarDeviceSettings(val deviceTimeOnConnect: Calendar?, val sdkModeEnabled: Boolean?)
 
 sealed class PolarApiResult<out T> {
   data class Success<out R>(val value: R? = null) : PolarApiResult<R>()
@@ -123,10 +123,12 @@ class PolarManager(
                           capabilities =
                               fetchDeviceCapabilitiesViaFallback(polarDeviceInfo.deviceId)
                         }
+
                         logViewModel.addLogMessage(
                             "Fetching settings for device ${polarDeviceInfo.deviceId}")
                         deviceViewModel.updateConnectionState(
                             polarDeviceInfo.deviceId, ConnectionState.FETCHING_SETTINGS)
+
                         val settings = fetchDeviceSettings(polarDeviceInfo.deviceId).await()
                         if (capabilities !== null && capabilities.availableTypes.isNotEmpty()) {
                           finishConnectDevice(polarDeviceInfo, capabilities, settings)
@@ -249,25 +251,32 @@ class PolarManager(
   }
 
   private fun fetchDeviceSettings(deviceId: String): Single<PolarDeviceSettings> {
-    val settings = PolarDeviceSettings(null)
+    return Single.create { emitter ->
+      MainScope().launch {
+        var deviceTime: Calendar? = null
+        var deviceSdkMode: Boolean? = null
 
-    if (deviceFeatureReadiness[deviceId]?.contains(
-        PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP) == true) {
-      return Single.create { emitter ->
-        MainScope().launch {
+        if (deviceFeatureReadiness[deviceId]?.contains(
+            PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP) == true) {
           try {
-            val deviceTime = getTime(deviceId)
-            val updatedSettings = PolarDeviceSettings(deviceTime)
-            emitter.onSuccess(updatedSettings)
+            deviceTime = getTime(deviceId)
           } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch device time", e)
-            emitter.onSuccess(settings)
+            logViewModel.addLogError("Failed to fetch device time (${e.message})", false)
           }
         }
+
+        if (deviceFeatureReadiness[deviceId]?.contains(
+            PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_SDK_MODE) == true) {
+          try {
+            deviceSdkMode = getSdkMode(deviceId)
+          } catch (e: Exception) {
+            logViewModel.addLogError("Failed to fetch device sdk mode (${e.message})", false)
+          }
+        }
+
+        val deviceSettings = PolarDeviceSettings(deviceTime, deviceSdkMode)
+        emitter.onSuccess(deviceSettings)
       }
-    } else {
-      // Return a Single with default settings when feature is not available
-      return Single.just(settings)
     }
   }
 
@@ -405,6 +414,27 @@ class PolarManager(
         } catch (e: Exception) {
           logViewModel.addLogError("Setting time of $deviceId failed: ${e.message}")
           PolarApiResult.Failure("Set time failed", e)
+        }
+      }
+
+  private suspend fun getSdkMode(deviceId: String): Boolean {
+    return withContext(Dispatchers.IO) { api.isSDKModeEnabled(deviceId).await() }
+  }
+
+  suspend fun setSdkMode(deviceId: String, newSdkMode: Boolean): PolarApiResult<Nothing> =
+      withContext(Dispatchers.IO) {
+        logViewModel.addLogMessage("Setting sdk mode for $deviceId to $newSdkMode")
+        return@withContext try {
+          if (newSdkMode) {
+            api.enableSDKMode(deviceId).await()
+          } else {
+            api.disableSDKMode(deviceId).await()
+          }
+          logViewModel.addLogSuccess("Setting sdk mode for $deviceId succeeded")
+          PolarApiResult.Success()
+        } catch (e: Exception) {
+          logViewModel.addLogError("Setting sdk mode of $deviceId failed: ${e.message}")
+          PolarApiResult.Failure("Set sdk mode failed", e)
         }
       }
 

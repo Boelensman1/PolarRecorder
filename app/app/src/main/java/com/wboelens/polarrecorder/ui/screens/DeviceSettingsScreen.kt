@@ -115,11 +115,11 @@ fun DeviceSettingsScreen(
         deviceId = device.info.deviceId,
         polarManager = polarManager,
         onDismiss = { showSettingsDialog = false },
-        onSettingsSelected = { settings, dataTypes ->
+        onDataTypeSettingsSelected = { settings, dataTypes ->
           deviceViewModel.updateDeviceSensorSettings(device.info.deviceId, settings)
           deviceViewModel.updateDeviceDataTypes(device.info.deviceId, dataTypes)
         },
-        initialSettings = device.sensorSettings,
+        initialDataTypeSettings = device.sensorSettings,
         initialDataTypes = device.dataTypes)
   }
 }
