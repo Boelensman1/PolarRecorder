@@ -207,6 +207,12 @@ class FileSystemDataSaver(
         return
       }
 
+      if (recordingName.isEmpty()) {
+        logViewModel.addLogError("Cannot init file system saving: recordingName is empty")
+        _isInitialized.value = InitializationState.FAILED
+        return
+      }
+
       recordingDir = pickedDir?.createDirectory(recordingName)
 
       for ((deviceId, info) in deviceIdsWithInfo) {

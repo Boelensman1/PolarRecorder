@@ -16,7 +16,6 @@ import com.polar.sdk.api.model.PolarPpgData
 import com.polar.sdk.api.model.PolarPpiData
 import com.polar.sdk.api.model.PolarTemperatureData
 import com.wboelens.polarrecorder.dataSavers.DataSavers
-import com.wboelens.polarrecorder.dataSavers.InitializationState
 import com.wboelens.polarrecorder.services.RecordingService
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
@@ -25,8 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 
 data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
 
@@ -158,15 +155,6 @@ class RecordingManager(
 
     // Clear timestamps when starting new recording
     _lastDataTimestamps.value = emptyMap()
-
-    currentRecordingName =
-        if (preferencesManager.recordingNameAppendTimestamp) {
-          val timestamp =
-              java.text
-                  .SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
-                  .format(java.util.Date())
-          "${preferencesManager.recordingName}_$timestamp"
-        } else preferencesManager.recordingName
 
     // Log app version information
     logDeviceAndAppInfo()

@@ -132,7 +132,6 @@ class MainActivity : ComponentActivity() {
                   RecordingSettingsScreen(
                       deviceViewModel = deviceViewModel,
                       fileSystemSettingsViewModel = fileSystemViewModel,
-                      recordingManager = recordingManager,
                       dataSavers = dataSavers,
                       preferencesManager = preferencesManager,
                       onBackPressed = { navController.navigateUp() },
@@ -143,6 +142,7 @@ class MainActivity : ComponentActivity() {
                       dataSavers = dataSavers,
                       deviceViewModel = deviceViewModel,
                       recordingManager = recordingManager,
+                      preferencesManager = preferencesManager,
                       onBackPressed = { navController.navigateUp() },
                       onContinue = { navController.navigate("recording") })
                 }

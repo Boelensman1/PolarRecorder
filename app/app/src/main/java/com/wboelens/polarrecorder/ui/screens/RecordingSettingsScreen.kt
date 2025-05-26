@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.managers.PreferencesManager
-import com.wboelens.polarrecorder.managers.RecordingManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
 import com.wboelens.polarrecorder.ui.components.SaveToOptions
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
@@ -38,7 +37,6 @@ import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 fun RecordingSettingsScreen(
     deviceViewModel: DeviceViewModel,
     fileSystemSettingsViewModel: FileSystemSettingsViewModel,
-    recordingManager: RecordingManager,
     dataSavers: DataSavers,
     preferencesManager: PreferencesManager,
     onBackPressed: () -> Unit,

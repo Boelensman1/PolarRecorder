@@ -34,6 +34,7 @@ import com.wboelens.polarrecorder.dataSavers.DataSaver
 import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.dataSavers.InitializationState
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
+import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.managers.RecordingManager
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
@@ -43,6 +44,7 @@ fun DataSaverInitializationScreen(
     dataSavers: DataSavers,
     deviceViewModel: DeviceViewModel,
     recordingManager: RecordingManager,
+    preferencesManager: PreferencesManager,
     onBackPressed: () -> Unit,
     onContinue: () -> Unit
 ) {
@@ -59,8 +61,18 @@ fun DataSaverInitializationScreen(
         device.info.deviceId to DeviceInfoForDataSaver(device.info.name, dataTypesWithLog.toSet())
       }
 
-  // Initialize data savers
+  // Initialize data savers & set recording name
   LaunchedEffect(Unit) {
+    // set recording name
+    recordingManager.currentRecordingName =
+        if (preferencesManager.recordingNameAppendTimestamp) {
+          val timestamp =
+              java.text
+                  .SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
+                  .format(java.util.Date())
+          "${preferencesManager.recordingName}_$timestamp"
+        } else preferencesManager.recordingName
+
     enabledSavers.forEach { saver ->
       saver.initSaving(recordingManager.currentRecordingName, deviceIdsWithInfo)
     }
