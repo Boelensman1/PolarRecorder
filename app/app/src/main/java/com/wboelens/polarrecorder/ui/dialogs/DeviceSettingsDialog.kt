@@ -348,6 +348,12 @@ private fun DeviceSettingsSection(
                     "The SDK mode is the mode of the device in which a wider range of stream capabilities are offered, i.e higher sampling rates, wider (or narrow) ranges etc.",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp))
+            Text(
+                text =
+                    "After enabling or disabling SDK mode, you must reconnect the device for the change to take effect.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 4.dp))
           },
           buttonText = if (sdkModeEnabled) "Disable SDK Mode" else "Enable SDK Mode",
           isLoading = sdkModeSetState.isLoading,
