@@ -101,7 +101,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       }
 
       // Connect asynchronously
-      connectBuilder.send().whenComplete { connAck, throwable ->
+      connectBuilder.send().whenComplete { _, throwable ->
         if (throwable != null) {
           logViewModel.addLogError("Failed to connect to MQTT broker: ${throwable.message}")
           _isInitialized.value = InitializationState.FAILED
