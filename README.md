@@ -15,6 +15,9 @@ Polar Recorder is an open-source application designed for researchers, developer
 
 Polar Recorder is available on the [Play Store](https://play.google.com/store/apps/details?id=com.wboelens.polarrecorder). You can also download the APK directly from the [Releases](https://github.com/boelensman1/polarrecorder/releases) section and install it manually on your device.
 
+## Using the app with Polar Watches
+The app supports data streaming from Polar watches, however, specific setup steps are required. See [the official Polar documentation](https://github.com/polarofficial/polar-ble-sdk/blob/master/documentation/UsingSDKWithWatches.md#step-by-step-how-to) for step-by-step setup instructions.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
