@@ -1,5 +1,6 @@
 package com.wboelens.polarrecorder.ui.dialogs
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,10 +14,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -245,44 +252,56 @@ private fun DeviceSettingsContent(
   DataTypeSection(
       availableTypes = availableDataTypes,
       selectedTypes = selectedDataTypes,
-      onSelectionChanged = onDataTypesChanged)
+      onSelectionChanged = onDataTypesChanged,
+      availableSettingsMap = availableSettingsMap,
+      selectedSettingsMap = selectedSettingsMap,
+      onSettingsChanged = onSettingsChanged)
 
-  Spacer(modifier = Modifier.height(16.dp))
+}
 
-  val dataTypesWithSettings =
-      selectedDataTypes.filter { dataType ->
-        availableSettingsMap[dataType]?.settings?.isNotEmpty() == true
-      }
+@Composable
+private fun DataTypeSettingsDialog(
+    dataType: PolarDeviceDataType,
+    availableSettings: PolarSensorSetting,
+    selectedSettings: Map<PolarSensorSetting.SettingType, Int>,
+    onDismiss: () -> Unit,
+    onSettingsChanged: (Map<PolarSensorSetting.SettingType, Int>) -> Unit
+) {
+  var tempSettings by remember { mutableStateOf(selectedSettings) }
 
-  dataTypesWithSettings.forEachIndexed { index, dataType ->
-    Text(
-        text = "Settings for ${getDataTypeDisplayText(dataType)}",
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(vertical = 8.dp))
-
-    availableSettingsMap[dataType]?.settings?.forEach { (settingType, values) ->
-      if (values.isNotEmpty()) {
-        SettingSection(
-            settingType = settingType,
-            options = values.toList(),
-            selectedValue = selectedSettingsMap[dataType]?.get(settingType),
-            onValueSelected = { newValue ->
-              onSettingsChanged(
-                  selectedSettingsMap.toMutableMap().apply {
-                    this[dataType] =
-                        (this[dataType] ?: emptyMap()).toMutableMap().apply {
-                          this[settingType] = newValue
-                        }
+  AlertDialog(
+      onDismissRequest = onDismiss,
+      title = { Text("Settings for ${getDataTypeDisplayText(dataType)}") },
+      text = {
+        Column {
+          availableSettings.settings.forEach { (settingType, values) ->
+            if (values.isNotEmpty()) {
+              SettingSection(
+                  settingType = settingType,
+                  options = values.toList(),
+                  selectedValue = tempSettings[settingType],
+                  onValueSelected = { newValue ->
+                    tempSettings = tempSettings.toMutableMap().apply {
+                      this[settingType] = newValue
+                    }
                   })
-            })
-        Spacer(modifier = Modifier.height(8.dp))
-      }
-    }
-
-    if (index < dataTypesWithSettings.size - 1) {
-      HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-    }
-  }
+              Spacer(modifier = Modifier.height(16.dp))
+            }
+          }
+        }
+      },
+      confirmButton = {
+        Button(onClick = {
+          onSettingsChanged(tempSettings)
+        }) {
+          Text("Apply")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = onDismiss) {
+          Text("Cancel")
+        }
+      })
 }
 
 @Composable
@@ -292,16 +311,43 @@ private fun SettingSection(
     selectedValue: Int?,
     onValueSelected: (Int) -> Unit
 ) {
+  var showHelpDialog by remember { mutableStateOf(false) }
+
   Column {
-    Text(text = settingType.toString(), style = MaterialTheme.typography.titleSmall)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+          Text(
+              text = getSettingTypeDisplayText(settingType),
+              style = MaterialTheme.typography.titleSmall,
+              modifier = Modifier.weight(1f))
+          Icon(
+              imageVector = Icons.Default.Info,
+              contentDescription = "Help",
+              modifier = Modifier.size(20.dp).clickable { showHelpDialog = true },
+              tint = MaterialTheme.colorScheme.primary)
+        }
+
+    Spacer(modifier = Modifier.height(4.dp))
+
     options.forEach { value ->
       Row(
           modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
           verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             RadioButton(selected = value == selectedValue, onClick = { onValueSelected(value) })
-            Text(text = value.toString(), modifier = Modifier.padding(start = 8.dp))
+            Text(
+                text = getSettingValueDisplayText(settingType, value),
+                modifier = Modifier.padding(start = 8.dp))
           }
     }
+  }
+
+  if (showHelpDialog) {
+    AlertDialog(
+        onDismissRequest = { showHelpDialog = false },
+        title = { Text(getSettingTypeDisplayText(settingType)) },
+        text = { Text(getSettingTypeHelpText(settingType)) },
+        confirmButton = { TextButton(onClick = { showHelpDialog = false }) { Text("OK") } })
   }
 }
 
@@ -415,24 +461,71 @@ private fun SettingItem(
 private fun DataTypeSection(
     availableTypes: Set<PolarDeviceDataType>,
     selectedTypes: Set<PolarDeviceDataType>,
-    onSelectionChanged: (Set<PolarDeviceDataType>) -> Unit
+    onSelectionChanged: (Set<PolarDeviceDataType>) -> Unit,
+    availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
+    selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
+    onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit
 ) {
+  var showSettingsDialog by remember { mutableStateOf(false) }
+  var selectedDataTypeForSettings by remember { mutableStateOf<PolarDeviceDataType?>(null) }
+  
   Column {
     Text(text = "Data Types", style = MaterialTheme.typography.titleMedium)
 
     availableTypes.forEach { dataType ->
-      CheckboxWithLabel(
-          label = getDataTypeDisplayText(dataType),
-          checked = selectedTypes.contains(dataType),
-          fullWidth = true,
-          onCheckedChange = { checked ->
-            if (checked) {
-              onSelectionChanged(selectedTypes + dataType)
-            } else {
-              onSelectionChanged(selectedTypes - dataType)
-            }
-          })
+      Row(
+          modifier = Modifier.fillMaxWidth(),
+          verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        CheckboxWithLabel(
+            label = getDataTypeDisplayText(dataType),
+            checked = selectedTypes.contains(dataType),
+            fullWidth = false,
+            onCheckedChange = { checked ->
+              if (checked) {
+                onSelectionChanged(selectedTypes + dataType)
+              } else {
+                onSelectionChanged(selectedTypes - dataType)
+              }
+            })
+        
+        Spacer(modifier = Modifier.weight(1f))
+        
+        if (selectedTypes.contains(dataType) && availableSettingsMap[dataType]?.settings?.isNotEmpty() == true) {
+          IconButton(
+              onClick = {
+                selectedDataTypeForSettings = dataType
+                showSettingsDialog = true
+              }) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings for ${getDataTypeDisplayText(dataType)}",
+                tint = MaterialTheme.colorScheme.primary)
+          }
+        }
+      }
     }
+
+    Text(
+        text =
+            "Warning: Some data types may conflict with each other. If recording fails or produces unexpected results, try selecting fewer data types.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.padding(vertical = 8.dp))
+  }
+  
+  if (showSettingsDialog && selectedDataTypeForSettings != null) {
+    DataTypeSettingsDialog(
+        dataType = selectedDataTypeForSettings!!,
+        availableSettings = availableSettingsMap[selectedDataTypeForSettings!!]!!,
+        selectedSettings = selectedSettingsMap[selectedDataTypeForSettings!!] ?: emptyMap(),
+        onDismiss = { showSettingsDialog = false },
+        onSettingsChanged = { newSettings ->
+          onSettingsChanged(
+              selectedSettingsMap.toMutableMap().apply {
+                this[selectedDataTypeForSettings!!] = newSettings
+              })
+          showSettingsDialog = false
+        })
   }
 }
 
@@ -447,5 +540,42 @@ private fun getDataTypeDisplayText(dataType: PolarDeviceDataType): String {
     PolarDeviceDataType.ECG -> "ECG"
     PolarDeviceDataType.HR -> "HR & R-R"
     else -> dataType.toString()
+  }
+}
+
+private fun getSettingTypeDisplayText(settingType: PolarSensorSetting.SettingType): String {
+  return when (settingType) {
+    PolarSensorSetting.SettingType.SAMPLE_RATE -> "Sample Rate"
+    PolarSensorSetting.SettingType.RESOLUTION -> "Resolution"
+    PolarSensorSetting.SettingType.RANGE -> "Range"
+    PolarSensorSetting.SettingType.CHANNELS -> "Channels"
+    else -> settingType.toString()
+  }
+}
+
+private fun getSettingTypeHelpText(settingType: PolarSensorSetting.SettingType): String {
+  return when (settingType) {
+    PolarSensorSetting.SettingType.SAMPLE_RATE ->
+        "The number of samples per second (Hz). Higher sample rates provide more detailed data but consume more battery and storage space."
+    PolarSensorSetting.SettingType.RESOLUTION ->
+        "The precision of each measurement in bits. Higher resolution provides more precise data but increases file size."
+    PolarSensorSetting.SettingType.RANGE ->
+        "The measurement range of the sensor. Higher ranges can detect larger movements but may reduce sensitivity to small changes."
+    PolarSensorSetting.SettingType.CHANNELS ->
+        "The number of measurement channels. These represent different sensors."
+    else -> "No additional information available for this setting type."
+  }
+}
+
+private fun getSettingValueDisplayText(
+    settingType: PolarSensorSetting.SettingType,
+    value: Int
+): String {
+  return when (settingType) {
+    PolarSensorSetting.SettingType.SAMPLE_RATE -> "${value} Hz"
+    PolarSensorSetting.SettingType.RESOLUTION -> "${value} bits"
+    PolarSensorSetting.SettingType.RANGE -> "±${value}g"
+    PolarSensorSetting.SettingType.CHANNELS -> "${value} channel${if (value != 1) "s" else ""}"
+    else -> value.toString()
   }
 }
