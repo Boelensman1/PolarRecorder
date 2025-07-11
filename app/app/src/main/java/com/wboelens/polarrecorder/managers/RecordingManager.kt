@@ -7,6 +7,7 @@ import android.os.Looper
 import androidx.lifecycle.Observer
 import com.google.gson.Gson
 import com.polar.sdk.api.PolarBleApi
+import com.polar.sdk.api.model.EcgSample
 import com.polar.sdk.api.model.PolarAccelerometerData
 import com.polar.sdk.api.model.PolarEcgData
 import com.polar.sdk.api.model.PolarGyroData
@@ -35,8 +36,13 @@ fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float
         (data as PolarAccelerometerData).samples.lastOrNull()?.x?.toFloat()
     PolarBleApi.PolarDeviceDataType.PPG ->
         (data as PolarPpgData).samples.lastOrNull()?.channelSamples?.lastOrNull()?.toFloat()
-    PolarBleApi.PolarDeviceDataType.ECG ->
-        (data as PolarEcgData).samples.lastOrNull()?.timeStamp?.toFloat()
+    PolarBleApi.PolarDeviceDataType.ECG -> {
+      val ecgData = data as PolarEcgData
+      when (val ecgSample = ecgData.samples.lastOrNull()) {
+        is EcgSample -> ecgSample.voltage.toFloat()
+        else -> null
+      }
+    }
     PolarBleApi.PolarDeviceDataType.GYRO -> (data as PolarGyroData).samples.lastOrNull()?.x
     PolarBleApi.PolarDeviceDataType.TEMPERATURE ->
         (data as PolarTemperatureData).samples.lastOrNull()?.temperature
