@@ -20,8 +20,6 @@ import com.wboelens.polarrecorder.services.RecordingService
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 import io.reactivex.rxjava3.disposables.Disposable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -29,7 +27,6 @@ data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<Str
 
 class RecordingManager(
     private val context: Context,
-    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main),
     private val polarManager: PolarManager,
     private val logViewModel: LogViewModel,
     private val deviceViewModel: DeviceViewModel,

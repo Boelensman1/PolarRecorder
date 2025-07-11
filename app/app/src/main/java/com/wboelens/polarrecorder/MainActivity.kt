@@ -31,7 +31,6 @@ import com.wboelens.polarrecorder.ui.theme.AppTheme
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
-import kotlinx.coroutines.MainScope
 
 class MainActivity : ComponentActivity() {
   private val deviceViewModel: DeviceViewModel by viewModels()
@@ -63,7 +62,6 @@ class MainActivity : ComponentActivity() {
     recordingManager =
         RecordingManager(
             applicationContext,
-            MainScope(),
             polarManager,
             logViewModel,
             deviceViewModel,
