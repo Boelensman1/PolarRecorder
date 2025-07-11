@@ -17,16 +17,21 @@ fun RecordingControls(
     isRecording: Boolean,
     isFileSystemEnabled: Boolean,
     recordingManager: RecordingManager,
-    dataSavers: DataSavers
+    dataSavers: DataSavers,
+    onRestartRecording: () -> Unit
 ) {
   val context = LocalContext.current
 
   Button(
       onClick = {
-        if (isRecording) recordingManager.stopRecording() else recordingManager.startRecording()
+        if (isRecording) {
+          recordingManager.stopRecording()
+        } else {
+          onRestartRecording()
+        }
       },
       modifier = Modifier.fillMaxWidth()) {
-        Text(if (isRecording) "Stop Recording" else "Start Recording")
+        Text(if (isRecording) "Stop Recording" else "Restart Recording")
       }
 
   if (!isRecording && isFileSystemEnabled) {

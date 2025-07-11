@@ -284,6 +284,9 @@ class FileSystemDataSaver(
     }
     outputStreams.clear()
     rotationLocks.clear()
+
+    // Call parent to reset initialization state
+    super.stopSaving()
   }
 
   override fun cleanup() {

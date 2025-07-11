@@ -16,6 +16,7 @@ import com.polar.sdk.api.model.PolarPpgData
 import com.polar.sdk.api.model.PolarPpiData
 import com.polar.sdk.api.model.PolarTemperatureData
 import com.wboelens.polarrecorder.dataSavers.DataSavers
+import com.wboelens.polarrecorder.dataSavers.InitializationState
 import com.wboelens.polarrecorder.services.RecordingService
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
@@ -170,7 +171,33 @@ class RecordingManager(
 
     val selectedDevices = deviceViewModel.selectedDevices.value
     if (selectedDevices.isNullOrEmpty()) {
-      logViewModel.addLogError("Cannot start recording: No devices connected")
+      logViewModel.addLogError("Cannot start recording: No devices selected")
+      return
+    }
+
+    val connectedDevices = deviceViewModel.connectedDevices.value ?: emptyList()
+    val connectedDeviceIds = connectedDevices.map { it.info.deviceId }
+    val disconnectedDevices =
+        selectedDevices.filter { !connectedDeviceIds.contains(it.info.deviceId) }
+    if (disconnectedDevices.isNotEmpty()) {
+      val disconnectedNames = disconnectedDevices.map { it.info.name }.joinToString(", ")
+      logViewModel.addLogError(
+          "Cannot start recording: Some selected devices are not connected: $disconnectedNames")
+      return
+    }
+
+    // Check if datasavers are initialized
+    val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
+    if (enabledDataSavers.isEmpty()) {
+      logViewModel.addLogError("Cannot start recording: No data savers are enabled")
+      return
+    }
+
+    val uninitializedSavers =
+        enabledDataSavers.filter { it.isInitialized.value != InitializationState.SUCCESS }
+    if (uninitializedSavers.isNotEmpty()) {
+      logViewModel.addLogError(
+          "Cannot start recording: Data savers are not initialized. Please go through the initialization process first.")
       return
     }
 

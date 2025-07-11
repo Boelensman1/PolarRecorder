@@ -32,7 +32,8 @@ fun RecordingScreen(
     deviceViewModel: DeviceViewModel,
     recordingManager: RecordingManager,
     dataSavers: DataSavers,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    onRestartRecording: () -> Unit
 ) {
   val isRecording by recordingManager.isRecording.collectAsState(initial = false)
   val selectedDevices = deviceViewModel.selectedDevices.observeAsState(emptyList()).value
@@ -55,7 +56,8 @@ fun RecordingScreen(
                 isRecording = isRecording,
                 isFileSystemEnabled = isFileSystemEnabled,
                 recordingManager = recordingManager,
-                dataSavers = dataSavers)
+                dataSavers = dataSavers,
+                onRestartRecording = onRestartRecording)
 
             if (isRecording) {
               Spacer(modifier = Modifier.height(8.dp))

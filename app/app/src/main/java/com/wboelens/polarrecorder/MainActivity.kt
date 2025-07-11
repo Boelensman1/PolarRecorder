@@ -160,7 +160,8 @@ class MainActivity : ComponentActivity() {
                       deviceViewModel = deviceViewModel,
                       recordingManager = recordingManager,
                       dataSavers = dataSavers,
-                      onBackPressed = backAction)
+                      onBackPressed = backAction,
+                      onRestartRecording = { navController.navigate("dataSaverInitialization") })
                 }
               }
         }

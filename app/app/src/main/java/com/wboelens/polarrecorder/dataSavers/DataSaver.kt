@@ -60,7 +60,9 @@ abstract class DataSaver(
   }
 
   // Cleanup resources (if needed) when recording is stopped
-  open fun stopSaving() {}
+  open fun stopSaving() {
+    _isInitialized.value = InitializationState.NOT_STARTED
+  }
 
   // Cleanup resources (if needed) when app is closed
   open fun cleanup() {}
