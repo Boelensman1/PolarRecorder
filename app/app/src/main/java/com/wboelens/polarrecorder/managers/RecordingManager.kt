@@ -235,7 +235,7 @@ class RecordingManager(
               val payload =
                   gson.toJson(
                       mapOf(
-                          "phoneTimeStamp" to phoneTimestamp,
+                          "phoneTimestamp" to phoneTimestamp,
                           "deviceId" to deviceId,
                           "recordingName" to currentRecordingName,
                           "dataType" to dataType,
