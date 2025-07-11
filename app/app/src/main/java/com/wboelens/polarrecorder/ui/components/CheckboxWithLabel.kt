@@ -16,12 +16,13 @@ fun CheckboxWithLabel(
     label: String,
     checked: Boolean = false,
     fullWidth: Boolean = false,
+    modifier: Modifier = Modifier,
     onCheckedChange: (Boolean) -> Unit = {}
 ) {
   Row(
       verticalAlignment = Alignment.CenterVertically,
       modifier =
-          Modifier.let { if (fullWidth) it.fillMaxWidth() else it }
+          modifier.let { if (fullWidth) it.fillMaxWidth() else it }
               .clickable { onCheckedChange(!checked) }) {
         Checkbox(checked = checked, onCheckedChange = onCheckedChange)
         Text(text = label, modifier = Modifier.padding(start = 8.dp))

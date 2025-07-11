@@ -486,6 +486,7 @@ private fun DataTypeSection(
             label = getDataTypeDisplayText(dataType),
             checked = selectedTypes.contains(dataType),
             fullWidth = false,
+            modifier = Modifier.weight(1f),
             onCheckedChange = { checked ->
               if (checked) {
                 onSelectionChanged(selectedTypes + dataType)
@@ -493,8 +494,6 @@ private fun DataTypeSection(
                 onSelectionChanged(selectedTypes - dataType)
               }
             })
-        
-        Spacer(modifier = Modifier.weight(1f))
         
         if (selectedTypes.contains(dataType) && availableSettingsMap[dataType]?.settings?.isNotEmpty() == true) {
           IconButton(
