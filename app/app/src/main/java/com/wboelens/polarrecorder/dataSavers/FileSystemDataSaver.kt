@@ -113,7 +113,7 @@ class FileSystemDataSaver(
         val currentRecordingDir = currentFile.parentFile
 
         try {
-          val newFile = currentRecordingDir?.createFile("application/json", fileName)
+          val newFile = currentRecordingDir?.createFile("application/jsonl", fileName)
           if (newFile != null) {
             val newStream = context.contentResolver.openOutputStream(newFile.uri, "wa")
             if (newStream != null) {
