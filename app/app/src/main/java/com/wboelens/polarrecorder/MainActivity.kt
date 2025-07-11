@@ -160,7 +160,6 @@ class MainActivity : ComponentActivity() {
                   BackHandler(onBack = backAction)
                   RecordingScreen(
                       deviceViewModel = deviceViewModel,
-                      logViewModel = logViewModel,
                       recordingManager = recordingManager,
                       dataSavers = dataSavers,
                       onBackPressed = backAction)

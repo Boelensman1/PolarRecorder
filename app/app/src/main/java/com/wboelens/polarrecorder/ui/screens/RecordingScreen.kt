@@ -22,17 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.managers.RecordingManager
-import com.wboelens.polarrecorder.ui.components.LogView
 import com.wboelens.polarrecorder.ui.components.RecordingControls
 import com.wboelens.polarrecorder.ui.components.SelectedDevicesSection
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
-import com.wboelens.polarrecorder.viewModels.LogViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordingScreen(
     deviceViewModel: DeviceViewModel,
-    logViewModel: LogViewModel,
     recordingManager: RecordingManager,
     dataSavers: DataSavers,
     onBackPressed: () -> Unit
@@ -66,9 +63,6 @@ fun RecordingScreen(
                   lastDataTimestamps = lastDataTimestamps,
                   batteryLevels = batteryLevels)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            LogView(logViewModel.logMessages.observeAsState(emptyList()).value)
           }
         }
   }
