@@ -193,6 +193,7 @@ fun DeviceSettingsDialog(
             } else {
               DeviceSettingsContent(
                   deviceSettings = deviceSettings,
+                  isTimeManagementAvailable = polarManager.isTimeManagementAvailable(deviceId),
                   onSetTime = { updateDeviceSettings(newTime = Calendar.getInstance()) },
                   onToggleSdkMode = {
                     updateDeviceSettings(newSdkMode = deviceSettings.sdkModeEnabled == false)
@@ -231,6 +232,7 @@ fun DeviceSettingsDialog(
 @Composable
 private fun DeviceSettingsContent(
     deviceSettings: PolarDeviceSettings,
+    isTimeManagementAvailable: Boolean,
     onSetTime: () -> Unit,
     onToggleSdkMode: () -> Unit,
     timeSetState: DeviceSettingState,
@@ -244,6 +246,7 @@ private fun DeviceSettingsContent(
 ) {
   DeviceSettingsSection(
       deviceSettings = deviceSettings,
+      isTimeManagementAvailable = isTimeManagementAvailable,
       onSetTime = onSetTime,
       onToggleSdkMode = onToggleSdkMode,
       timeSetState = timeSetState,
@@ -354,23 +357,26 @@ private fun SettingSection(
 @Composable
 private fun DeviceSettingsSection(
     deviceSettings: PolarDeviceSettings,
+    isTimeManagementAvailable: Boolean,
     onSetTime: () -> Unit,
     onToggleSdkMode: () -> Unit,
     timeSetState: DeviceSettingState,
     sdkModeSetState: DeviceSettingState
 ) {
   Column {
-    deviceSettings.deviceTimeOnConnect?.let { calendar ->
+    if (isTimeManagementAvailable) {
       SettingItem(
           title = "Time",
           content = {
-            val dateFormat =
-                java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-            val deviceTimeText = dateFormat.format(calendar.time)
+            deviceSettings.deviceTimeOnConnect?.let { calendar ->
+              val dateFormat =
+                  java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+              val deviceTimeText = dateFormat.format(calendar.time)
 
-            Text(
-                text = "Device time on connect: $deviceTimeText",
-                style = MaterialTheme.typography.bodyMedium)
+              Text(
+                  text = "Device time on connect: $deviceTimeText",
+                  style = MaterialTheme.typography.bodyMedium)
+            }
           },
           buttonText = "Set device time to phone time",
           isLoading = timeSetState.isLoading,

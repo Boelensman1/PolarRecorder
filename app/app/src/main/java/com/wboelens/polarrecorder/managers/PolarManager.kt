@@ -195,8 +195,7 @@ class PolarManager(
   private fun fetchDeviceCapabilities(deviceId: String): Single<DeviceStreamCapabilities> {
     return Single.create { emitter ->
           // Wait for FEATURE_DEVICE_INFO to be ready
-          if (deviceFeatureReadiness[deviceId]?.contains(
-              PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO) == true) {
+          if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO)) {
             emitter.onSuccess(Unit)
           } else {
             emitter.onError(IllegalStateException("Device info feature not ready"))
@@ -256,8 +255,7 @@ class PolarManager(
         var deviceTime: Calendar? = null
         var deviceSdkMode: Boolean? = null
 
-        if (deviceFeatureReadiness[deviceId]?.contains(
-            PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP) == true) {
+        if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)) {
           try {
             deviceTime = getTime(deviceId)
           } catch (e: Exception) {
@@ -265,8 +263,7 @@ class PolarManager(
           }
         }
 
-        if (deviceFeatureReadiness[deviceId]?.contains(
-            PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_SDK_MODE) == true) {
+        if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_SDK_MODE)) {
           try {
             deviceSdkMode = getSdkMode(deviceId)
           } catch (e: Exception) {
@@ -299,6 +296,14 @@ class PolarManager(
 
   fun getDeviceSettings(deviceId: String): PolarDeviceSettings? {
     return deviceSettings[deviceId]
+  }
+
+  private fun isFeatureAvailable(deviceId: String, feature: PolarBleApi.PolarBleSdkFeature): Boolean {
+    return deviceFeatureReadiness[deviceId]?.contains(feature) == true
+  }
+
+  fun isTimeManagementAvailable(deviceId: String): Boolean {
+    return isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)
   }
 
   fun connectToDevice(deviceId: String) {
