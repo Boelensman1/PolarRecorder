@@ -39,6 +39,7 @@ fun RecordingScreen(
   val lastDataTimestamps by recordingManager.lastDataTimestamps.collectAsState()
   val batteryLevels by deviceViewModel.batteryLevels.observeAsState(emptyMap())
   val isFileSystemEnabled by dataSavers.fileSystem.isEnabled.collectAsState()
+  val lastData by recordingManager.lastData.collectAsState()
 
   MaterialTheme {
     Scaffold(
@@ -61,7 +62,8 @@ fun RecordingScreen(
               SelectedDevicesSection(
                   selectedDevices = selectedDevices,
                   lastDataTimestamps = lastDataTimestamps,
-                  batteryLevels = batteryLevels)
+                  batteryLevels = batteryLevels,
+                  lastData = lastData)
             }
           }
         }

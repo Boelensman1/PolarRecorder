@@ -25,6 +25,26 @@ import kotlinx.coroutines.flow.StateFlow
 
 data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
 
+fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float? {
+  return when (dataType) {
+    PolarBleApi.PolarDeviceDataType.HR -> (data as PolarHrData).samples.lastOrNull()?.hr?.toFloat()
+    PolarBleApi.PolarDeviceDataType.PPI ->
+        (data as PolarPpiData).samples.lastOrNull()?.ppi?.toFloat()
+    PolarBleApi.PolarDeviceDataType.ACC ->
+        (data as PolarAccelerometerData).samples.lastOrNull()?.x?.toFloat()
+    PolarBleApi.PolarDeviceDataType.PPG ->
+        (data as PolarPpgData).samples.lastOrNull()?.channelSamples?.lastOrNull()?.toFloat()
+    PolarBleApi.PolarDeviceDataType.ECG ->
+        (data as PolarEcgData).samples.lastOrNull()?.timeStamp?.toFloat()
+    PolarBleApi.PolarDeviceDataType.GYRO -> (data as PolarGyroData).samples.lastOrNull()?.x
+    PolarBleApi.PolarDeviceDataType.TEMPERATURE ->
+        (data as PolarTemperatureData).samples.lastOrNull()?.temperature
+    PolarBleApi.PolarDeviceDataType.MAGNETOMETER ->
+        (data as PolarMagnetometerData).samples.lastOrNull()?.x
+    else -> throw IllegalArgumentException("Unsupported data type: $dataType")
+  }
+}
+
 class RecordingManager(
     private val context: Context,
     private val polarManager: PolarManager,
@@ -94,6 +114,10 @@ class RecordingManager(
   // Track how many log messages we've processed
   private var lastSavedLogSize = 0
 
+  private val _lastData =
+      MutableStateFlow<Map<String, Map<PolarBleApi.PolarDeviceDataType, Float?>>>(emptyMap())
+  val lastData: StateFlow<Map<String, Map<PolarBleApi.PolarDeviceDataType, Float?>>> = _lastData
+
   private val _lastDataTimestamps = MutableStateFlow<Map<String, Long>>(emptyMap())
   val lastDataTimestamps: StateFlow<Map<String, Long>> = _lastDataTimestamps
 
@@ -150,7 +174,11 @@ class RecordingManager(
       return
     }
 
-    // Clear timestamps when starting new recording
+    // Clear last data and last data timestamps when starting new recording
+    _lastData.value =
+        selectedDevices.associate { device ->
+          device.info.deviceId to device.dataTypes.associateWith { null }
+        }
     _lastDataTimestamps.value = emptyMap()
 
     // Log app version information
@@ -211,6 +239,14 @@ class RecordingManager(
 
               // Update last data timestamp for this device
               _lastDataTimestamps.value += (deviceId to phoneTimestamp)
+
+              // Update last data for this device
+              _lastData.value =
+                  _lastData.value.toMutableMap().apply {
+                    val deviceData = this[deviceId]?.toMutableMap() ?: mutableMapOf()
+                    deviceData[dataType] = getDataFragment(dataType, data)
+                    this[deviceId] = deviceData
+                  }
 
               val batchData =
                   when (dataType) {

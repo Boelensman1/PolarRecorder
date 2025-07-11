@@ -6,23 +6,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.wboelens.polarrecorder.ui.theme.LocalExtendedColorScheme
+import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
 import com.wboelens.polarrecorder.viewModels.ConnectionState
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
-
-private const val STALLED_AFTER = 5000
-private const val WARNING_AFTER = 2000
 
 @Composable
 fun SelectedDevicesSection(
     selectedDevices: List<DeviceViewModel.Device>,
     lastDataTimestamps: Map<String, Long>,
-    batteryLevels: Map<String, Int>
+    batteryLevels: Map<String, Int>,
+    lastData: Map<String, Map<PolarDeviceDataType, Float?>>
 ) {
-  val extendedColorScheme = LocalExtendedColorScheme.current
-
   Text(
-      "Selected Devices:",
+      "Devices:",
       style = MaterialTheme.typography.titleMedium,
       modifier = Modifier.padding(bottom = 8.dp))
 
@@ -32,14 +28,7 @@ fun SelectedDevicesSection(
     val batteryLevel = batteryLevels[device.info.deviceId]
     val connected = device.connectionState == ConnectionState.CONNECTED
 
-    val statusColor =
-        when {
-          !connected -> MaterialTheme.colorScheme.error
-          timeSinceLastData == null -> MaterialTheme.colorScheme.error
-          timeSinceLastData > STALLED_AFTER -> MaterialTheme.colorScheme.error
-          timeSinceLastData > WARNING_AFTER -> extendedColorScheme.warning.onColor
-          else -> MaterialTheme.colorScheme.primary
-        }
+    val deviceLastData = lastData[device.info.deviceId] ?: emptyMap()
 
     DeviceStatusCard(
         deviceName = device.info.name,
@@ -47,6 +36,6 @@ fun SelectedDevicesSection(
         timeSinceLastData = timeSinceLastData,
         lastTimestamp = lastTimestamp,
         batteryLevel = batteryLevel,
-        statusColor = statusColor)
+        deviceLastData = deviceLastData)
   }
 }
