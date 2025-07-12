@@ -145,10 +145,12 @@ class FileSystemDataSaver(
       deviceId: String,
       recordingName: String,
       dataType: String,
-      payload: String
+      data: Any
   ) {
     val key = "$deviceId/$dataType"
     val lock = rotationLocks.getOrPut(key) { Any() }
+
+    val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, dataType, data)
 
     synchronized(lock) {
       try {

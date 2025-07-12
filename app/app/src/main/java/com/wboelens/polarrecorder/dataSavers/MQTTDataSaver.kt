@@ -128,9 +128,10 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       deviceId: String,
       recordingName: String,
       dataType: String,
-      payload: String
+      data: Any
   ) {
     val topic = "${config.topicPrefix}/$dataType/$deviceId"
+    val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, dataType, data)
 
     try {
       mqttClient?.let { client ->

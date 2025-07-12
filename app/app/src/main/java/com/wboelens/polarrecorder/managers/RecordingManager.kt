@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.Observer
-import com.google.gson.Gson
 import com.polar.sdk.api.PolarBleApi
 import com.polar.sdk.api.model.EcgSample
 import com.polar.sdk.api.model.PolarAccelerometerData
@@ -63,8 +62,6 @@ class RecordingManager(
   companion object {
     private const val RETRY_COUNT = 3L
   }
-
-  private val gson = Gson()
 
   private val _isRecording = MutableStateFlow(false)
   val isRecording: StateFlow<Boolean> = _isRecording
@@ -146,7 +143,7 @@ class RecordingManager(
     synchronized(messagesLock) {
       for (i in lastSavedLogSize until messages.size) {
         val entry = messages[i]
-        val payload = gson.toJson(mapOf("type" to entry.type.name, "message" to entry.message))
+        val data = listOf(mapOf("type" to entry.type.name, "message" to entry.message))
 
         selectedDevices.forEach { device ->
           enabledDataSavers.forEach { saver ->
@@ -155,7 +152,7 @@ class RecordingManager(
                 device.info.deviceId,
                 currentRecordingName,
                 "LOG",
-                payload,
+                data,
             )
           }
         }
@@ -298,17 +295,6 @@ class RecordingManager(
                     else -> throw IllegalArgumentException("Unsupported data type: $dataType")
                   }
 
-              val payload =
-                  gson.toJson(
-                      mapOf(
-                          "phoneTimestamp" to phoneTimestamp,
-                          "deviceId" to deviceId,
-                          "recordingName" to currentRecordingName,
-                          "dataType" to dataType,
-                          "data" to batchData,
-                      ),
-                  )
-
               dataSavers
                   .asList()
                   .filter { it.isEnabled.value }
@@ -318,7 +304,7 @@ class RecordingManager(
                         deviceId,
                         currentRecordingName,
                         dataType.name,
-                        payload,
+                        batchData,
                     )
                   }
             },

@@ -1,5 +1,6 @@
 package com.wboelens.polarrecorder.dataSavers
 
+import com.google.gson.Gson
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.viewModels.LogViewModel
@@ -30,6 +31,8 @@ abstract class DataSaver(
   protected val _isInitialized = MutableStateFlow(InitializationState.NOT_STARTED)
   val isInitialized: StateFlow<InitializationState> = _isInitialized
 
+  private val gson = Gson()
+
   // Abstract methods that must be implemented by children
   abstract fun enable()
 
@@ -41,8 +44,26 @@ abstract class DataSaver(
       deviceId: String,
       recordingName: String,
       dataType: String,
-      payload: String
+      data: Any
   )
+
+  open fun createJSONPayload(
+      phoneTimestamp: Long,
+      deviceId: String,
+      recordingName: String,
+      dataType: String,
+      data: Any
+  ): String {
+    return gson.toJson(
+        mapOf(
+            "phoneTimestamp" to phoneTimestamp,
+            "deviceId" to deviceId,
+            "recordingName" to recordingName,
+            "dataType" to dataType,
+            "data" to data,
+        ),
+    )
+  }
 
   // Initialise if needed
   open fun initSaving(
