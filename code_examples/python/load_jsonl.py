@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 import pytz
 
-def load_jsonl(folder, data_type, tz):
+def load_jsonl(folder, data_type):
     # Validate inputs
     if not os.path.isdir(folder):
         raise ValueError("Provided folder does not exist.")
@@ -24,30 +24,42 @@ def load_jsonl(folder, data_type, tz):
                 except json.JSONDecodeError as e:
                     raise ValueError(f"Invalid JSON on line {i} of '{file}': {e}")
 
-    # Extract metadata from first entry
-    first_entry = entries[0]
-    recording_name = first_entry.get("recordingName")
-    timestamp_ms = first_entry["phoneTimestamp"]
-    first_data_received_at = datetime.fromtimestamp(timestamp_ms / 1000, pytz.timezone(tz))
-
-    # Combine 'data' fields into one dataframe
-    data_frames = [pd.DataFrame(entry["data"]) for entry in entries]
-    data = pd.concat(data_frames, ignore_index=True)
-
-    # Return both data and metadata
-    return {
-        "data": data,
-        "recordingName": recording_name,
-        "firstDataReceivedAt": first_data_received_at
-    }
+    return entries
 
 
-# Usage example, where an ECG recording is saved in data/recording:
-result = load_jsonl("data/recording", "ECG", "Europe/Amsterdam")
+# Load file, where an ECG recording is saved in data/recording:
+result = load_jsonl("data/recording", "ECG")
 
-# View first few rows
-print(result['data'].head())
+# Extract metadata from first entry
+tz = "Europe/Amsterdam"
+first_entry = result[0]
+recording_name = first_entry.get("recordingName")
+timestamp_ms = first_entry["phoneTimestamp"]
+first_data_received_at = datetime.fromtimestamp(timestamp_ms / 1000, pytz.timezone(tz))
 
 # View the metadata
-print(result['recordingName'])
-print(result['firstDataReceivedAt'])
+print(recording_name)
+print(first_data_received_at)
+
+# Combine 'data' fields into one dataframe
+data_frames = [pd.DataFrame(entry['data']) for entry in result]
+data = pd.concat(data_frames, ignore_index=True)
+
+# View first few rows
+print(data.head())
+
+# Combine 'data' fields into one dataframe with received at info
+extended_data_frames = []
+for entry in result:
+    if "data" in entry:
+        df = pd.DataFrame(entry["data"])
+        # Add the received timestamp to each row
+        received_at = datetime.fromtimestamp(entry["phoneTimestamp"] / 1000, pytz.timezone(tz))
+        df["received_at"] = received_at
+        extended_data_frames.append(df)
+
+# Concatenate all dataframes
+extended_data = pd.concat(extended_data_frames, ignore_index=True)
+
+# View first few rows
+print(extended_data.head())
