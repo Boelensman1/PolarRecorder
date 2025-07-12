@@ -6,7 +6,7 @@ load_jsonl <- function(folder, dataType) {
   if (!dir.exists(folder)) stop("Provided folder does not exist.")
   if (!is.character(dataType) || length(dataType) != 1) stop("dataType must be a single character vector string.")
   
-  # Get all filenames that start with the dataType prefix (e.g., "ECG", "ECG_part2.jsonl.json", etc.)
+  # Get all filenames that start with the dataType prefix (e.g., "ECG.jsonl", "ECG_part2.jsonl", etc.)
   files <- list.files(path = folder, pattern = paste0("^", dataType), full.names = TRUE)
   if (length(files) == 0) stop(paste("No files found starting with", dataType, "in", folder))
   

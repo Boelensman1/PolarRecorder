@@ -9,7 +9,7 @@ def load_jsonl(folder, data_type):
     if not os.path.isdir(folder):
         raise ValueError("Provided folder does not exist.")
 
-    # Get all filenames that start with the dataType prefix (e.g., "ECG", "ECG_part2.jsonl.json", etc.)
+    # Get all filenames that start with the dataType prefix (e.g., "ECG.jsonl", "ECG_part2.jsonl", etc.)
     files = [os.path.join(folder, f) for f in os.listdir(folder) if f.startswith(data_type)]
     if not files:
         raise FileNotFoundError(f"No files found starting with '{data_type}' in '{folder}'")
