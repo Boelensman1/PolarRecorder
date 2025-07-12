@@ -2,6 +2,7 @@ package com.wboelens.polarrecorder.dataSavers
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
@@ -55,7 +56,7 @@ class FileSystemDataSaver(
     }
 
     try {
-      val selectedUri = Uri.parse(config.baseDirectory)
+      val selectedUri = config.baseDirectory.toUri()
       val userPickedDir = DocumentFile.fromTreeUri(context, selectedUri)
 
       if (userPickedDir == null) {
@@ -123,14 +124,16 @@ class FileSystemDataSaver(
           }
         } catch (e: SecurityException) {
           logViewModel.addLogError(
-              "[$key] Permission denied while creating new file part: ${e.message}")
+              "[$key] Permission denied while creating new file part: ${e.message}",
+          )
           outputStreams.remove(key)
         } catch (e: IOException) {
           logViewModel.addLogError("[$key] I/O error while creating new file part: ${e.message}")
           outputStreams.remove(key)
         } catch (e: IllegalArgumentException) {
           logViewModel.addLogError(
-              "[$key] Invalid arguments while creating new file part: ${e.message}")
+              "[$key] Invalid arguments while creating new file part: ${e.message}",
+          )
           outputStreams.remove(key)
         }
       }
@@ -160,13 +163,15 @@ class FileSystemDataSaver(
 
         if (!firstMessageSaved[key]!!) {
           logViewModel.addLogMessage(
-              "[$deviceId] Successfully saved first $dataType data to filesystem.")
+              "[$deviceId] Successfully saved first $dataType data to filesystem.",
+          )
           firstMessageSaved[key] = true
         }
       } catch (e: IOException) {
         // If stream was closed, try to rotate file immediately
         logViewModel.addLogError(
-            "[$deviceId] Failed to write data to file: ${e.message}. Attempting emergency rotation")
+            "[$deviceId] Failed to write data to file: ${e.message}. Attempting emergency rotation",
+        )
         checkAndRotateFile(deviceId, dataType)
       } catch (e: IllegalStateException) {
         logViewModel.addLogError("[$deviceId] Failed to save data to file system: ${e.message}")
@@ -194,7 +199,8 @@ class FileSystemDataSaver(
                     checkAndRotateFile(parts[0], parts[1])
                   } else {
                     logViewModel.addLogError(
-                        "[${parts[0]}] Invalid key format: $key, expected deviceId/dataType")
+                        "[${parts[0]}] Invalid key format: $key, expected deviceId/dataType",
+                    )
                   }
                 }
               }
@@ -220,7 +226,8 @@ class FileSystemDataSaver(
 
         if (recordingDir == null) {
           logViewModel.addLogError(
-              "[$deviceId] Cannot init file system saving: recordingDir is null")
+              "[$deviceId] Cannot init file system saving: recordingDir is null",
+          )
           _isInitialized.value = InitializationState.FAILED
           return
         }
@@ -231,7 +238,8 @@ class FileSystemDataSaver(
 
           if (currentRecordingDir == null) {
             logViewModel.addLogError(
-                "[$deviceId/$dataType] Cannot init file system saving: currentRecordingDir is null")
+                "[$deviceId/$dataType] Cannot init file system saving: currentRecordingDir is null",
+            )
             _isInitialized.value = InitializationState.FAILED
             return
           }
@@ -244,7 +252,8 @@ class FileSystemDataSaver(
             logViewModel.addLogError(
                 "[$deviceId/$dataType] Failed to create or access file $fileName in ${
                   Uri.decode(currentRecordingDir.uri.toString())
-                }")
+                }",
+            )
             _isInitialized.value = InitializationState.FAILED
             return
           }
@@ -252,7 +261,8 @@ class FileSystemDataSaver(
           val stream = context.contentResolver.openOutputStream(file.uri, "wa")
           if (stream == null) {
             logViewModel.addLogError(
-                "[$deviceId/$dataType] Failed to create or access stream ${file.uri}")
+                "[$deviceId/$dataType] Failed to create or access stream ${file.uri}",
+            )
             _isInitialized.value = InitializationState.FAILED
             return
           }
