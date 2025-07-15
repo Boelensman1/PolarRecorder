@@ -7,13 +7,15 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 
 @Composable
-fun SnackbarMessageDisplayer(logViewModel: LogViewModel): Pair<SnackbarHostState, LogViewModel.LogType?> {
+fun SnackbarMessageDisplayer(
+    logViewModel: LogViewModel
+): Pair<SnackbarHostState, LogViewModel.LogType?> {
   val snackbarHostState = remember { SnackbarHostState() }
   // Track the current log type
   val currentLogType = remember { mutableStateOf<LogViewModel.LogType?>(null) }
@@ -41,29 +43,27 @@ fun SnackbarMessageDisplayer(logViewModel: LogViewModel): Pair<SnackbarHostState
 
 @Composable
 fun LogMessageSnackbarHost(
-    snackbarHostState: SnackbarHostState, 
+    snackbarHostState: SnackbarHostState,
     logType: LogViewModel.LogType? = null,
     modifier: Modifier = Modifier
 ) {
   SnackbarHost(hostState = snackbarHostState, modifier = modifier) { data ->
-    val containerColor = when (logType) {
-      LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.primary
-      LogViewModel.LogType.NORMAL -> MaterialTheme.colorScheme.surface
-      LogViewModel.LogType.ERROR -> MaterialTheme.colorScheme.error
-      null -> MaterialTheme.colorScheme.surface // Default case
-    }
-    
-    val contentColor = when (logType) {
-      LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.onPrimary
-      LogViewModel.LogType.NORMAL -> MaterialTheme.colorScheme.onSurface
-      LogViewModel.LogType.ERROR -> MaterialTheme.colorScheme.onError
-      null -> MaterialTheme.colorScheme.onSurface // Default case
-    }
-    
-    Snackbar(
-        snackbarData = data,
-        containerColor = containerColor,
-        contentColor = contentColor
-    )
+    val containerColor =
+        when (logType) {
+          LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.primary
+          LogViewModel.LogType.NORMAL -> MaterialTheme.colorScheme.surface
+          LogViewModel.LogType.ERROR -> MaterialTheme.colorScheme.error
+          null -> MaterialTheme.colorScheme.surface // Default case
+        }
+
+    val contentColor =
+        when (logType) {
+          LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.onPrimary
+          LogViewModel.LogType.NORMAL -> MaterialTheme.colorScheme.onSurface
+          LogViewModel.LogType.ERROR -> MaterialTheme.colorScheme.onError
+          null -> MaterialTheme.colorScheme.onSurface // Default case
+        }
+
+    Snackbar(snackbarData = data, containerColor = containerColor, contentColor = contentColor)
   }
 }

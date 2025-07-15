@@ -120,6 +120,7 @@ fun SaveToOptions(
           showFilesystemSettings = false
         },
         initialConfig = fileSystemConfig,
-        fileSystemSettingsViewModel = fileSystemSettingsViewModel)
+        fileSystemSettingsViewModel = fileSystemSettingsViewModel,
+    )
   }
 }

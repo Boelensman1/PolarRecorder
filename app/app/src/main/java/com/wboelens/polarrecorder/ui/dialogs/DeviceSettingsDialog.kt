@@ -21,7 +21,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,8 +43,8 @@ import com.wboelens.polarrecorder.managers.PolarApiResult
 import com.wboelens.polarrecorder.managers.PolarDeviceSettings
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
-import java.util.Calendar
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null, sdkModeEnabled = false)
 
@@ -259,7 +258,6 @@ private fun DeviceSettingsContent(
       availableSettingsMap = availableSettingsMap,
       selectedSettingsMap = selectedSettingsMap,
       onSettingsChanged = onSettingsChanged)
-
 }
 
 @Composable
@@ -284,27 +282,16 @@ private fun DataTypeSettingsDialog(
                   options = values.toList(),
                   selectedValue = tempSettings[settingType],
                   onValueSelected = { newValue ->
-                    tempSettings = tempSettings.toMutableMap().apply {
-                      this[settingType] = newValue
-                    }
+                    tempSettings =
+                        tempSettings.toMutableMap().apply { this[settingType] = newValue }
                   })
               Spacer(modifier = Modifier.height(16.dp))
             }
           }
         }
       },
-      confirmButton = {
-        Button(onClick = {
-          onSettingsChanged(tempSettings)
-        }) {
-          Text("Apply")
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = onDismiss) {
-          Text("Cancel")
-        }
-      })
+      confirmButton = { Button(onClick = { onSettingsChanged(tempSettings) }) { Text("Apply") } },
+      dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
 }
 
 @Composable
@@ -474,7 +461,7 @@ private fun DataTypeSection(
 ) {
   var showSettingsDialog by remember { mutableStateOf(false) }
   var selectedDataTypeForSettings by remember { mutableStateOf<PolarDeviceDataType?>(null) }
-  
+
   Column {
     Text(text = "Data Types", style = MaterialTheme.typography.titleMedium)
 
@@ -482,32 +469,33 @@ private fun DataTypeSection(
       Row(
           modifier = Modifier.fillMaxWidth(),
           verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-        CheckboxWithLabel(
-            label = getDataTypeDisplayText(dataType),
-            checked = selectedTypes.contains(dataType),
-            fullWidth = false,
-            modifier = Modifier.weight(1f),
-            onCheckedChange = { checked ->
-              if (checked) {
-                onSelectionChanged(selectedTypes + dataType)
-              } else {
-                onSelectionChanged(selectedTypes - dataType)
-              }
-            })
-        
-        if (selectedTypes.contains(dataType) && availableSettingsMap[dataType]?.settings?.isNotEmpty() == true) {
-          IconButton(
-              onClick = {
-                selectedDataTypeForSettings = dataType
-                showSettingsDialog = true
-              }) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings for ${getDataTypeDisplayText(dataType)}",
-                tint = MaterialTheme.colorScheme.primary)
+            CheckboxWithLabel(
+                label = getDataTypeDisplayText(dataType),
+                checked = selectedTypes.contains(dataType),
+                fullWidth = false,
+                modifier = Modifier.weight(1f),
+                onCheckedChange = { checked ->
+                  if (checked) {
+                    onSelectionChanged(selectedTypes + dataType)
+                  } else {
+                    onSelectionChanged(selectedTypes - dataType)
+                  }
+                })
+
+            if (selectedTypes.contains(dataType) &&
+                availableSettingsMap[dataType]?.settings?.isNotEmpty() == true) {
+              IconButton(
+                  onClick = {
+                    selectedDataTypeForSettings = dataType
+                    showSettingsDialog = true
+                  }) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings for ${getDataTypeDisplayText(dataType)}",
+                        tint = MaterialTheme.colorScheme.primary)
+                  }
+            }
           }
-        }
-      }
     }
 
     Text(
@@ -517,7 +505,7 @@ private fun DataTypeSection(
         color = MaterialTheme.colorScheme.error,
         modifier = Modifier.padding(vertical = 8.dp))
   }
-  
+
   if (showSettingsDialog && selectedDataTypeForSettings != null) {
     DataTypeSettingsDialog(
         dataType = selectedDataTypeForSettings!!,

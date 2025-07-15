@@ -255,7 +255,8 @@ class PolarManager(
         var deviceTime: Calendar? = null
         var deviceSdkMode: Boolean? = null
 
-        if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)) {
+        if (isFeatureAvailable(
+            deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)) {
           try {
             deviceTime = getTime(deviceId)
           } catch (e: Exception) {
@@ -298,12 +299,16 @@ class PolarManager(
     return deviceSettings[deviceId]
   }
 
-  private fun isFeatureAvailable(deviceId: String, feature: PolarBleApi.PolarBleSdkFeature): Boolean {
+  private fun isFeatureAvailable(
+      deviceId: String,
+      feature: PolarBleApi.PolarBleSdkFeature
+  ): Boolean {
     return deviceFeatureReadiness[deviceId]?.contains(feature) == true
   }
 
   fun isTimeManagementAvailable(deviceId: String): Boolean {
-    return isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)
+    return isFeatureAvailable(
+        deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)
   }
 
   fun connectToDevice(deviceId: String) {

@@ -22,7 +22,8 @@ fun CheckboxWithLabel(
   Row(
       verticalAlignment = Alignment.CenterVertically,
       modifier =
-          modifier.let { if (fullWidth) it.fillMaxWidth() else it }
+          modifier
+              .let { if (fullWidth) it.fillMaxWidth() else it }
               .clickable { onCheckedChange(!checked) }) {
         Checkbox(checked = checked, onCheckedChange = onCheckedChange)
         Text(text = label, modifier = Modifier.padding(start = 8.dp))
