@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.polar.androidcommunications.api.ble.model.DisInfo
+import com.polar.androidcommunications.api.ble.model.gatt.client.BleDisClient
 import com.polar.sdk.api.PolarBleApi
 import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
 import com.polar.sdk.api.PolarBleApiCallback
@@ -23,15 +24,16 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
-import java.util.Calendar
-import java.util.Timer
-import java.util.TimerTask
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
 import kotlinx.coroutines.withContext
+import java.util.Calendar
+import java.util.Timer
+import java.util.TimerTask
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 data class DeviceStreamCapabilities(
     val availableTypes: Set<PolarDeviceDataType>,
@@ -173,8 +175,42 @@ class PolarManager(
             deviceFeatureReadiness.getOrPut(identifier) { mutableSetOf() }.add(feature)
           }
 
+          override fun disInformationReceived(identifier: String, uuid: UUID, value: String) {
+            when (uuid) {
+              BleDisClient.SOFTWARE_REVISION_STRING -> {
+                logViewModel.addLogMessage(
+                    "DIS info received for device $identifier: [FirmwareVersion]: $value")
+                deviceViewModel.updateFirmwareVersion(identifier, value)
+              }
+              BleDisClient.FIRMWARE_REVISION_STRING -> {
+                logViewModel.addLogMessage(
+                    "DIS info received for device $identifier: [FirmwareRevision]: $value")
+              }
+              BleDisClient.HARDWARE_REVISION_STRING -> {
+                logViewModel.addLogMessage(
+                    "DIS info received for device $identifier: [HardwareRevision]: $value")
+              }
+              BleDisClient.MODEL_NUMBER_STRING -> {
+                logViewModel.addLogMessage(
+                    "DIS info received for device $identifier: [ModelNumber]: $value")
+              }
+              BleDisClient.SERIAL_NUMBER_STRING -> {
+                logViewModel.addLogMessage(
+                    "DIS info received for device $identifier: [SerialNumber]: $value")
+              }
+              BleDisClient.MANUFACTURER_NAME_STRING -> {
+                logViewModel.addLogMessage(
+                    "DIS info received for device $identifier: [ManufacturerName]: $value")
+              }
+              else -> {
+                Log.d(TAG,
+                    "DIS info received for device $identifier: [$uuid]: $value")
+              }
+            }
+          }
+
           override fun disInformationReceived(identifier: String, disInfo: DisInfo) {
-            Log.d(TAG, "DIS info received for device $identifier: $disInfo")
+            Log.d(TAG, "DIS info 2 received for device $identifier: $disInfo")
           }
 
           override fun htsNotificationReceived(

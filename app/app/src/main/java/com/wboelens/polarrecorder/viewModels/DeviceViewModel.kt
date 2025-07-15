@@ -26,7 +26,8 @@ class DeviceViewModel : ViewModel() {
       val isSelected: Boolean = false,
       val connectionState: ConnectionState,
       val dataTypes: Set<PolarDeviceDataType> = emptySet(),
-      val sensorSettings: Map<PolarDeviceDataType, PolarSensorSetting> = emptyMap()
+      val sensorSettings: Map<PolarDeviceDataType, PolarSensorSetting> = emptyMap(),
+      val firmwareVersion: String? = null
   )
 
   private val _devices = MutableLiveData<List<Device>>(emptyList())
@@ -67,6 +68,10 @@ class DeviceViewModel : ViewModel() {
 
   fun updateConnectionState(deviceId: String, state: ConnectionState) {
     updateDevice(deviceId) { device -> device.copy(connectionState = state) }
+  }
+
+  fun updateFirmwareVersion(deviceId: String, firmwareVersion: String) {
+    updateDevice(deviceId) { device -> device.copy(firmwareVersion = firmwareVersion) }
   }
 
   fun getConnectionState(deviceId: String): ConnectionState {
