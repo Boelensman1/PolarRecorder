@@ -114,13 +114,15 @@ class PolarManager(
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe({ _ -> // Explicitly using Consumer<Unit> overload
                       MainScope().launch {
+                        // Wait a bit so that FEATURE_DEVICE_INFO is more likely to be ready
+                        kotlinx.coroutines.delay(1000)
                         var capabilities: DeviceStreamCapabilities?
                         try {
                           capabilities = fetchDeviceCapabilities(polarDeviceInfo.deviceId).await()
                         } catch (error: Throwable) {
                           Log.e(TAG, "Failed to fetch device capabilities", error)
                           logViewModel.addLogError(
-                              "Failed to fetch device capabilities for ${polarDeviceInfo.deviceId} (${error.message}), falling back to alternative method",
+                              "Failed to fetch device capabilities for ${polarDeviceInfo.deviceId} (${error}), falling back to alternative method",
                               false)
                           capabilities =
                               fetchDeviceCapabilitiesViaFallback(polarDeviceInfo.deviceId)
@@ -230,16 +232,20 @@ class PolarManager(
 
   private fun fetchDeviceCapabilities(deviceId: String): Single<DeviceStreamCapabilities> {
     return Single.create { emitter ->
-          // Wait for FEATURE_DEVICE_INFO to be ready
+          // Check if FEATURE_DEVICE_INFO is available
           if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO)) {
+            logViewModel.addLogMessage("FEATURE_DEVICE_INFO is available")
             emitter.onSuccess(Unit)
           } else {
+            logViewModel.addLogMessage("FEATURE_DEVICE_INFO is not ready")
             emitter.onError(IllegalStateException("Device info feature not ready"))
           }
         }
         .flatMap { getAvailableOnlineStreamDataTypes(deviceId) }
         .retryWhen { errors ->
-          errors.take(MAX_RETRY_ERRORS).flatMap { _ ->
+          errors.take(MAX_RETRY_ERRORS).flatMap { error ->
+            logViewModel.addLogError(
+                "Failed to fetch stream capabilities (${error}), retrying", false)
             // Wait 1 second before retrying
             Flowable.timer(2, TimeUnit.SECONDS)
           }
