@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +52,12 @@ fun RecordingSettingsScreen(
   var recordingStopOnDisconnect by remember {
     mutableStateOf(preferencesManager.recordingStopOnDisconnect)
   }
+
+  // Collect enabled state for all datasavers
+  val datasaversList = dataSavers.asList()
+  val enabledStates = datasaversList.map { it.isEnabled.collectAsState() }
+  val isAnyDataSaverEnabled by
+      remember(enabledStates) { derivedStateOf { enabledStates.any { it.value } } }
 
   MaterialTheme {
     Scaffold(
@@ -110,7 +118,10 @@ fun RecordingSettingsScreen(
         Button(
             onClick = { onContinue() },
             modifier = Modifier.fillMaxWidth(),
-            enabled = connectedDevices.isNotEmpty() && recordingName.isNotEmpty()) {
+            enabled =
+                connectedDevices.isNotEmpty() &&
+                    recordingName.isNotEmpty() &&
+                    isAnyDataSaverEnabled) {
               Text("Start Recording")
             }
       }
