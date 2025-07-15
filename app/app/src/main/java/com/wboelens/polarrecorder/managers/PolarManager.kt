@@ -58,7 +58,7 @@ class PolarManager(
     private const val TAG = "PolarManager"
     private const val SCAN_INTERVAL = 30000L // 30 seconds between scans
     private const val SCAN_DURATION = 10000L // 10 seconds per scan
-    private const val MAX_RETRY_ERRORS = 3L
+    private const val MAX_RETRY_ERRORS = 6L
   }
 
   private var scanDisposable: Disposable? = null
@@ -241,7 +241,7 @@ class PolarManager(
         .retryWhen { errors ->
           errors.take(MAX_RETRY_ERRORS).flatMap { _ ->
             // Wait 1 second before retrying
-            Single.timer(1, TimeUnit.SECONDS).flatMapPublisher { Flowable.just(it) }
+            Flowable.timer(2, TimeUnit.SECONDS)
           }
         }
         .flatMap { types ->
