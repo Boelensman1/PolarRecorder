@@ -243,7 +243,7 @@ class PolarManager(
           errors.take(MAX_RETRY_ERRORS).flatMap { error ->
             logViewModel.addLogError(
                 "Failed to fetch stream capabilities (${error}), retrying", false)
-            // Wait 1 second before retrying
+            // Wait 2 seconds before retrying
             Flowable.timer(2, TimeUnit.SECONDS)
           }
         }
