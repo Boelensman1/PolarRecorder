@@ -205,8 +205,7 @@ class PolarManager(
                     "DIS info received for device $identifier: [ManufacturerName]: $value")
               }
               else -> {
-                Log.d(TAG,
-                    "DIS info received for device $identifier: [$uuid]: $value")
+                Log.d(TAG, "DIS info received for device $identifier: [$uuid]: $value")
               }
             }
           }
@@ -234,10 +233,8 @@ class PolarManager(
     return Single.create { emitter ->
           // Check if FEATURE_DEVICE_INFO is available
           if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO)) {
-            logViewModel.addLogMessage("FEATURE_DEVICE_INFO is available")
             emitter.onSuccess(Unit)
           } else {
-            logViewModel.addLogMessage("FEATURE_DEVICE_INFO is not ready")
             emitter.onError(IllegalStateException("Device info feature not ready"))
           }
         }
