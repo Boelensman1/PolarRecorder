@@ -28,7 +28,7 @@ To function, the app may request access to Bluetooth (to connect with Polar devi
 Under the General Data Protection Regulation (GDPR), you have rights regarding personal data processing. However, as no personal data is transmitted or stored by me (the developer), and all processing occurs locally on your device, the exercise of GDPR rights must be carried out directly by the user.
 
 ## 5. Changes to this Policy
-I may update this privacy policy to reflect changes in the app or in legal requirements. Changes will be communicated through an update of this policy, which will be communicated within the app or its update notes, and will be published at https://boelensman1.github.io/PolarRecorder/app/privacy_policy.
+I may update this privacy policy to reflect changes in the app or in legal requirements. Changes will be communicated through an update of this policy, which will be communicated within the app or its update notes, and will be published at [https://boelensman1.github.io/PolarRecorder/app/privacy_policy](https://boelensman1.github.io/PolarRecorder/app/privacy_policy).
 
 All previous versions of this policy are also available in the [GitHub Repository](https://github.com/Boelensman1/PolarRecorder). Users are encouraged to review this privacy policy periodically, especially after installing app updates.
 
