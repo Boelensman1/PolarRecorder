@@ -18,6 +18,10 @@ Polar Recorder is available on the [Play Store](https://play.google.com/store/ap
 ## Using the app with Polar Watches
 The app supports data streaming from Polar watches, however, specific setup steps are required. See [the official Polar documentation](https://github.com/polarofficial/polar-ble-sdk/blob/master/documentation/UsingSDKWithWatches.md#step-by-step-how-to) for step-by-step setup instructions.
 
+## Code Examples
+
+The `code_examples/` directory contains sample code for processing recorded data in Python and R. More examples will be added over time, contributions are welcome!
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
