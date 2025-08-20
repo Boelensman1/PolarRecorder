@@ -67,5 +67,8 @@ class PolarRecorderApplication : Application() {
 
     logRepository.cleanup()
     polarRepository.cleanup()
+
+    polarManager.cleanup()
+    recordingManager.cleanup()
   }
 }
