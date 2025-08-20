@@ -70,6 +70,13 @@ class MainActivity : ComponentActivity() {
       }
     }
 
+    val isRecordingInProgress = recordingManager.isRecording.value
+    val startDestination = if (isRecordingInProgress) {
+      "recording"
+    } else {
+      "deviceSelection"
+    }
+
     setContent {
       AppTheme {
         val navController = rememberNavController()
@@ -97,7 +104,7 @@ class MainActivity : ComponentActivity() {
         ) { paddingValues ->
           NavHost(
               navController = navController,
-              startDestination = "deviceSelection",
+              startDestination = startDestination,
               modifier = Modifier.padding(paddingValues),
           ) {
             composable("deviceSelection") {
