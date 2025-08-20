@@ -29,22 +29,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
 import com.polar.sdk.api.model.PolarSensorSetting
+import com.polar.sdk.api.model.PolarSensorSetting.SettingType
 import com.wboelens.polarrecorder.managers.PolarApiResult
 import com.wboelens.polarrecorder.managers.PolarDeviceSettings
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null, sdkModeEnabled = false)
 
@@ -61,7 +66,7 @@ fun DeviceSettingsDialog(
   onDismiss: () -> Unit,
   onDataTypeSettingsSelected:
   (
-    Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
+    Map<PolarDeviceDataType, Map<SettingType, Int>>,
     Set<PolarDeviceDataType>
   ) -> Unit,
   initialDataTypeSettings: Map<PolarDeviceDataType, PolarSensorSetting>? = emptyMap(),
@@ -182,27 +187,33 @@ fun DeviceSettingsDialog(
   }
 
   Dialog(onDismissRequest = onDismiss) {
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(16.dp)
-        .heightIn(max = 600.dp)) {
-      Column(modifier = Modifier
-          .padding(16.dp)
-          .fillMaxWidth()) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .heightIn(max = 600.dp),
+    ) {
+      Column(
+          modifier = Modifier
+              .padding(16.dp)
+              .fillMaxWidth(),
+      ) {
         Text(text = "Settings - Device $deviceId", style = MaterialTheme.typography.titleLarge)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box(modifier = Modifier
-            .weight(1f)
-            .verticalScroll(rememberScrollState())) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+        ) {
           Column {
             if (isLoading) {
               Box(
                   modifier = Modifier
                       .fillMaxWidth()
                       .padding(32.dp),
-                  contentAlignment = androidx.compose.ui.Alignment.Center,
+                  contentAlignment = Alignment.Center,
               ) {
                 CircularProgressIndicator()
               }
@@ -261,8 +272,8 @@ private fun DeviceSettingsContent(
   selectedDataTypes: Set<PolarDeviceDataType>,
   onDataTypesChanged: (Set<PolarDeviceDataType>) -> Unit,
   availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
-  selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
-  onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit
+  selectedSettingsMap: Map<PolarDeviceDataType, Map<SettingType, Int>>,
+  onSettingsChanged: (Map<PolarDeviceDataType, Map<SettingType, Int>>) -> Unit
 ) {
   DeviceSettingsSection(
       deviceSettings = deviceSettings,
@@ -287,9 +298,9 @@ private fun DeviceSettingsContent(
 private fun DataTypeSettingsDialog(
   dataType: PolarDeviceDataType,
   availableSettings: PolarSensorSetting,
-  selectedSettings: Map<PolarSensorSetting.SettingType, Int>,
+  selectedSettings: Map<SettingType, Int>,
   onDismiss: () -> Unit,
-  onSettingsChanged: (Map<PolarSensorSetting.SettingType, Int>) -> Unit
+  onSettingsChanged: (Map<SettingType, Int>) -> Unit
 ) {
   var tempSettings by remember { mutableStateOf(selectedSettings) }
 
@@ -321,7 +332,7 @@ private fun DataTypeSettingsDialog(
 
 @Composable
 private fun SettingSection(
-  settingType: PolarSensorSetting.SettingType,
+  settingType: SettingType,
   options: List<Int>,
   selectedValue: Int?,
   onValueSelected: (Int) -> Unit
@@ -331,7 +342,7 @@ private fun SettingSection(
   Column {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
       Text(
           text = getSettingTypeDisplayText(settingType),
@@ -355,7 +366,7 @@ private fun SettingSection(
           modifier = Modifier
               .fillMaxWidth()
               .padding(vertical = 4.dp),
-          verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+          verticalAlignment = Alignment.CenterVertically,
       ) {
         RadioButton(selected = value == selectedValue, onClick = { onValueSelected(value) })
         Text(
@@ -392,7 +403,7 @@ private fun DeviceSettingsSection(
           content = {
             deviceSettings.deviceTimeOnConnect?.let { calendar ->
               val dateFormat =
-                  java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                  SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
               val deviceTimeText = dateFormat.format(calendar.time)
 
               Text(
@@ -499,8 +510,8 @@ private fun DataTypeSection(
   selectedTypes: Set<PolarDeviceDataType>,
   onSelectionChanged: (Set<PolarDeviceDataType>) -> Unit,
   availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
-  selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
-  onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit
+  selectedSettingsMap: Map<PolarDeviceDataType, Map<SettingType, Int>>,
+  onSettingsChanged: (Map<PolarDeviceDataType, Map<SettingType, Int>>) -> Unit
 ) {
   var showSettingsDialog by remember { mutableStateOf(false) }
   var selectedDataTypeForSettings by remember { mutableStateOf<PolarDeviceDataType?>(null) }
@@ -511,7 +522,7 @@ private fun DataTypeSection(
     availableTypes.forEach { dataType ->
       Row(
           modifier = Modifier.fillMaxWidth(),
-          verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+          verticalAlignment = Alignment.CenterVertically,
       ) {
         CheckboxWithLabel(
             label = getDataTypeDisplayText(dataType),
@@ -586,28 +597,28 @@ private fun getDataTypeDisplayText(dataType: PolarDeviceDataType): String {
   }
 }
 
-private fun getSettingTypeDisplayText(settingType: PolarSensorSetting.SettingType): String {
+private fun getSettingTypeDisplayText(settingType: SettingType): String {
   return when (settingType) {
-    PolarSensorSetting.SettingType.SAMPLE_RATE -> "Sample Rate"
-    PolarSensorSetting.SettingType.RESOLUTION -> "Resolution"
-    PolarSensorSetting.SettingType.RANGE -> "Range"
-    PolarSensorSetting.SettingType.CHANNELS -> "Channels"
+    SettingType.SAMPLE_RATE -> "Sample Rate"
+    SettingType.RESOLUTION -> "Resolution"
+    SettingType.RANGE -> "Range"
+    SettingType.CHANNELS -> "Channels"
     else -> settingType.toString()
   }
 }
 
-private fun getSettingTypeHelpText(settingType: PolarSensorSetting.SettingType): String {
+private fun getSettingTypeHelpText(settingType: SettingType): String {
   return when (settingType) {
-    PolarSensorSetting.SettingType.SAMPLE_RATE ->
+    SettingType.SAMPLE_RATE ->
       "The number of samples per second (Hz). Higher sample rates provide more detailed data but consume more battery and storage space."
 
-    PolarSensorSetting.SettingType.RESOLUTION ->
+    SettingType.RESOLUTION ->
       "The precision of each measurement in bits. Higher resolution provides more precise data but increases file size."
 
-    PolarSensorSetting.SettingType.RANGE ->
+    SettingType.RANGE ->
       "The measurement range of the sensor. Higher ranges can detect larger movements but may reduce sensitivity to small changes."
 
-    PolarSensorSetting.SettingType.CHANNELS ->
+    SettingType.CHANNELS ->
       "The number of measurement channels. These represent different sensors."
 
     else -> "No additional information available for this setting type."
@@ -615,14 +626,14 @@ private fun getSettingTypeHelpText(settingType: PolarSensorSetting.SettingType):
 }
 
 private fun getSettingValueDisplayText(
-  settingType: PolarSensorSetting.SettingType,
+  settingType: SettingType,
   value: Int
 ): String {
   return when (settingType) {
-    PolarSensorSetting.SettingType.SAMPLE_RATE -> "${value} Hz"
-    PolarSensorSetting.SettingType.RESOLUTION -> "${value} bits"
-    PolarSensorSetting.SettingType.RANGE -> "±${value}g"
-    PolarSensorSetting.SettingType.CHANNELS -> "${value} channel${if (value != 1) "s" else ""}"
+    SettingType.SAMPLE_RATE -> "${value} Hz"
+    SettingType.RESOLUTION -> "${value} bits"
+    SettingType.RANGE -> "±${value}g"
+    SettingType.CHANNELS -> "${value} channel${if (value != 1) "s" else ""}"
     else -> value.toString()
   }
 }

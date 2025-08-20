@@ -8,11 +8,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
 import com.wboelens.polarrecorder.viewModels.ConnectionState
-import com.wboelens.polarrecorder.viewModels.DeviceViewModel
+import com.wboelens.polarrecorder.viewModels.Device
 
 @Composable
 fun SelectedDevicesSection(
-  selectedDevices: List<DeviceViewModel.Device>,
+  selectedDevices: List<Device>,
   lastDataTimestamps: Map<String, Long>,
   batteryLevels: Map<String, Int>,
   lastData: Map<String, Map<PolarDeviceDataType, Float?>>

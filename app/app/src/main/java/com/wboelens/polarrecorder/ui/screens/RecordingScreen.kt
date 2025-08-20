@@ -53,10 +53,12 @@ fun RecordingScreen(
           )
         },
     ) { paddingValues ->
-      Column(modifier = Modifier
-          .fillMaxSize()
-          .padding(paddingValues)
-          .padding(16.dp)) {
+      Column(
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(paddingValues)
+              .padding(16.dp),
+      ) {
         RecordingControls(
             isRecording = isRecording,
             isFileSystemEnabled = isFileSystemEnabled,

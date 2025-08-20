@@ -17,12 +17,17 @@ import com.polar.sdk.api.model.PolarPpiData
 import com.polar.sdk.api.model.PolarTemperatureData
 import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.dataSavers.InitializationState
+import com.wboelens.polarrecorder.repository.LogRepository
+import com.wboelens.polarrecorder.repository.PolarRepository
 import com.wboelens.polarrecorder.services.RecordingService
-import com.wboelens.polarrecorder.viewModels.DeviceViewModel
-import com.wboelens.polarrecorder.viewModels.LogViewModel
+import com.wboelens.polarrecorder.viewModels.Device
+import com.wboelens.polarrecorder.viewModels.LogEntry
 import io.reactivex.rxjava3.disposables.Disposable
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
 
@@ -60,8 +65,8 @@ fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float
 class RecordingManager(
   private val context: Context,
   private val polarManager: PolarManager,
-  private val logViewModel: LogViewModel,
-  private val deviceViewModel: DeviceViewModel,
+  private val logRepository: LogRepository,
+  private val polarRepository: PolarRepository,
   private val preferencesManager: PreferencesManager,
   private val dataSavers: DataSavers
 ) {
@@ -75,16 +80,16 @@ class RecordingManager(
   var currentRecordingName: String = ""
 
   private val connectedDevicesObserver =
-      Observer<List<DeviceViewModel.Device>> { devices ->
+      Observer<List<Device>> { devices ->
         if (!_isRecording.value) {
           return@Observer
         }
 
         if (devices.isEmpty() && preferencesManager.recordingStopOnDisconnect) {
-          logViewModel.addLogError("No devices connected, stopping recording")
+          logRepository.addLogError("No devices connected, stopping recording")
           stopRecording()
         } else {
-          val selectedDevices = deviceViewModel.selectedDevices.value ?: emptyList()
+          val selectedDevices = polarRepository.selectedDevices.value ?: emptyList()
           val connectedDeviceIds = devices.map { it.info.deviceId }
 
           // Process devices that were selected but are no longer connected
@@ -112,7 +117,7 @@ class RecordingManager(
       }
 
   private val logMessagesObserver =
-      Observer<List<LogViewModel.LogEntry>> { messages ->
+      Observer<List<LogEntry>> { messages ->
         if (messages.isNotEmpty() && messages.size > lastSavedLogSize) {
           saveUnsavedLogMessages(messages)
         }
@@ -131,14 +136,29 @@ class RecordingManager(
   private val _lastDataTimestamps = MutableStateFlow<Map<String, Long>>(emptyMap())
   val lastDataTimestamps: StateFlow<Map<String, Long>> = _lastDataTimestamps
 
+  private val jobs: List<Job>
+
   init {
-    deviceViewModel.connectedDevices.observeForever(connectedDevicesObserver)
-    logViewModel.logMessages.observeForever(logMessagesObserver)
+    this.jobs = buildList {
+      this += MainScope().launch {
+        polarRepository.connectedDevices
+            .collect {
+              connectedDevicesObserver.onChanged(it)
+            }
+      }
+
+      this += MainScope().launch {
+        logRepository.logMessages
+            .collect {
+              logMessagesObserver.onChanged(it)
+            }
+      }
+    }
   }
 
-  private fun saveUnsavedLogMessages(messages: List<LogViewModel.LogEntry>) {
+  private fun saveUnsavedLogMessages(messages: List<LogEntry>) {
     val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
-    val selectedDevices = deviceViewModel.selectedDevices.value
+    val selectedDevices = polarRepository.selectedDevices.value
 
     if (!_isRecording.value || selectedDevices.isNullOrEmpty() || enabledDataSavers.isEmpty()) {
       // Recording is not in progress, or no devices or data savers are enabled
@@ -169,28 +189,28 @@ class RecordingManager(
 
   fun startRecording() {
     if (preferencesManager.recordingName === "") {
-      logViewModel.addLogError("Recording name cannot be the empty string")
+      logRepository.addLogError("Recording name cannot be the empty string")
       return
     }
 
     if (_isRecording.value) {
-      logViewModel.addLogError("Recording already in progress")
+      logRepository.addLogError("Recording already in progress")
       return
     }
 
-    val selectedDevices = deviceViewModel.selectedDevices.value
+    val selectedDevices = polarRepository.selectedDevices.value
     if (selectedDevices.isNullOrEmpty()) {
-      logViewModel.addLogError("Cannot start recording: No devices selected")
+      logRepository.addLogError("Cannot start recording: No devices selected")
       return
     }
 
-    val connectedDevices = deviceViewModel.connectedDevices.value ?: emptyList()
+    val connectedDevices = polarRepository.connectedDevices.value ?: emptyList()
     val connectedDeviceIds = connectedDevices.map { it.info.deviceId }
     val disconnectedDevices =
         selectedDevices.filter { !connectedDeviceIds.contains(it.info.deviceId) }
     if (disconnectedDevices.isNotEmpty()) {
       val disconnectedNames = disconnectedDevices.map { it.info.name }.joinToString(", ")
-      logViewModel.addLogError(
+      logRepository.addLogError(
           "Cannot start recording: Some selected devices are not connected: $disconnectedNames",
       )
       return
@@ -199,14 +219,14 @@ class RecordingManager(
     // Check if datasavers are initialized
     val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
     if (enabledDataSavers.isEmpty()) {
-      logViewModel.addLogError("Cannot start recording: No data savers are enabled")
+      logRepository.addLogError("Cannot start recording: No data savers are enabled")
       return
     }
 
     val uninitializedSavers =
         enabledDataSavers.filter { it.isInitialized.value != InitializationState.SUCCESS }
     if (uninitializedSavers.isNotEmpty()) {
-      logViewModel.addLogError(
+      logRepository.addLogError(
           "Cannot start recording: Data savers are not initialized. Please go through the initialization process first.",
       )
       return
@@ -222,7 +242,7 @@ class RecordingManager(
     // Log app version information
     logDeviceAndAppInfo()
 
-    logViewModel.addLogSuccess(
+    logRepository.addLogSuccess(
         "Recording $currentRecordingName started, saving to ${
           dataSavers.enabledCount
         } data saver(s)",
@@ -240,12 +260,12 @@ class RecordingManager(
     selectedDevices.forEach { device -> startStreamsForDevice(device) }
   }
 
-  private fun startStreamsForDevice(device: DeviceViewModel.Device) {
+  private fun startStreamsForDevice(device: Device) {
     val deviceId = device.info.deviceId
 
     disposables[deviceId] = mutableMapOf()
     disposables[deviceId]?.let { deviceDisposables ->
-      val selectedDataTypes = deviceViewModel.getDeviceDataTypes(deviceId)
+      val selectedDataTypes = polarRepository.getDeviceDataTypes(deviceId)
       selectedDataTypes.forEach { dataType ->
         deviceDisposables[dataType.name.lowercase()] = startStreamForDevice(deviceId, dataType)
       }
@@ -257,19 +277,19 @@ class RecordingManager(
     dataType: PolarBleApi.PolarDeviceDataType
   ): Disposable {
     val selectedSensorSettings =
-        deviceViewModel.getDeviceSensorSettingsForDataType(deviceId, dataType)
+        polarRepository.getDeviceSensorSettingsForDataType(deviceId, dataType)
 
     return polarManager
         .startStreaming(deviceId, dataType, selectedSensorSettings)
         .subscribeOn(io.reactivex.rxjava3.schedulers.Schedulers.io())
         .observeOn(io.reactivex.rxjava3.schedulers.Schedulers.computation())
         .retry(RETRY_COUNT)
-        .doOnSubscribe { logViewModel.addLogMessage("Starting $dataType stream for $deviceId") }
+        .doOnSubscribe { logRepository.addLogMessage("Starting $dataType stream for $deviceId") }
         .doOnError { error ->
-          logViewModel.addLogError("Stream error for $deviceId - $dataType: ${error.message}")
+          logRepository.addLogError("Stream error for $deviceId - $dataType: ${error.message}")
         }
         .doOnComplete {
-          logViewModel.addLogError("Stream completed unexpectedly for $deviceId - $dataType")
+          logRepository.addLogError("Stream completed unexpectedly for $deviceId - $dataType")
         }
         .subscribe(
             { data ->
@@ -317,7 +337,7 @@ class RecordingManager(
                   }
             },
             { error ->
-              logViewModel.addLogError(
+              logRepository.addLogError(
                   "${dataType.name} recording failed for device $deviceId: ${error.message}",
               )
             },
@@ -333,37 +353,37 @@ class RecordingManager(
         } else {
           @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
         }
-    logViewModel.addLogMessage("App version: $versionName (code: $versionCode)")
+    logRepository.addLogMessage("App version: $versionName (code: $versionCode)")
 
     // Add Polar SDK version information
     val polarSdkVersion = polarManager.getSdkVersion()
-    logViewModel.addLogMessage("Polar SDK version: $polarSdkVersion")
+    logRepository.addLogMessage("Polar SDK version: $polarSdkVersion")
 
     // Add Android version information
     val androidVersion =
         "Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})"
-    logViewModel.addLogMessage("OS version: $androidVersion")
+    logRepository.addLogMessage("OS version: $androidVersion")
 
     // Add device information
     val deviceInfo = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
-    logViewModel.addLogMessage("Phone: $deviceInfo")
+    logRepository.addLogMessage("Phone: $deviceInfo")
   }
 
   fun stopRecording() {
     if (!_isRecording.value) {
-      logViewModel.addLogError("Trying to stop recording while no recording in progress")
+      logRepository.addLogError("Trying to stop recording while no recording in progress")
       return
     }
 
-    logViewModel.addLogMessage("Recording stopped")
+    logRepository.addLogMessage("Recording stopped")
     // Force save the final log message (pt. 1)
-    logViewModel.requestFlushQueue()
+    logRepository.requestFlushQueue()
 
     // Wait for the log to be flushed before continuing by posting to the main thread, just like
     // requestFlushQueue does.
     Handler(Looper.getMainLooper()).post {
       // Force save the final log message (pt. 2)
-      saveUnsavedLogMessages(logViewModel.logMessages.value?.toList() ?: emptyList())
+      saveUnsavedLogMessages(logRepository.logMessages.value?.toList() ?: emptyList())
 
       // Stop the foreground service
       context.stopService(Intent(context, RecordingService::class.java))
@@ -394,7 +414,6 @@ class RecordingManager(
     // cleanup dataSavers
     dataSavers.asList().forEach { saver -> saver.cleanup() }
 
-    deviceViewModel.connectedDevices.removeObserver(connectedDevicesObserver)
-    logViewModel.logMessages.removeObserver(logMessagesObserver)
+    jobs.forEach { it.cancel() }
   }
 }

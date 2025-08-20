@@ -45,9 +45,11 @@ fun MQTTSettingsDialog(
       onDismissRequest = onDismiss,
       title = { Text("MQTT Settings") },
       text = {
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+        ) {
           TextField(
               value = host,
               onValueChange = { host = it },

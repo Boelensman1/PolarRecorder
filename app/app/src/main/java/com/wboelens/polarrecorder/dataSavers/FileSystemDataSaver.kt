@@ -6,22 +6,22 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
-import com.wboelens.polarrecorder.viewModels.LogViewModel
-import java.io.IOException
+import com.wboelens.polarrecorder.repository.LogRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 data class FileSystemDataSaverConfig(val baseDirectory: String = "", val splitAtSizeMb: Int = 0)
 
 class FileSystemDataSaver(
   private val context: Context,
-  logViewModel: LogViewModel,
+  logRepository: LogRepository,
   preferencesManager: PreferencesManager
-) : DataSaver(logViewModel, preferencesManager) {
+) : DataSaver(logRepository, preferencesManager) {
 
   companion object {
     private const val FILE_ROTATION_CHECK_INTERVAL = 60000L // Check every minute
@@ -51,7 +51,7 @@ class FileSystemDataSaver(
 
   override fun enable() {
     if (config.baseDirectory.isEmpty()) {
-      logViewModel.addLogError("Base directory must be configured before starting")
+      this@FileSystemDataSaver.logRepository.addLogError("Base directory must be configured before starting")
       return
     }
 
@@ -60,19 +60,19 @@ class FileSystemDataSaver(
       val userPickedDir = DocumentFile.fromTreeUri(context, selectedUri)
 
       if (userPickedDir == null) {
-        logViewModel.addLogMessage("pickedDir is null, could not construct uri")
+        this@FileSystemDataSaver.logRepository.addLogMessage("pickedDir is null, could not construct uri")
         return
       }
 
       pickedDir = userPickedDir
       setEnabled(true)
-      logViewModel.addLogMessage("File system recording enabled at: ${userPickedDir.uri}")
+      this@FileSystemDataSaver.logRepository.addLogMessage("File system recording enabled at: ${userPickedDir.uri}")
     } catch (e: SecurityException) {
       _isEnabled.value = false
-      logViewModel.addLogError("Permission denied accessing directory: ${e.message}")
+      this@FileSystemDataSaver.logRepository.addLogError("Permission denied accessing directory: ${e.message}")
     } catch (e: IllegalArgumentException) {
       _isEnabled.value = false
-      logViewModel.addLogError("Invalid directory URI: ${e.message}")
+      this@FileSystemDataSaver.logRepository.addLogError("Invalid directory URI: ${e.message}")
     }
   }
 
@@ -105,7 +105,7 @@ class FileSystemDataSaver(
         try {
           streamPair.second.close()
         } catch (e: IOException) {
-          logViewModel.addLogError("[$key] Error closing old stream: ${e.message}")
+          this@FileSystemDataSaver.logRepository.addLogError("[$key] Error closing old stream: ${e.message}")
         }
 
         filePartNumbers[key] = (filePartNumbers[key] ?: 1) + 1
@@ -119,19 +119,19 @@ class FileSystemDataSaver(
             val newStream = context.contentResolver.openOutputStream(newFile.uri, "wa")
             if (newStream != null) {
               outputStreams[key] = Pair(newFile, newStream)
-              logViewModel.addLogMessage("[$key] Created new file part: $fileName")
+              this@FileSystemDataSaver.logRepository.addLogMessage("[$key] Created new file part: $fileName")
             }
           }
         } catch (e: SecurityException) {
-          logViewModel.addLogError(
+          this@FileSystemDataSaver.logRepository.addLogError(
               "[$key] Permission denied while creating new file part: ${e.message}",
           )
           outputStreams.remove(key)
         } catch (e: IOException) {
-          logViewModel.addLogError("[$key] I/O error while creating new file part: ${e.message}")
+          this@FileSystemDataSaver.logRepository.addLogError("[$key] I/O error while creating new file part: ${e.message}")
           outputStreams.remove(key)
         } catch (e: IllegalArgumentException) {
-          logViewModel.addLogError(
+          this@FileSystemDataSaver.logRepository.addLogError(
               "[$key] Invalid arguments while creating new file part: ${e.message}",
           )
           outputStreams.remove(key)
@@ -164,19 +164,19 @@ class FileSystemDataSaver(
         streamPair.second.write(payloadAsByteArray)
 
         if (!firstMessageSaved[key]!!) {
-          logViewModel.addLogMessage(
+          this@FileSystemDataSaver.logRepository.addLogMessage(
               "[$deviceId] Successfully saved first $dataType data to filesystem.",
           )
           firstMessageSaved[key] = true
         }
       } catch (e: IOException) {
         // If stream was closed, try to rotate file immediately
-        logViewModel.addLogError(
+        this@FileSystemDataSaver.logRepository.addLogError(
             "[$deviceId] Failed to write data to file: ${e.message}. Attempting emergency rotation",
         )
         checkAndRotateFile(deviceId, dataType)
       } catch (e: IllegalStateException) {
-        logViewModel.addLogError("[$deviceId] Failed to save data to file system: ${e.message}")
+        this@FileSystemDataSaver.logRepository.addLogError("[$deviceId] Failed to save data to file system: ${e.message}")
       }
     }
   }
@@ -200,7 +200,7 @@ class FileSystemDataSaver(
                   if (parts.size == 2) {
                     checkAndRotateFile(parts[0], parts[1])
                   } else {
-                    logViewModel.addLogError(
+                    this@FileSystemDataSaver.logRepository.addLogError(
                         "[${parts[0]}] Invalid key format: $key, expected deviceId/dataType",
                     )
                   }
@@ -210,13 +210,13 @@ class FileSystemDataSaver(
       }
 
       if (pickedDir == null) {
-        logViewModel.addLogError("Cannot init file system saving: pickedDir is null")
+        this@FileSystemDataSaver.logRepository.addLogError("Cannot init file system saving: pickedDir is null")
         _isInitialized.value = InitializationState.FAILED
         return
       }
 
       if (recordingName.isEmpty()) {
-        logViewModel.addLogError("Cannot init file system saving: recordingName is empty")
+        this@FileSystemDataSaver.logRepository.addLogError("Cannot init file system saving: recordingName is empty")
         _isInitialized.value = InitializationState.FAILED
         return
       }
@@ -227,7 +227,7 @@ class FileSystemDataSaver(
         val currentRecordingDir = recordingDir?.createDirectory(info.deviceName)
 
         if (recordingDir == null) {
-          logViewModel.addLogError(
+          this@FileSystemDataSaver.logRepository.addLogError(
               "[$deviceId] Cannot init file system saving: recordingDir is null",
           )
           _isInitialized.value = InitializationState.FAILED
@@ -239,7 +239,7 @@ class FileSystemDataSaver(
           val key = "$deviceId/$dataType"
 
           if (currentRecordingDir == null) {
-            logViewModel.addLogError(
+            this@FileSystemDataSaver.logRepository.addLogError(
                 "[$deviceId/$dataType] Cannot init file system saving: currentRecordingDir is null",
             )
             _isInitialized.value = InitializationState.FAILED
@@ -251,7 +251,7 @@ class FileSystemDataSaver(
                 ?: currentRecordingDir.createFile("application/jsonl", fileName)
 
           if (file == null) {
-            logViewModel.addLogError(
+            this@FileSystemDataSaver.logRepository.addLogError(
                 "[$deviceId/$dataType] Failed to create or access file $fileName in ${
                   Uri.decode(currentRecordingDir.uri.toString())
                 }",
@@ -262,7 +262,7 @@ class FileSystemDataSaver(
 
           val stream = context.contentResolver.openOutputStream(file.uri, "wa")
           if (stream == null) {
-            logViewModel.addLogError(
+            this@FileSystemDataSaver.logRepository.addLogError(
                 "[$deviceId/$dataType] Failed to create or access stream ${file.uri}",
             )
             _isInitialized.value = InitializationState.FAILED
@@ -276,9 +276,9 @@ class FileSystemDataSaver(
 
       // Set initialization state to SUCCESS if we reach this point
       _isInitialized.value = InitializationState.SUCCESS
-      logViewModel.addLogMessage("File system data saver initialized successfully")
+      this@FileSystemDataSaver.logRepository.addLogMessage("File system data saver initialized successfully")
     } catch (e: Exception) {
-      logViewModel.addLogError("Failed to initialize file system data saver: ${e.message}")
+      this@FileSystemDataSaver.logRepository.addLogError("Failed to initialize file system data saver: ${e.message}")
       _isInitialized.value = InitializationState.FAILED
     }
   }
@@ -291,7 +291,7 @@ class FileSystemDataSaver(
       try {
         stream.close()
       } catch (e: IOException) {
-        logViewModel.addLogError("[$key] Failed to close output stream: ${e.message}")
+        this@FileSystemDataSaver.logRepository.addLogError("[$key] Failed to close output stream: ${e.message}")
       }
     }
     outputStreams.clear()

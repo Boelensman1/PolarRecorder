@@ -56,10 +56,12 @@ fun DeviceSettingsScreen(
           )
         },
     ) { paddingValues ->
-      Column(modifier = Modifier
-          .fillMaxSize()
-          .padding(paddingValues)
-          .padding(16.dp)) {
+      Column(
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(paddingValues)
+              .padding(16.dp),
+      ) {
         Text(
             text = "Configure device settings",
             style = MaterialTheme.typography.headlineMedium,

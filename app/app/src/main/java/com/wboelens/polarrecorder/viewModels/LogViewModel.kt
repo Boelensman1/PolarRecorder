@@ -1,92 +1,74 @@
 package com.wboelens.polarrecorder.viewModels
 
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.lifecycle.asLiveData
+import com.wboelens.polarrecorder.repository.LogRepository
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+
+data class LogEntry(val message: String, val type: LogType, val timestamp: Long)
+
+enum class LogType {
+  SUCCESS,
+  NORMAL,
+  ERROR
+}
 
 class LogViewModel : ViewModel() {
   companion object {
-    private const val MAX_LOG_MESSAGES = 250
     private const val TAG = "LogViewModel"
   }
 
-  data class LogEntry(val message: String, val type: LogType, val timestamp: Long)
+  private lateinit var logRepository: LogRepository
 
-  enum class LogType {
-    SUCCESS,
-    NORMAL,
-    ERROR,
-  }
-
-  private val _logMessages = MutableLiveData<List<LogEntry>>(emptyList())
-  val logMessages: LiveData<List<LogEntry>> = _logMessages
-
-  private val logQueue = java.util.concurrent.ConcurrentLinkedQueue<LogEntry>()
+  private lateinit var _logMessages: LiveData<List<LogEntry>>
+  val logMessages: LiveData<List<LogEntry>>
+      get() = _logMessages
 
   // Property to hold the snackbar messages queue, used to display snackbars with log messages
-  private val _snackbarMessagesQueue = MutableStateFlow<List<LogEntry>>(emptyList())
-  val snackbarMessagesQueue: StateFlow<List<LogEntry>> = _snackbarMessagesQueue.asStateFlow()
+  private lateinit var _snackbarMessagesQueue: StateFlow<List<LogEntry>>
+
+  val snackbarMessagesQueue: StateFlow<List<LogEntry>>
+    get() = _snackbarMessagesQueue
+
+  init {
+
+  }
+
+  fun setup(logRepository: LogRepository) {
+    this.logRepository = logRepository
+
+    _logMessages = logRepository.logMessages.asLiveData()
+    _snackbarMessagesQueue = logRepository.snackbarMessagesQueue
+  }
 
   // Method to pop the first snackbar message from the queue
   fun popSnackbarMessage(): LogEntry? {
-    return if (_snackbarMessagesQueue.value.isNotEmpty()) {
-      val firstMessage = _snackbarMessagesQueue.value.first()
-      _snackbarMessagesQueue.value = _snackbarMessagesQueue.value.drop(1)
-      firstMessage
-    } else null
-  }
-
-  private fun add(message: String, type: LogType, withSnackbar: Boolean) {
-    val entry = LogEntry(message, type, System.currentTimeMillis())
-    logQueue.offer(entry)
-    requestFlushQueue()
-    if (withSnackbar) {
-      _snackbarMessagesQueue.value += entry
-    }
+    return logRepository.popSnackbarMessage()
   }
 
   fun addLogMessage(message: String, withSnackbar: Boolean = false) {
     Log.d(TAG, message)
-    this.add(message, LogType.NORMAL, withSnackbar)
+
+    logRepository.addLogMessage(message, withSnackbar)
   }
 
   fun addLogError(message: String, withSnackbar: Boolean = true) {
     Log.e(TAG, message)
-    this.add(message, LogType.ERROR, withSnackbar)
+    logRepository.addLogError(message, withSnackbar)
   }
 
   fun addLogSuccess(message: String, withSnackbar: Boolean = false) {
     Log.d(TAG, message)
-    this.add(message, LogType.SUCCESS, withSnackbar)
+    logRepository.addLogSuccess(message, withSnackbar)
   }
 
   fun requestFlushQueue() {
-    Handler(Looper.getMainLooper()).post { flushQueue() }
-  }
-
-  // Merge all queued items into the LiveData once
-  private fun flushQueue() {
-    // Drain everything currently in the queue
-    val newEntries = mutableListOf<LogEntry>()
-    while (true) {
-      val entry = logQueue.poll() ?: break
-      newEntries.add(entry)
-    }
-    if (newEntries.isNotEmpty()) {
-      val currentList = _logMessages.value.orEmpty()
-      val updatedList = (currentList + newEntries).takeLast(MAX_LOG_MESSAGES)
-      _logMessages.value = updatedList
-    }
+    logRepository.requestFlushQueue()
   }
 
   fun clearLogs() {
-    logQueue.clear()
-    _logMessages.value = emptyList()
+    logRepository.clearLogs()
   }
 }

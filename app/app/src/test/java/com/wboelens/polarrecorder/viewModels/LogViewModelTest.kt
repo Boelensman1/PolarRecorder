@@ -35,7 +35,7 @@ class LogViewModelTest {
     val logs = viewModel.logMessages.value
     assertEquals(1, logs?.size)
     assertEquals("Test message", logs?.get(0)?.message)
-    assertEquals(LogViewModel.LogType.NORMAL, logs?.get(0)?.type)
+    assertEquals(LogType.NORMAL, logs?.get(0)?.type)
   }
 
   @Test
@@ -48,7 +48,7 @@ class LogViewModelTest {
     val logs = viewModel.logMessages.value
     assertEquals(1, logs?.size)
     assertEquals("Error message", logs?.get(0)?.message)
-    assertEquals(LogViewModel.LogType.ERROR, logs?.get(0)?.type)
+    assertEquals(LogType.ERROR, logs?.get(0)?.type)
   }
 
   @Test
@@ -61,7 +61,7 @@ class LogViewModelTest {
     val logs = viewModel.logMessages.value
     assertEquals(1, logs?.size)
     assertEquals("Success message", logs?.get(0)?.message)
-    assertEquals(LogViewModel.LogType.SUCCESS, logs?.get(0)?.type)
+    assertEquals(LogType.SUCCESS, logs?.get(0)?.type)
   }
 
   @Test

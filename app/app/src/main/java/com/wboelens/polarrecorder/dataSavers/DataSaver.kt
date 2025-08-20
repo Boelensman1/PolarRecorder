@@ -3,7 +3,7 @@ package com.wboelens.polarrecorder.dataSavers
 import com.google.gson.Gson
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
-import com.wboelens.polarrecorder.viewModels.LogViewModel
+import com.wboelens.polarrecorder.repository.LogRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +15,7 @@ enum class InitializationState {
 }
 
 abstract class DataSaver(
-  protected val logViewModel: LogViewModel,
+  protected val logRepository: LogRepository,
   protected val preferencesManager: PreferencesManager
 ) {
   // Track first message status

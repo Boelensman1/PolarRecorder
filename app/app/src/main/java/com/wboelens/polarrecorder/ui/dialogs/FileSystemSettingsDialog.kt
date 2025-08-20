@@ -67,9 +67,11 @@ fun FileSystemSettingsDialog(
       onDismissRequest = onDismiss,
       title = { Text("File System Settings") },
       text = {
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+        ) {
           Button(onClick = onDirectoryPick, modifier = Modifier.fillMaxWidth()) {
             Text("Select Directory")
           }

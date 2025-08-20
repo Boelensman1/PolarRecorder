@@ -103,10 +103,12 @@ fun DataSaverInitializationScreen(
           )
         },
     ) { paddingValues ->
-      Column(modifier = Modifier
-          .fillMaxSize()
-          .padding(paddingValues)
-          .padding(16.dp)) {
+      Column(
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(paddingValues)
+              .padding(16.dp),
+      ) {
         enabledSavers.forEach { saver ->
           DataSaverInitializationItem(saver = saver)
           Spacer(modifier = Modifier.height(8.dp))
@@ -144,9 +146,12 @@ private fun DataSaverInitializationItem(saver: DataSaver) {
       )
     }
 
-    Box(modifier = Modifier
-        .size(24.dp)
-        .padding(4.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .padding(4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
       when (initState) {
         InitializationState.NOT_STARTED -> {
           CircularProgressIndicator(modifier = Modifier.fillMaxSize(), strokeWidth = 2.dp)

@@ -63,9 +63,11 @@ fun DeviceSelectionScreen(
           isRefreshing = isRefreshing.value && isBLEEnabled.value,
           onRefresh = onRefresh,
       ) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+        ) {
           DeviceList(
               deviceViewModel = deviceViewModel, isBLEEnabled = polarManager.isBLEEnabled.value,
           )

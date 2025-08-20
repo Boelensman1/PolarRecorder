@@ -10,15 +10,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.wboelens.polarrecorder.viewModels.LogType
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 
 @Composable
 fun SnackbarMessageDisplayer(
   logViewModel: LogViewModel
-): Pair<SnackbarHostState, LogViewModel.LogType?> {
+): Pair<SnackbarHostState, LogType?> {
   val snackbarHostState = remember { SnackbarHostState() }
   // Track the current log type
-  val currentLogType = remember { mutableStateOf<LogViewModel.LogType?>(null) }
+  val currentLogType = remember { mutableStateOf<LogType?>(null) }
 
   // Collect errors in a side-effect
   LaunchedEffect(logViewModel.snackbarMessagesQueue.hashCode()) {
@@ -44,23 +45,23 @@ fun SnackbarMessageDisplayer(
 @Composable
 fun LogMessageSnackbarHost(
   snackbarHostState: SnackbarHostState,
-  logType: LogViewModel.LogType? = null,
+  logType: LogType? = null,
   modifier: Modifier = Modifier
 ) {
   SnackbarHost(hostState = snackbarHostState, modifier = modifier) { data ->
     val containerColor =
         when (logType) {
-          LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.primary
-          LogViewModel.LogType.NORMAL -> MaterialTheme.colorScheme.surface
-          LogViewModel.LogType.ERROR -> MaterialTheme.colorScheme.error
+          LogType.SUCCESS -> MaterialTheme.colorScheme.primary
+          LogType.NORMAL -> MaterialTheme.colorScheme.surface
+          LogType.ERROR -> MaterialTheme.colorScheme.error
           null -> MaterialTheme.colorScheme.surface // Default case
         }
 
     val contentColor =
         when (logType) {
-          LogViewModel.LogType.SUCCESS -> MaterialTheme.colorScheme.onPrimary
-          LogViewModel.LogType.NORMAL -> MaterialTheme.colorScheme.onSurface
-          LogViewModel.LogType.ERROR -> MaterialTheme.colorScheme.onError
+          LogType.SUCCESS -> MaterialTheme.colorScheme.onPrimary
+          LogType.NORMAL -> MaterialTheme.colorScheme.onSurface
+          LogType.ERROR -> MaterialTheme.colorScheme.onError
           null -> MaterialTheme.colorScheme.onSurface // Default case
         }
 

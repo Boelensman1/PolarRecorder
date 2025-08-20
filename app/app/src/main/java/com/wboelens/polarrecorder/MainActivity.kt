@@ -36,11 +36,20 @@ class MainActivity : ComponentActivity() {
   private val deviceViewModel: DeviceViewModel by viewModels()
   private val logViewModel: LogViewModel by viewModels()
   private val fileSystemViewModel: FileSystemSettingsViewModel by viewModels()
-  private lateinit var polarManager: PolarManager
+
+  private val polarRecorderApplication: PolarRecorderApplication
+    get() = application as PolarRecorderApplication
+
+  private val polarManager: PolarManager
+    get() = polarRecorderApplication.polarManager
   private lateinit var permissionManager: PermissionManager
-  private lateinit var recordingManager: RecordingManager
-  private lateinit var preferencesManager: PreferencesManager
-  private lateinit var dataSavers: DataSavers
+
+  private val recordingManager: RecordingManager
+    get() = polarRecorderApplication.recordingManager
+  private val preferencesManager: PreferencesManager
+    get() = polarRecorderApplication.preferencesManager
+  private val dataSavers: DataSavers
+    get() = polarRecorderApplication.dataSavers
 
   companion object {
     private const val TAG = "PolarManager"
@@ -49,25 +58,11 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     Log.d(TAG, "onCreate: Initializing MainActivity")
-    Log.d(TAG, "onCreate: Initializing MainActivity")
-
-    // Load saved settings
-    this.preferencesManager = PreferencesManager(applicationContext)
-
-    // Init datasavers
-    this.dataSavers = DataSavers(applicationContext, logViewModel, this.preferencesManager)
 
     permissionManager = PermissionManager(this)
-    polarManager = PolarManager(applicationContext, deviceViewModel, logViewModel)
-    recordingManager =
-        RecordingManager(
-            applicationContext,
-            polarManager,
-            logViewModel,
-            deviceViewModel,
-            preferencesManager,
-            dataSavers,
-        )
+
+    deviceViewModel.setup(polarRecorderApplication.polarRepository)
+    logViewModel.setup(polarRecorderApplication.logRepository)
 
     registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
       if (result.resultCode == RESULT_OK) {

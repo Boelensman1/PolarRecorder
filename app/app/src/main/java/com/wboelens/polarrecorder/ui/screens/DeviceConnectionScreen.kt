@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.viewModels.ConnectionState
+import com.wboelens.polarrecorder.viewModels.Device
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,10 +72,12 @@ fun DeviceConnectionScreen(
           )
         },
     ) { paddingValues ->
-      Column(modifier = Modifier
-          .fillMaxSize()
-          .padding(paddingValues)
-          .padding(16.dp)) {
+      Column(
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(paddingValues)
+              .padding(16.dp),
+      ) {
         selectedDevices.forEach { device ->
           DeviceConnectionItem(device = device)
           Spacer(modifier = Modifier.height(8.dp))
@@ -85,7 +88,7 @@ fun DeviceConnectionScreen(
 }
 
 @Composable
-private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
+private fun DeviceConnectionItem(device: Device) {
   Row(
       modifier = Modifier
           .fillMaxWidth()
@@ -112,9 +115,12 @@ private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
       )
     }
 
-    Box(modifier = Modifier
-        .size(24.dp)
-        .padding(4.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .padding(4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
       when (device.connectionState) {
         ConnectionState.CONNECTING,
         ConnectionState.FETCHING_CAPABILITIES -> {

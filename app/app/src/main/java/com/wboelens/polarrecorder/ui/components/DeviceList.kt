@@ -21,6 +21,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.wboelens.polarrecorder.viewModels.Device
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
 @Composable
@@ -60,10 +61,13 @@ fun DeviceList(deviceViewModel: DeviceViewModel, isBLEEnabled: Boolean) {
 }
 
 @Composable
-private fun DeviceItem(device: DeviceViewModel.Device, onSelect: () -> Unit) {
-  Card(modifier = Modifier
-      .fillMaxWidth()
-      .height(72.dp), onClick = onSelect) {
+private fun DeviceItem(device: Device, onSelect: () -> Unit) {
+  Card(
+      modifier = Modifier
+          .fillMaxWidth()
+          .height(72.dp),
+      onClick = onSelect,
+  ) {
     Row(
         modifier = Modifier
             .fillMaxSize()

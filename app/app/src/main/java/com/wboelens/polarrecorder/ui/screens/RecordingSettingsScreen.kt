@@ -70,10 +70,12 @@ fun RecordingSettingsScreen(
           )
         },
     ) { paddingValues ->
-      Column(modifier = Modifier
-          .fillMaxSize()
-          .padding(paddingValues)
-          .padding(16.dp)) {
+      Column(
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(paddingValues)
+              .padding(16.dp),
+      ) {
         SaveToOptions(
             dataSavers = dataSavers,
             preferencesManager = preferencesManager,
