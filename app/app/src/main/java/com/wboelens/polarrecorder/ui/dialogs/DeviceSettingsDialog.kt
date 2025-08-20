@@ -43,29 +43,29 @@ import com.wboelens.polarrecorder.managers.PolarApiResult
 import com.wboelens.polarrecorder.managers.PolarDeviceSettings
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
-import java.util.Calendar
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null, sdkModeEnabled = false)
 
 data class DeviceSettingState(
-    val isLoading: Boolean = false,
-    val resultMessage: String? = null,
-    val isSuccess: Boolean = false,
+  val isLoading: Boolean = false,
+  val resultMessage: String? = null,
+  val isSuccess: Boolean = false
 )
 
 @Composable
 fun DeviceSettingsDialog(
-    deviceId: String,
-    polarManager: PolarManager,
-    onDismiss: () -> Unit,
-    onDataTypeSettingsSelected:
-        (
-            Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
-            Set<PolarDeviceDataType>,
-        ) -> Unit,
-    initialDataTypeSettings: Map<PolarDeviceDataType, PolarSensorSetting>? = emptyMap(),
-    initialDataTypes: Set<PolarDeviceDataType> = emptySet(),
+  deviceId: String,
+  polarManager: PolarManager,
+  onDismiss: () -> Unit,
+  onDataTypeSettingsSelected:
+  (
+    Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
+    Set<PolarDeviceDataType>
+  ) -> Unit,
+  initialDataTypeSettings: Map<PolarDeviceDataType, PolarSensorSetting>? = emptyMap(),
+  initialDataTypes: Set<PolarDeviceDataType> = emptySet()
 ) {
   var availableSettingsMap by remember {
     mutableStateOf<Map<PolarDeviceDataType, PolarSensorSetting>>(emptyMap())
@@ -78,7 +78,7 @@ fun DeviceSettingsDialog(
     mutableStateOf(
         initialDataTypeSettings?.mapValues { (_, sensorSetting) ->
           sensorSetting.settings.mapValues { (_, values) -> values.firstOrNull() ?: 0 }
-        } ?: emptyMap()
+        } ?: emptyMap(),
     )
   }
 
@@ -141,6 +141,7 @@ fun DeviceSettingsDialog(
                     isSuccess = true,
                 )
           }
+
           is PolarApiResult.Failure -> {
             timeSetState =
                 timeSetState.copy(
@@ -166,6 +167,7 @@ fun DeviceSettingsDialog(
                     isSuccess = true,
                 )
           }
+
           is PolarApiResult.Failure -> {
             sdkModeSetState =
                 sdkModeSetState.copy(
@@ -180,17 +182,26 @@ fun DeviceSettingsDialog(
   }
 
   Dialog(onDismissRequest = onDismiss) {
-    Card(modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(max = 600.dp)) {
-      Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp)
+        .heightIn(max = 600.dp)) {
+      Column(modifier = Modifier
+          .padding(16.dp)
+          .fillMaxWidth()) {
         Text(text = "Settings - Device $deviceId", style = MaterialTheme.typography.titleLarge)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+        Box(modifier = Modifier
+            .weight(1f)
+            .verticalScroll(rememberScrollState())) {
           Column {
             if (isLoading) {
               Box(
-                  modifier = Modifier.fillMaxWidth().padding(32.dp),
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .padding(32.dp),
                   contentAlignment = androidx.compose.ui.Alignment.Center,
               ) {
                 CircularProgressIndicator()
@@ -240,18 +251,18 @@ fun DeviceSettingsDialog(
 
 @Composable
 private fun DeviceSettingsContent(
-    deviceSettings: PolarDeviceSettings,
-    isTimeManagementAvailable: Boolean,
-    onSetTime: () -> Unit,
-    onToggleSdkMode: () -> Unit,
-    timeSetState: DeviceSettingState,
-    sdkModeSetState: DeviceSettingState,
-    availableDataTypes: Set<PolarDeviceDataType>,
-    selectedDataTypes: Set<PolarDeviceDataType>,
-    onDataTypesChanged: (Set<PolarDeviceDataType>) -> Unit,
-    availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
-    selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
-    onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit,
+  deviceSettings: PolarDeviceSettings,
+  isTimeManagementAvailable: Boolean,
+  onSetTime: () -> Unit,
+  onToggleSdkMode: () -> Unit,
+  timeSetState: DeviceSettingState,
+  sdkModeSetState: DeviceSettingState,
+  availableDataTypes: Set<PolarDeviceDataType>,
+  selectedDataTypes: Set<PolarDeviceDataType>,
+  onDataTypesChanged: (Set<PolarDeviceDataType>) -> Unit,
+  availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
+  selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
+  onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit
 ) {
   DeviceSettingsSection(
       deviceSettings = deviceSettings,
@@ -274,11 +285,11 @@ private fun DeviceSettingsContent(
 
 @Composable
 private fun DataTypeSettingsDialog(
-    dataType: PolarDeviceDataType,
-    availableSettings: PolarSensorSetting,
-    selectedSettings: Map<PolarSensorSetting.SettingType, Int>,
-    onDismiss: () -> Unit,
-    onSettingsChanged: (Map<PolarSensorSetting.SettingType, Int>) -> Unit,
+  dataType: PolarDeviceDataType,
+  availableSettings: PolarSensorSetting,
+  selectedSettings: Map<PolarSensorSetting.SettingType, Int>,
+  onDismiss: () -> Unit,
+  onSettingsChanged: (Map<PolarSensorSetting.SettingType, Int>) -> Unit
 ) {
   var tempSettings by remember { mutableStateOf(selectedSettings) }
 
@@ -310,10 +321,10 @@ private fun DataTypeSettingsDialog(
 
 @Composable
 private fun SettingSection(
-    settingType: PolarSensorSetting.SettingType,
-    options: List<Int>,
-    selectedValue: Int?,
-    onValueSelected: (Int) -> Unit,
+  settingType: PolarSensorSetting.SettingType,
+  options: List<Int>,
+  selectedValue: Int?,
+  onValueSelected: (Int) -> Unit
 ) {
   var showHelpDialog by remember { mutableStateOf(false) }
 
@@ -330,7 +341,9 @@ private fun SettingSection(
       Icon(
           imageVector = Icons.Default.Info,
           contentDescription = "Help",
-          modifier = Modifier.size(20.dp).clickable { showHelpDialog = true },
+          modifier = Modifier
+              .size(20.dp)
+              .clickable { showHelpDialog = true },
           tint = MaterialTheme.colorScheme.primary,
       )
     }
@@ -339,7 +352,9 @@ private fun SettingSection(
 
     options.forEach { value ->
       Row(
-          modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+          modifier = Modifier
+              .fillMaxWidth()
+              .padding(vertical = 4.dp),
           verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
       ) {
         RadioButton(selected = value == selectedValue, onClick = { onValueSelected(value) })
@@ -363,12 +378,12 @@ private fun SettingSection(
 
 @Composable
 private fun DeviceSettingsSection(
-    deviceSettings: PolarDeviceSettings,
-    isTimeManagementAvailable: Boolean,
-    onSetTime: () -> Unit,
-    onToggleSdkMode: () -> Unit,
-    timeSetState: DeviceSettingState,
-    sdkModeSetState: DeviceSettingState,
+  deviceSettings: PolarDeviceSettings,
+  isTimeManagementAvailable: Boolean,
+  onSetTime: () -> Unit,
+  onToggleSdkMode: () -> Unit,
+  timeSetState: DeviceSettingState,
+  sdkModeSetState: DeviceSettingState
 ) {
   Column {
     if (isTimeManagementAvailable) {
@@ -434,14 +449,14 @@ private fun DeviceSettingsSection(
 
 @Composable
 private fun SettingItem(
-    title: String,
-    content: @Composable () -> Unit,
-    buttonText: String,
-    isLoading: Boolean,
-    loadingText: String,
-    result: String?,
-    isSuccess: Boolean,
-    onAction: () -> Unit,
+  title: String,
+  content: @Composable () -> Unit,
+  buttonText: String,
+  isLoading: Boolean,
+  loadingText: String,
+  result: String?,
+  isSuccess: Boolean,
+  onAction: () -> Unit
 ) {
   Column {
     Text(text = title, style = MaterialTheme.typography.titleMedium)
@@ -480,12 +495,12 @@ private fun SettingItem(
 
 @Composable
 private fun DataTypeSection(
-    availableTypes: Set<PolarDeviceDataType>,
-    selectedTypes: Set<PolarDeviceDataType>,
-    onSelectionChanged: (Set<PolarDeviceDataType>) -> Unit,
-    availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
-    selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
-    onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit,
+  availableTypes: Set<PolarDeviceDataType>,
+  selectedTypes: Set<PolarDeviceDataType>,
+  onSelectionChanged: (Set<PolarDeviceDataType>) -> Unit,
+  availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
+  selectedSettingsMap: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
+  onSettingsChanged: (Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>) -> Unit
 ) {
   var showSettingsDialog by remember { mutableStateOf(false) }
   var selectedDataTypeForSettings by remember { mutableStateOf<PolarDeviceDataType?>(null) }
@@ -512,15 +527,13 @@ private fun DataTypeSection(
             },
         )
 
-        if (
-            selectedTypes.contains(dataType) &&
-                availableSettingsMap[dataType]?.settings?.isNotEmpty() == true
-        ) {
+        if (selectedTypes.contains(dataType) &&
+          availableSettingsMap[dataType]?.settings?.isNotEmpty() == true) {
           IconButton(
               onClick = {
                 selectedDataTypeForSettings = dataType
                 showSettingsDialog = true
-              }
+              },
           ) {
             Icon(
                 imageVector = Icons.Default.Settings,
@@ -551,7 +564,7 @@ private fun DataTypeSection(
           onSettingsChanged(
               selectedSettingsMap.toMutableMap().apply {
                 this[selectedDataTypeForSettings!!] = newSettings
-              }
+              },
           )
           showSettingsDialog = false
         },
@@ -586,20 +599,24 @@ private fun getSettingTypeDisplayText(settingType: PolarSensorSetting.SettingTyp
 private fun getSettingTypeHelpText(settingType: PolarSensorSetting.SettingType): String {
   return when (settingType) {
     PolarSensorSetting.SettingType.SAMPLE_RATE ->
-        "The number of samples per second (Hz). Higher sample rates provide more detailed data but consume more battery and storage space."
+      "The number of samples per second (Hz). Higher sample rates provide more detailed data but consume more battery and storage space."
+
     PolarSensorSetting.SettingType.RESOLUTION ->
-        "The precision of each measurement in bits. Higher resolution provides more precise data but increases file size."
+      "The precision of each measurement in bits. Higher resolution provides more precise data but increases file size."
+
     PolarSensorSetting.SettingType.RANGE ->
-        "The measurement range of the sensor. Higher ranges can detect larger movements but may reduce sensitivity to small changes."
+      "The measurement range of the sensor. Higher ranges can detect larger movements but may reduce sensitivity to small changes."
+
     PolarSensorSetting.SettingType.CHANNELS ->
-        "The number of measurement channels. These represent different sensors."
+      "The number of measurement channels. These represent different sensors."
+
     else -> "No additional information available for this setting type."
   }
 }
 
 private fun getSettingValueDisplayText(
-    settingType: PolarSensorSetting.SettingType,
-    value: Int,
+  settingType: PolarSensorSetting.SettingType,
+  value: Int
 ): String {
   return when (settingType) {
     PolarSensorSetting.SettingType.SAMPLE_RATE -> "${value} Hz"

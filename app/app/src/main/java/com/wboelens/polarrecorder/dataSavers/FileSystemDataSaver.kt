@@ -18,9 +18,9 @@ import kotlinx.coroutines.launch
 data class FileSystemDataSaverConfig(val baseDirectory: String = "", val splitAtSizeMb: Int = 0)
 
 class FileSystemDataSaver(
-    private val context: Context,
-    logViewModel: LogViewModel,
-    preferencesManager: PreferencesManager,
+  private val context: Context,
+  logViewModel: LogViewModel,
+  preferencesManager: PreferencesManager
 ) : DataSaver(logViewModel, preferencesManager) {
 
   companion object {
@@ -141,11 +141,11 @@ class FileSystemDataSaver(
   }
 
   override fun saveData(
-      phoneTimestamp: Long,
-      deviceId: String,
-      recordingName: String,
-      dataType: String,
-      data: Any,
+    phoneTimestamp: Long,
+    deviceId: String,
+    recordingName: String,
+    dataType: String,
+    data: Any
   ) {
     val key = "$deviceId/$dataType"
     val lock = rotationLocks.getOrPut(key) { Any() }
@@ -183,8 +183,8 @@ class FileSystemDataSaver(
 
   @Suppress("NestedBlockDepth", "ReturnCount")
   override fun initSaving(
-      recordingName: String,
-      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
+    recordingName: String,
+    deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
   ) {
     super.initSaving(recordingName, deviceIdsWithInfo)
     filePartNumbers.clear()
@@ -248,7 +248,7 @@ class FileSystemDataSaver(
 
           val file =
               currentRecordingDir.findFile(fileName)
-                  ?: currentRecordingDir.createFile("application/jsonl", fileName)
+                ?: currentRecordingDir.createFile("application/jsonl", fileName)
 
           if (file == null) {
             logViewModel.addLogError(

@@ -30,10 +30,10 @@ import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 
 @Composable
 fun FileSystemSettingsDialog(
-    onDismiss: () -> Unit,
-    onSave: (String, Int) -> Unit,
-    initialConfig: FileSystemDataSaverConfig,
-    fileSystemSettingsViewModel: FileSystemSettingsViewModel,
+  onDismiss: () -> Unit,
+  onSave: (String, Int) -> Unit,
+  initialConfig: FileSystemDataSaverConfig,
+  fileSystemSettingsViewModel: FileSystemSettingsViewModel,
 ) {
   // Get the context at the Composable level
   val context = LocalContext.current
@@ -67,7 +67,9 @@ fun FileSystemSettingsDialog(
       onDismissRequest = onDismiss,
       title = { Text("File System Settings") },
       text = {
-        Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)) {
           Button(onClick = onDirectoryPick, modifier = Modifier.fillMaxWidth()) {
             Text("Select Directory")
           }
@@ -92,11 +94,9 @@ fun FileSystemSettingsDialog(
               value = splitAtSizeMb,
               onValueChange = { newValue ->
                 // Only allow positive numeric input
-                if (
-                    newValue.isEmpty() ||
-                        (newValue.all { it.isDigit() } &&
-                            newValue.toIntOrNull()?.let { it >= 0 } == true)
-                ) {
+                if (newValue.isEmpty() ||
+                  (newValue.all { it.isDigit() } &&
+                      newValue.toIntOrNull()?.let { it >= 0 } == true)) {
                   splitAtSizeMb = newValue
                 }
               },
@@ -123,7 +123,7 @@ fun FileSystemSettingsDialog(
             onClick = {
               onSave(baseDirectory, splitAtSizeMb.toIntOrNull() ?: 0)
               onDismiss()
-            }
+            },
         ) {
           Text("Save")
         }

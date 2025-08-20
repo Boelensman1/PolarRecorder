@@ -36,10 +36,10 @@ import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceConnectionScreen(
-    deviceViewModel: DeviceViewModel,
-    polarManager: PolarManager,
-    onBackPressed: () -> Unit,
-    onContinue: () -> Unit,
+  deviceViewModel: DeviceViewModel,
+  polarManager: PolarManager,
+  onBackPressed: () -> Unit,
+  onContinue: () -> Unit
 ) {
   val selectedDevices by deviceViewModel.selectedDevices.observeAsState(emptyList())
   val allConnected = selectedDevices.all { it.connectionState == ConnectionState.CONNECTED }
@@ -69,9 +69,12 @@ fun DeviceConnectionScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
-        }
+        },
     ) { paddingValues ->
-      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+      Column(modifier = Modifier
+          .fillMaxSize()
+          .padding(paddingValues)
+          .padding(16.dp)) {
         selectedDevices.forEach { device ->
           DeviceConnectionItem(device = device)
           Spacer(modifier = Modifier.height(8.dp))
@@ -84,7 +87,9 @@ fun DeviceConnectionScreen(
 @Composable
 private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
   Row(
-      modifier = Modifier.fillMaxWidth().padding(8.dp),
+      modifier = Modifier
+          .fillMaxWidth()
+          .padding(8.dp),
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.Top,
   ) {
@@ -107,12 +112,15 @@ private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
       )
     }
 
-    Box(modifier = Modifier.size(24.dp).padding(4.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier
+        .size(24.dp)
+        .padding(4.dp), contentAlignment = Alignment.Center) {
       when (device.connectionState) {
         ConnectionState.CONNECTING,
         ConnectionState.FETCHING_CAPABILITIES -> {
           CircularProgressIndicator(modifier = Modifier.fillMaxSize(), strokeWidth = 2.dp)
         }
+
         ConnectionState.CONNECTED -> {
           Icon(
               imageVector = Icons.Default.CheckCircle,
@@ -121,6 +129,7 @@ private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
               modifier = Modifier.fillMaxSize(),
           )
         }
+
         ConnectionState.FAILED -> {
           Icon(
               imageVector = Icons.Default.Error,
@@ -129,6 +138,7 @@ private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
               modifier = Modifier.fillMaxSize(),
           )
         }
+
         else -> {
           /* No indicator for other states */
         }

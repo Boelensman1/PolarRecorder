@@ -15,7 +15,8 @@ import org.robolectric.shadows.ShadowLooper
 @Config(manifest = Config.NONE)
 class LogViewModelTest {
 
-  @get:Rule val instantTaskExecutorRule = InstantTaskExecutorRule()
+  @get:Rule
+  val instantTaskExecutorRule = InstantTaskExecutorRule()
 
   private lateinit var viewModel: LogViewModel
 

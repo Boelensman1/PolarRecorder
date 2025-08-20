@@ -92,8 +92,14 @@ class MainActivity : ComponentActivity() {
           }
         }
 
-        Scaffold(snackbarHost = { LogMessageSnackbarHost(snackbarHostState, currentLogType) }) {
-            paddingValues ->
+        Scaffold(
+            snackbarHost = {
+              LogMessageSnackbarHost(
+                  snackbarHostState,
+                  currentLogType,
+              )
+            },
+        ) { paddingValues ->
           NavHost(
               navController = navController,
               startDestination = "deviceSelection",

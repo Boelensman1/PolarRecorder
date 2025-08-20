@@ -10,17 +10,17 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 data class MQTTConfig(
-    val host: String = "",
-    val port: Int,
-    val useSSL: Boolean,
-    val username: String? = null,
-    val password: String? = null,
-    val clientId: String = "PolarRecorder_${UUID.randomUUID()}",
-    val topicPrefix: String = "polar_recorder",
+  val host: String = "",
+  val port: Int,
+  val useSSL: Boolean,
+  val username: String? = null,
+  val password: String? = null,
+  val clientId: String = "PolarRecorder_${UUID.randomUUID()}",
+  val topicPrefix: String = "polar_recorder"
 )
 
 class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesManager) :
-    DataSaver(logViewModel, preferencesManager) {
+  DataSaver(logViewModel, preferencesManager) {
   private var mqttClient: Mqtt3AsyncClient? = null
 
   private lateinit var config: MQTTConfig
@@ -70,8 +70,8 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
   }
 
   override fun initSaving(
-      recordingName: String,
-      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
+    recordingName: String,
+    deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
   ) {
     super.initSaving(recordingName, deviceIdsWithInfo)
 
@@ -125,11 +125,11 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
   }
 
   override fun saveData(
-      phoneTimestamp: Long,
-      deviceId: String,
-      recordingName: String,
-      dataType: String,
-      data: Any,
+    phoneTimestamp: Long,
+    deviceId: String,
+    recordingName: String,
+    dataType: String,
+    data: Any
   ) {
     val topic = "${config.topicPrefix}/$dataType/$deviceId"
     val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, dataType, data)
@@ -145,7 +145,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
 
         if (!firstMessageSaved["$deviceId/$dataType"]!!) {
           logViewModel.addLogMessage(
-              "Successfully published first $dataType data to MQTT topic: $topic"
+              "Successfully published first $dataType data to MQTT topic: $topic",
           )
           firstMessageSaved["$deviceId/$dataType"] = true
         }

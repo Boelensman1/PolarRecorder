@@ -36,10 +36,10 @@ import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceSettingsScreen(
-    deviceViewModel: DeviceViewModel,
-    polarManager: PolarManager,
-    onBackPressed: () -> Unit,
-    onContinue: () -> Unit,
+  deviceViewModel: DeviceViewModel,
+  polarManager: PolarManager,
+  onBackPressed: () -> Unit,
+  onContinue: () -> Unit
 ) {
   val connectedDevices by deviceViewModel.connectedDevices.observeAsState(emptyList())
   var currentDeviceIndex by remember { mutableIntStateOf(0) }
@@ -54,9 +54,12 @@ fun DeviceSettingsScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
-        }
+        },
     ) { paddingValues ->
-      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+      Column(modifier = Modifier
+          .fillMaxSize()
+          .padding(paddingValues)
+          .padding(16.dp)) {
         Text(
             text = "Configure device settings",
             style = MaterialTheme.typography.headlineMedium,
@@ -65,19 +68,26 @@ fun DeviceSettingsScreen(
 
         connectedDevices.forEachIndexed { index, device ->
           Card(
-              modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+              modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(vertical = 8.dp),
               onClick = {
                 currentDeviceIndex = index
                 showSettingsDialog = true
               },
           ) {
             Row(
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             ) {
               Column {
-                Text(text = device.info.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = device.info.name,
+                    style = MaterialTheme.typography.titleMedium,
+                )
                 Text(
                     text =
                         if (device.dataTypes.isEmpty()) "Click to configure settings"
@@ -90,7 +100,8 @@ fun DeviceSettingsScreen(
                       if (device.dataTypes.isEmpty()) Icons.Default.ArrowForward
                       else Icons.Default.CheckCircle,
                   contentDescription =
-                      if (device.dataTypes.isEmpty()) "Configure device" else "Device configured",
+                      if (device.dataTypes.isEmpty()) "Configure device"
+                      else "Device configured",
                   tint =
                       if (device.dataTypes.isEmpty()) MaterialTheme.colorScheme.primary
                       else MaterialTheme.colorScheme.secondary,
@@ -104,7 +115,8 @@ fun DeviceSettingsScreen(
         Button(
             onClick = onContinue,
             enabled =
-                connectedDevices.isNotEmpty() && connectedDevices.all { it.dataTypes.isNotEmpty() },
+                connectedDevices.isNotEmpty() &&
+                    connectedDevices.all { it.dataTypes.isNotEmpty() },
             modifier = Modifier.align(androidx.compose.ui.Alignment.End),
         ) {
           Text("Continue")

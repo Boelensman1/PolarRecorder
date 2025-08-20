@@ -18,6 +18,7 @@ object Preferences {
   val MQTT_ENABLED = PreferenceConfig("mqtt_enabled", false)
 
   val FILE_SYSTEM_BASE_DIRECTORY = PreferenceConfig("file_system_base_directory", "")
+
   @Suppress("MagicNumber")
   val FILE_SYSTEM_RECORDING_SPLIT_AT_SIZE_MB =
       PreferenceConfig("file_system_recording_split_at_size_mb", 20)
@@ -45,23 +46,19 @@ class PreferencesManager(context: Context) {
               mPref.getBoolean(Preferences.MQTT_USE_SSL.key, Preferences.MQTT_USE_SSL.defaultValue),
           username =
               mPref.getString(
-                  Preferences.MQTT_USERNAME.key,
-                  Preferences.MQTT_USERNAME.defaultValue,
+                  Preferences.MQTT_USERNAME.key, Preferences.MQTT_USERNAME.defaultValue,
               )!!,
           password =
               mPref.getString(
-                  Preferences.MQTT_PASSWORD.key,
-                  Preferences.MQTT_PASSWORD.defaultValue,
+                  Preferences.MQTT_PASSWORD.key, Preferences.MQTT_PASSWORD.defaultValue,
               )!!,
           clientId =
               mPref.getString(
-                  Preferences.MQTT_CLIENT_ID.key,
-                  Preferences.MQTT_CLIENT_ID.defaultValue,
+                  Preferences.MQTT_CLIENT_ID.key, Preferences.MQTT_CLIENT_ID.defaultValue,
               )!!,
           topicPrefix =
               mPref.getString(
-                  Preferences.MQTT_TOPIC_PREFIX.key,
-                  Preferences.MQTT_TOPIC_PREFIX.defaultValue,
+                  Preferences.MQTT_TOPIC_PREFIX.key, Preferences.MQTT_TOPIC_PREFIX.defaultValue,
               )!!,
       )
     }
@@ -109,37 +106,36 @@ class PreferencesManager(context: Context) {
 
   var fileSystemEnabled: Boolean
     get() =
-        mPref.getBoolean(
-            Preferences.FILE_SYSTEM_ENABLED.key,
-            Preferences.FILE_SYSTEM_ENABLED.defaultValue,
-        )
+      mPref.getBoolean(
+          Preferences.FILE_SYSTEM_ENABLED.key, Preferences.FILE_SYSTEM_ENABLED.defaultValue,
+      )
     set(enabled) {
       mPref.edit().putBoolean(Preferences.FILE_SYSTEM_ENABLED.key, enabled).apply()
     }
 
   var recordingName: String
     get() =
-        mPref.getString(Preferences.RECORDING_NAME.key, Preferences.RECORDING_NAME.defaultValue)!!
+      mPref.getString(Preferences.RECORDING_NAME.key, Preferences.RECORDING_NAME.defaultValue)!!
     set(name) {
       mPref.edit().putString(Preferences.RECORDING_NAME.key, name).apply()
     }
 
   var recordingNameAppendTimestamp: Boolean
     get() =
-        mPref.getBoolean(
-            Preferences.RECORDING_NAME_APPEND_TIMESTAMP.key,
-            Preferences.RECORDING_NAME_APPEND_TIMESTAMP.defaultValue,
-        )
+      mPref.getBoolean(
+          Preferences.RECORDING_NAME_APPEND_TIMESTAMP.key,
+          Preferences.RECORDING_NAME_APPEND_TIMESTAMP.defaultValue,
+      )
     set(enabled) {
       mPref.edit().putBoolean(Preferences.RECORDING_NAME_APPEND_TIMESTAMP.key, enabled).apply()
     }
 
   var recordingStopOnDisconnect: Boolean
     get() =
-        mPref.getBoolean(
-            Preferences.RECORDING_STOP_ON_DISCONNECT.key,
-            Preferences.RECORDING_STOP_ON_DISCONNECT.defaultValue,
-        )
+      mPref.getBoolean(
+          Preferences.RECORDING_STOP_ON_DISCONNECT.key,
+          Preferences.RECORDING_STOP_ON_DISCONNECT.defaultValue,
+      )
     set(name) {
       mPref.edit().putBoolean(Preferences.RECORDING_STOP_ON_DISCONNECT.key, name).apply()
     }

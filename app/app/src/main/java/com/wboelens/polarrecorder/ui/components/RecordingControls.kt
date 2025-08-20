@@ -14,11 +14,11 @@ import com.wboelens.polarrecorder.managers.RecordingManager
 
 @Composable
 fun RecordingControls(
-    isRecording: Boolean,
-    isFileSystemEnabled: Boolean,
-    recordingManager: RecordingManager,
-    dataSavers: DataSavers,
-    onRestartRecording: () -> Unit,
+  isRecording: Boolean,
+  isFileSystemEnabled: Boolean,
+  recordingManager: RecordingManager,
+  dataSavers: DataSavers,
+  onRestartRecording: () -> Unit
 ) {
   val context = LocalContext.current
 

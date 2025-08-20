@@ -30,9 +30,9 @@ import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 
 @Composable
 fun SaveToOptions(
-    dataSavers: DataSavers,
-    preferencesManager: PreferencesManager,
-    fileSystemSettingsViewModel: FileSystemSettingsViewModel,
+  dataSavers: DataSavers,
+  preferencesManager: PreferencesManager,
+  fileSystemSettingsViewModel: FileSystemSettingsViewModel
 ) {
   var showMqttSettings by remember { mutableStateOf(false) }
   var mqttConfig by remember { mutableStateOf(preferencesManager.mqttConfig) }

@@ -41,12 +41,12 @@ import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataSaverInitializationScreen(
-    dataSavers: DataSavers,
-    deviceViewModel: DeviceViewModel,
-    recordingManager: RecordingManager,
-    preferencesManager: PreferencesManager,
-    onBackPressed: () -> Unit,
-    onContinue: () -> Unit,
+  dataSavers: DataSavers,
+  deviceViewModel: DeviceViewModel,
+  recordingManager: RecordingManager,
+  preferencesManager: PreferencesManager,
+  onBackPressed: () -> Unit,
+  onContinue: () -> Unit
 ) {
   val selectedDevices by deviceViewModel.selectedDevices.observeAsState(emptyList())
   val enabledSavers = dataSavers.asList().filter { it.isEnabled.collectAsState().value }
@@ -101,9 +101,12 @@ fun DataSaverInitializationScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
-        }
+        },
     ) { paddingValues ->
-      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+      Column(modifier = Modifier
+          .fillMaxSize()
+          .padding(paddingValues)
+          .padding(16.dp)) {
         enabledSavers.forEach { saver ->
           DataSaverInitializationItem(saver = saver)
           Spacer(modifier = Modifier.height(8.dp))
@@ -118,7 +121,9 @@ private fun DataSaverInitializationItem(saver: DataSaver) {
   val initState by saver.isInitialized.collectAsState()
 
   Row(
-      modifier = Modifier.fillMaxWidth().padding(8.dp),
+      modifier = Modifier
+          .fillMaxWidth()
+          .padding(8.dp),
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.Top,
   ) {
@@ -139,11 +144,14 @@ private fun DataSaverInitializationItem(saver: DataSaver) {
       )
     }
 
-    Box(modifier = Modifier.size(24.dp).padding(4.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier
+        .size(24.dp)
+        .padding(4.dp), contentAlignment = Alignment.Center) {
       when (initState) {
         InitializationState.NOT_STARTED -> {
           CircularProgressIndicator(modifier = Modifier.fillMaxSize(), strokeWidth = 2.dp)
         }
+
         InitializationState.SUCCESS -> {
           Icon(
               imageVector = Icons.Default.CheckCircle,
@@ -152,6 +160,7 @@ private fun DataSaverInitializationItem(saver: DataSaver) {
               modifier = Modifier.fillMaxSize(),
           )
         }
+
         InitializationState.FAILED -> {
           Icon(
               imageVector = Icons.Default.Error,
