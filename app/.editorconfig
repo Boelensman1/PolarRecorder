@@ -1,4 +1,4 @@
-# From https://github.com/facebook/ktfmt/blob/bcec853c9bd86c529cb285b0376aa35ca37ec3b0/docs/editorconfig/.editorconfig-default
+# From https://github.com/facebook/ktfmt/blob/f8fcec67bd09c908bd5e7d9d8023372bec7e2766/docs/editorconfig/.editorconfig-default
 [{*.kt,*.kts}]
 indent_style = space
 insert_final_newline = true
@@ -30,7 +30,7 @@ ij_kotlin_continuation_indent_for_expression_bodies = true
 ij_kotlin_continuation_indent_in_argument_lists = true
 ij_kotlin_continuation_indent_in_elvis = false
 ij_kotlin_continuation_indent_in_if_conditions = false
-ij_kotlin_continuation_indent_in_parameter_lists = false
+ij_kotlin_continuation_indent_in_parameter_lists = true
 ij_kotlin_continuation_indent_in_supertype_lists = false
 ij_kotlin_else_on_new_line = false
 ij_kotlin_enum_constants_wrap = off
