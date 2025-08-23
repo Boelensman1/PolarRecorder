@@ -33,7 +33,7 @@ fun RecordingScreen(
     recordingManager: RecordingManager,
     dataSavers: DataSavers,
     onBackPressed: () -> Unit,
-    onRestartRecording: () -> Unit
+    onRestartRecording: () -> Unit,
 ) {
   val isRecording by recordingManager.isRecording.collectAsState(initial = false)
   val selectedDevices = deviceViewModel.selectedDevices.observeAsState(emptyList()).value
@@ -49,25 +49,29 @@ fun RecordingScreen(
               title = { Text("Recording") },
               navigationIcon = {
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
-              })
-        }) { paddingValues ->
-          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            RecordingControls(
-                isRecording = isRecording,
-                isFileSystemEnabled = isFileSystemEnabled,
-                recordingManager = recordingManager,
-                dataSavers = dataSavers,
-                onRestartRecording = onRestartRecording)
-
-            if (isRecording) {
-              Spacer(modifier = Modifier.height(8.dp))
-              SelectedDevicesSection(
-                  selectedDevices = selectedDevices,
-                  lastDataTimestamps = lastDataTimestamps,
-                  batteryLevels = batteryLevels,
-                  lastData = lastData)
-            }
-          }
+              },
+          )
         }
+    ) { paddingValues ->
+      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+        RecordingControls(
+            isRecording = isRecording,
+            isFileSystemEnabled = isFileSystemEnabled,
+            recordingManager = recordingManager,
+            dataSavers = dataSavers,
+            onRestartRecording = onRestartRecording,
+        )
+
+        if (isRecording) {
+          Spacer(modifier = Modifier.height(8.dp))
+          SelectedDevicesSection(
+              selectedDevices = selectedDevices,
+              lastDataTimestamps = lastDataTimestamps,
+              batteryLevels = batteryLevels,
+              lastData = lastData,
+          )
+        }
+      }
+    }
   }
 }

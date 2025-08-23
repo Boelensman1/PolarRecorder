@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class InitializationState {
   NOT_STARTED,
   SUCCESS,
-  FAILED
+  FAILED,
 }
 
 abstract class DataSaver(
     protected val logViewModel: LogViewModel,
-    protected val preferencesManager: PreferencesManager
+    protected val preferencesManager: PreferencesManager,
 ) {
   // Track first message status
   var firstMessageSaved = mutableMapOf<String, Boolean>()
@@ -44,7 +44,7 @@ abstract class DataSaver(
       deviceId: String,
       recordingName: String,
       dataType: String,
-      data: Any
+      data: Any,
   )
 
   open fun createJSONPayload(
@@ -52,7 +52,7 @@ abstract class DataSaver(
       deviceId: String,
       recordingName: String,
       dataType: String,
-      data: Any
+      data: Any,
   ): String {
     return gson.toJson(
         mapOf(
@@ -68,7 +68,7 @@ abstract class DataSaver(
   // Initialise if needed
   open fun initSaving(
       recordingName: String,
-      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     // Reset initialization state when starting a new initialization
     _isInitialized.value = InitializationState.NOT_STARTED

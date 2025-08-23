@@ -1,6 +1,7 @@
 package com.wboelens.polarrecorder.viewModels
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -9,7 +10,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper
-import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)

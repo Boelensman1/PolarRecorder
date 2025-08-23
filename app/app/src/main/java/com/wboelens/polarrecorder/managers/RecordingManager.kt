@@ -57,7 +57,7 @@ class RecordingManager(
     private val logViewModel: LogViewModel,
     private val deviceViewModel: DeviceViewModel,
     private val preferencesManager: PreferencesManager,
-    private val dataSavers: DataSavers
+    private val dataSavers: DataSavers,
 ) {
   companion object {
     private const val RETRY_COUNT = 3L
@@ -185,7 +185,8 @@ class RecordingManager(
     if (disconnectedDevices.isNotEmpty()) {
       val disconnectedNames = disconnectedDevices.map { it.info.name }.joinToString(", ")
       logViewModel.addLogError(
-          "Cannot start recording: Some selected devices are not connected: $disconnectedNames")
+          "Cannot start recording: Some selected devices are not connected: $disconnectedNames"
+      )
       return
     }
 
@@ -200,7 +201,8 @@ class RecordingManager(
         enabledDataSavers.filter { it.isInitialized.value != InitializationState.SUCCESS }
     if (uninitializedSavers.isNotEmpty()) {
       logViewModel.addLogError(
-          "Cannot start recording: Data savers are not initialized. Please go through the initialization process first.")
+          "Cannot start recording: Data savers are not initialized. Please go through the initialization process first."
+      )
       return
     }
 
@@ -246,7 +248,7 @@ class RecordingManager(
 
   private fun startStreamForDevice(
       deviceId: String,
-      dataType: PolarBleApi.PolarDeviceDataType
+      dataType: PolarBleApi.PolarDeviceDataType,
   ): Disposable {
     val selectedSensorSettings =
         deviceViewModel.getDeviceSensorSettingsForDataType(deviceId, dataType)

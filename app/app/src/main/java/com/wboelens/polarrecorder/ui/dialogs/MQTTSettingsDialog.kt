@@ -31,7 +31,7 @@ import com.wboelens.polarrecorder.dataSavers.MQTTConfig
 fun MQTTSettingsDialog(
     onDismiss: () -> Unit,
     onSave: (String, Int, Boolean, String?, String?, String, String) -> Unit,
-    initialConfig: MQTTConfig
+    initialConfig: MQTTConfig,
 ) {
   var host by remember { mutableStateOf(initialConfig.host) }
   var port by remember { mutableStateOf((initialConfig.port.takeIf { it > 0 } ?: 1883).toString()) }
@@ -55,7 +55,9 @@ fun MQTTSettingsDialog(
               keyboardOptions =
                   KeyboardOptions(
                       capitalization = KeyboardCapitalization.None,
-                      keyboardType = KeyboardType.Uri))
+                      keyboardType = KeyboardType.Uri,
+                  ),
+          )
           Spacer(modifier = Modifier.height(8.dp))
 
           TextField(
@@ -64,7 +66,8 @@ fun MQTTSettingsDialog(
               label = { Text("Port") },
               modifier = Modifier.fillMaxWidth(),
               singleLine = true,
-              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+          )
           Spacer(modifier = Modifier.height(8.dp))
 
           Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -81,7 +84,10 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false))
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
+                  ),
+          )
           Spacer(modifier = Modifier.height(8.dp))
           TextField(
               value = password,
@@ -91,8 +97,11 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false),
-              visualTransformation = PasswordVisualTransformation())
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
+                  ),
+              visualTransformation = PasswordVisualTransformation(),
+          )
           Spacer(modifier = Modifier.height(8.dp))
           TextField(
               value = topicPrefix,
@@ -102,12 +111,16 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false))
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
+                  ),
+          )
           Text(
               text =
                   "Messages will be published under topics: $topicPrefix/[data_type]/[device_ID]",
               style = MaterialTheme.typography.bodySmall,
-              modifier = Modifier.padding(top = 4.dp))
+              modifier = Modifier.padding(top = 4.dp),
+          )
           Spacer(modifier = Modifier.height(8.dp))
           TextField(
               value = clientId,
@@ -117,12 +130,16 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false))
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
+                  ),
+          )
           Text(
               text =
                   "If no Client ID is set, a random ID in the format 'PolarRecorder_[UUID]' will be used",
               style = MaterialTheme.typography.bodySmall,
-              modifier = Modifier.padding(top = 4.dp))
+              modifier = Modifier.padding(top = 4.dp),
+          )
         }
       },
       confirmButton = {
@@ -135,11 +152,14 @@ fun MQTTSettingsDialog(
                   username.takeIf { it.isNotEmpty() },
                   password.takeIf { it.isNotEmpty() },
                   topicPrefix,
-                  clientId)
+                  clientId,
+              )
               onDismiss()
-            }) {
-              Text("Save")
             }
+        ) {
+          Text("Save")
+        }
       },
-      dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+      dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+  )
 }

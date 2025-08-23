@@ -16,7 +16,7 @@ data class MQTTConfig(
     val username: String? = null,
     val password: String? = null,
     val clientId: String = "PolarRecorder_${UUID.randomUUID()}",
-    val topicPrefix: String = "polar_recorder"
+    val topicPrefix: String = "polar_recorder",
 )
 
 class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesManager) :
@@ -40,7 +40,8 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
         config.copy(
             // Convert empty strings to null
             username = config.username?.takeIf { it.isNotEmpty() },
-            password = config.password?.takeIf { it.isNotEmpty() })
+            password = config.password?.takeIf { it.isNotEmpty() },
+        )
 
     this.config = sanitizedConfig
   }
@@ -70,7 +71,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
 
   override fun initSaving(
       recordingName: String,
-      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     super.initSaving(recordingName, deviceIdsWithInfo)
 
@@ -128,7 +129,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       deviceId: String,
       recordingName: String,
       dataType: String,
-      data: Any
+      data: Any,
   ) {
     val topic = "${config.topicPrefix}/$dataType/$deviceId"
     val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, dataType, data)
@@ -144,7 +145,8 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
 
         if (!firstMessageSaved["$deviceId/$dataType"]!!) {
           logViewModel.addLogMessage(
-              "Successfully published first $dataType data to MQTT topic: $topic")
+              "Successfully published first $dataType data to MQTT topic: $topic"
+          )
           firstMessageSaved["$deviceId/$dataType"] = true
         }
       } ?: run { logViewModel.addLogError("MQTT client not initialized") }

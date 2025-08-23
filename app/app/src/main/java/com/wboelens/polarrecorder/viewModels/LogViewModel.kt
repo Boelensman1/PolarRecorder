@@ -21,7 +21,7 @@ class LogViewModel : ViewModel() {
   enum class LogType {
     SUCCESS,
     NORMAL,
-    ERROR
+    ERROR,
   }
 
   private val _logMessages = MutableLiveData<List<LogEntry>>(emptyList())

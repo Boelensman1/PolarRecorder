@@ -47,7 +47,8 @@ class RecordingService : Service() {
         },
         1,
         1,
-        TimeUnit.MINUTES)
+        TimeUnit.MINUTES,
+    )
   }
 
   private fun createNotificationChannel() {
@@ -56,7 +57,10 @@ class RecordingService : Service() {
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
       val channel =
           NotificationChannel(
-              CHANNEL_ID, "Recording Service Channel", NotificationManager.IMPORTANCE_LOW)
+              CHANNEL_ID,
+              "Recording Service Channel",
+              NotificationManager.IMPORTANCE_LOW,
+          )
       val manager = getSystemService(NotificationManager::class.java)
       manager.createNotificationChannel(channel)
     }
@@ -79,7 +83,8 @@ class RecordingService : Service() {
             this,
             0,
             packageManager.getLaunchIntentForPackage(packageName),
-            PendingIntent.FLAG_IMMUTABLE)
+            PendingIntent.FLAG_IMMUTABLE,
+        )
 
     return NotificationCompat.Builder(this, CHANNEL_ID)
         .setContentTitle("Recording in progress")

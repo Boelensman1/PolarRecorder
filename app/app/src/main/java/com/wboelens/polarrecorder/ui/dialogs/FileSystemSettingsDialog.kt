@@ -75,14 +75,16 @@ fun FileSystemSettingsDialog(
             Text(
                 text = "Selected: $baseDirectory",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(vertical = 8.dp))
+                modifier = Modifier.padding(vertical = 8.dp),
+            )
           }
           @Suppress("MaxLineLength")
           Text(
               text =
                   "Directory where recordings will be saved, they will be saved as [recording_name]/[device_id]/[data_type].jsonl",
               style = MaterialTheme.typography.bodySmall,
-              modifier = Modifier.padding(bottom = 16.dp))
+              modifier = Modifier.padding(bottom = 16.dp),
+          )
 
           Spacer(modifier = Modifier.height(8.dp))
 
@@ -90,25 +92,30 @@ fun FileSystemSettingsDialog(
               value = splitAtSizeMb,
               onValueChange = { newValue ->
                 // Only allow positive numeric input
-                if (newValue.isEmpty() ||
-                    (newValue.all { it.isDigit() } &&
-                        newValue.toIntOrNull()?.let { it >= 0 } == true)) {
+                if (
+                    newValue.isEmpty() ||
+                        (newValue.all { it.isDigit() } &&
+                            newValue.toIntOrNull()?.let { it >= 0 } == true)
+                ) {
                   splitAtSizeMb = newValue
                 }
               },
               label = { Text("Split Recording Size (MB)") },
               modifier = Modifier.fillMaxWidth(),
               singleLine = true,
-              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+          )
           Text(
               text =
                   "Recording will be split into new files when reaching this size. Set to 0 to disable splitting.",
               style = MaterialTheme.typography.bodySmall,
-              modifier = Modifier.padding(top = 4.dp))
+              modifier = Modifier.padding(top = 4.dp),
+          )
           Text(
               text = "Note: The actual split may occur slightly after the specified size.",
               style = MaterialTheme.typography.bodySmall,
-              modifier = Modifier.padding(top = 4.dp))
+              modifier = Modifier.padding(top = 4.dp),
+          )
         }
       },
       confirmButton = {
@@ -116,9 +123,11 @@ fun FileSystemSettingsDialog(
             onClick = {
               onSave(baseDirectory, splitAtSizeMb.toIntOrNull() ?: 0)
               onDismiss()
-            }) {
-              Text("Save")
             }
+        ) {
+          Text("Save")
+        }
       },
-      dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+      dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+  )
 }

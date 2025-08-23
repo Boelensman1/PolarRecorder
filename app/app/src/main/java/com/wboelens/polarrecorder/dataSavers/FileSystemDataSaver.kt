@@ -20,7 +20,7 @@ data class FileSystemDataSaverConfig(val baseDirectory: String = "", val splitAt
 class FileSystemDataSaver(
     private val context: Context,
     logViewModel: LogViewModel,
-    preferencesManager: PreferencesManager
+    preferencesManager: PreferencesManager,
 ) : DataSaver(logViewModel, preferencesManager) {
 
   companion object {
@@ -145,7 +145,7 @@ class FileSystemDataSaver(
       deviceId: String,
       recordingName: String,
       dataType: String,
-      data: Any
+      data: Any,
   ) {
     val key = "$deviceId/$dataType"
     val lock = rotationLocks.getOrPut(key) { Any() }
@@ -184,7 +184,7 @@ class FileSystemDataSaver(
   @Suppress("NestedBlockDepth", "ReturnCount")
   override fun initSaving(
       recordingName: String,
-      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     super.initSaving(recordingName, deviceIdsWithInfo)
     filePartNumbers.clear()

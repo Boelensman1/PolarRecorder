@@ -24,20 +24,20 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx3.await
-import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx3.await
+import kotlinx.coroutines.withContext
 
 data class DeviceStreamCapabilities(
     val availableTypes: Set<PolarDeviceDataType>,
-    val settings: Map<PolarDeviceDataType, Pair<PolarSensorSetting, PolarSensorSetting>>
+    val settings: Map<PolarDeviceDataType, Pair<PolarSensorSetting, PolarSensorSetting>>,
 )
 
 data class PolarDeviceSettings(val deviceTimeOnConnect: Calendar?, val sdkModeEnabled: Boolean?)
@@ -52,7 +52,7 @@ sealed class PolarApiResult<out T> {
 class PolarManager(
     private val context: Context,
     private val deviceViewModel: DeviceViewModel,
-    private val logViewModel: LogViewModel
+    private val logViewModel: LogViewModel,
 ) {
   companion object {
     private const val TAG = "PolarManager"
@@ -73,7 +73,9 @@ class PolarManager(
             PolarBleApi.PolarBleSdkFeature.FEATURE_BATTERY_INFO,
             PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_ONLINE_STREAMING,
             PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
-            PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO))
+            PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO,
+        ),
+    )
   }
   private val disposables = CompositeDisposable()
 
@@ -105,9 +107,12 @@ class PolarManager(
 
           override fun deviceConnected(polarDeviceInfo: PolarDeviceInfo) {
             logViewModel.addLogMessage(
-                "Fetching capabilities for device ${polarDeviceInfo.deviceId}")
+                "Fetching capabilities for device ${polarDeviceInfo.deviceId}"
+            )
             deviceViewModel.updateConnectionState(
-                polarDeviceInfo.deviceId, ConnectionState.FETCHING_CAPABILITIES)
+                polarDeviceInfo.deviceId,
+                ConnectionState.FETCHING_CAPABILITIES,
+            )
 
             val disposable =
                 Single.just(Unit)
@@ -123,15 +128,19 @@ class PolarManager(
                           Log.e(TAG, "Failed to fetch device capabilities", error)
                           logViewModel.addLogError(
                               "Failed to fetch device capabilities for ${polarDeviceInfo.deviceId} (${error}), falling back to alternative method",
-                              false)
+                              false,
+                          )
                           capabilities =
                               fetchDeviceCapabilitiesViaFallback(polarDeviceInfo.deviceId)
                         }
 
                         logViewModel.addLogMessage(
-                            "Fetching settings for device ${polarDeviceInfo.deviceId}")
+                            "Fetching settings for device ${polarDeviceInfo.deviceId}"
+                        )
                         deviceViewModel.updateConnectionState(
-                            polarDeviceInfo.deviceId, ConnectionState.FETCHING_SETTINGS)
+                            polarDeviceInfo.deviceId,
+                            ConnectionState.FETCHING_SETTINGS,
+                        )
 
                         val settings = fetchDeviceSettings(polarDeviceInfo.deviceId).await()
                         if (capabilities !== null && capabilities.availableTypes.isNotEmpty()) {
@@ -139,9 +148,12 @@ class PolarManager(
                         } else {
                           // alternate method also failed, disconnect
                           deviceViewModel.updateConnectionState(
-                              polarDeviceInfo.deviceId, ConnectionState.FAILED)
+                              polarDeviceInfo.deviceId,
+                              ConnectionState.FAILED,
+                          )
                           logViewModel.addLogMessage(
-                              "Failed to connect to device, could not fetch capabilities.")
+                              "Failed to connect to device, could not fetch capabilities."
+                          )
                           api.disconnectFromDevice(polarDeviceInfo.deviceId)
                         }
                       }
@@ -151,14 +163,18 @@ class PolarManager(
 
           override fun deviceConnecting(polarDeviceInfo: PolarDeviceInfo) {
             deviceViewModel.updateConnectionState(
-                polarDeviceInfo.deviceId, ConnectionState.CONNECTING)
+                polarDeviceInfo.deviceId,
+                ConnectionState.CONNECTING,
+            )
             logViewModel.addLogMessage("Connecting to device ${polarDeviceInfo.deviceId}")
           }
 
           override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
             deviceCapabilities.remove(polarDeviceInfo.deviceId)
-            if (deviceViewModel.getConnectionState(polarDeviceInfo.deviceId) ===
-                ConnectionState.DISCONNECTING) {
+            if (
+                deviceViewModel.getConnectionState(polarDeviceInfo.deviceId) ===
+                    ConnectionState.DISCONNECTING
+            ) {
               // a disconnect was requested, so this disconnect is expected
               logViewModel.addLogMessage("Device ${polarDeviceInfo.deviceId} disconnected")
             } else {
@@ -166,12 +182,14 @@ class PolarManager(
             }
 
             deviceViewModel.updateConnectionState(
-                polarDeviceInfo.deviceId, ConnectionState.DISCONNECTED)
+                polarDeviceInfo.deviceId,
+                ConnectionState.DISCONNECTED,
+            )
           }
 
           override fun bleSdkFeatureReady(
               identifier: String,
-              feature: PolarBleApi.PolarBleSdkFeature
+              feature: PolarBleApi.PolarBleSdkFeature,
           ) {
             Log.d(TAG, "Feature $feature ready for device $identifier")
             deviceFeatureReadiness.getOrPut(identifier) { mutableSetOf() }.add(feature)
@@ -181,28 +199,34 @@ class PolarManager(
             when (uuid) {
               BleDisClient.SOFTWARE_REVISION_STRING -> {
                 logViewModel.addLogMessage(
-                    "DIS info received for device $identifier: [FirmwareVersion]: $value")
+                    "DIS info received for device $identifier: [FirmwareVersion]: $value"
+                )
                 deviceViewModel.updateFirmwareVersion(identifier, value)
               }
               BleDisClient.FIRMWARE_REVISION_STRING -> {
                 logViewModel.addLogMessage(
-                    "DIS info received for device $identifier: [FirmwareRevision]: $value")
+                    "DIS info received for device $identifier: [FirmwareRevision]: $value"
+                )
               }
               BleDisClient.HARDWARE_REVISION_STRING -> {
                 logViewModel.addLogMessage(
-                    "DIS info received for device $identifier: [HardwareRevision]: $value")
+                    "DIS info received for device $identifier: [HardwareRevision]: $value"
+                )
               }
               BleDisClient.MODEL_NUMBER_STRING -> {
                 logViewModel.addLogMessage(
-                    "DIS info received for device $identifier: [ModelNumber]: $value")
+                    "DIS info received for device $identifier: [ModelNumber]: $value"
+                )
               }
               BleDisClient.SERIAL_NUMBER_STRING -> {
                 logViewModel.addLogMessage(
-                    "DIS info received for device $identifier: [SerialNumber]: $value")
+                    "DIS info received for device $identifier: [SerialNumber]: $value"
+                )
               }
               BleDisClient.MANUFACTURER_NAME_STRING -> {
                 logViewModel.addLogMessage(
-                    "DIS info received for device $identifier: [ManufacturerName]: $value")
+                    "DIS info received for device $identifier: [ManufacturerName]: $value"
+                )
               }
               else -> {
                 Log.d(TAG, "DIS info received for device $identifier: [$uuid]: $value")
@@ -216,7 +240,7 @@ class PolarManager(
 
           override fun htsNotificationReceived(
               identifier: String,
-              data: PolarHealthThermometerData
+              data: PolarHealthThermometerData,
           ) {
             Log.d(TAG, "PolarHealthThermometer Data info received for device $identifier: $data")
           }
@@ -226,7 +250,8 @@ class PolarManager(
             deviceBatteryLevels[identifier] = level
             deviceViewModel.updateBatteryLevel(identifier, level)
           }
-        })
+        }
+    )
   }
 
   private fun fetchDeviceCapabilities(deviceId: String): Single<DeviceStreamCapabilities> {
@@ -242,7 +267,9 @@ class PolarManager(
         .retryWhen { errors ->
           errors.take(MAX_RETRY_ERRORS).flatMap { error ->
             logViewModel.addLogError(
-                "Failed to fetch stream capabilities (${error}), retrying", false)
+                "Failed to fetch stream capabilities (${error}), retrying",
+                false,
+            )
             // Wait 2 seconds before retrying
             Flowable.timer(2, TimeUnit.SECONDS)
           }
@@ -261,7 +288,8 @@ class PolarManager(
                       (triple.first as PolarDeviceDataType) to
                           Pair(
                               triple.second as PolarSensorSetting,
-                              triple.third as PolarSensorSetting)
+                              triple.third as PolarSensorSetting,
+                          )
                     }
             DeviceStreamCapabilities(types.toSet(), settings)
           }
@@ -294,8 +322,12 @@ class PolarManager(
         var deviceTime: Calendar? = null
         var deviceSdkMode: Boolean? = null
 
-        if (isFeatureAvailable(
-            deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)) {
+        if (
+            isFeatureAvailable(
+                deviceId,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
+            )
+        ) {
           try {
             deviceTime = getTime(deviceId)
           } catch (e: Exception) {
@@ -320,7 +352,7 @@ class PolarManager(
   private fun finishConnectDevice(
       polarDeviceInfo: PolarDeviceInfo,
       capabilities: DeviceStreamCapabilities,
-      settings: PolarDeviceSettings
+      settings: PolarDeviceSettings,
   ) {
     deviceCapabilities[polarDeviceInfo.deviceId] = capabilities
     deviceSettings[polarDeviceInfo.deviceId] = settings
@@ -340,14 +372,16 @@ class PolarManager(
 
   private fun isFeatureAvailable(
       deviceId: String,
-      feature: PolarBleApi.PolarBleSdkFeature
+      feature: PolarBleApi.PolarBleSdkFeature,
   ): Boolean {
     return deviceFeatureReadiness[deviceId]?.contains(feature) == true
   }
 
   fun isTimeManagementAvailable(deviceId: String): Boolean {
     return isFeatureAvailable(
-        deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP)
+        deviceId,
+        PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
+    )
   }
 
   fun connectToDevice(deviceId: String) {
@@ -393,7 +427,8 @@ class PolarManager(
                 {
                   Log.d(TAG, "Stopping scan")
                   _isRefreshing.value = false
-                })
+                },
+            )
 
     Handler(Looper.getMainLooper())
         .postDelayed(
@@ -402,7 +437,8 @@ class PolarManager(
               Log.d(TAG, "Stopping scan")
               _isRefreshing.value = false
             },
-            SCAN_DURATION)
+            SCAN_DURATION,
+        )
   }
 
   fun startPeriodicScanning() {
@@ -419,7 +455,8 @@ class PolarManager(
           }
         },
         0,
-        SCAN_INTERVAL)
+        SCAN_INTERVAL,
+    )
   }
 
   fun stopPeriodicScanning() {
@@ -496,7 +533,7 @@ class PolarManager(
   fun startStreaming(
       deviceId: String,
       dataType: PolarDeviceDataType,
-      sensorSettings: PolarSensorSetting
+      sensorSettings: PolarSensorSetting,
   ): Flowable<*> {
     return when (dataType) {
       PolarDeviceDataType.HR -> api.startHrStreaming(deviceId)

@@ -42,7 +42,7 @@ fun RecordingSettingsScreen(
     dataSavers: DataSavers,
     preferencesManager: PreferencesManager,
     onBackPressed: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
 ) {
   val connectedDevices = deviceViewModel.connectedDevices.observeAsState(emptySet()).value
   var recordingName by remember { mutableStateOf(preferencesManager.recordingName) }
@@ -66,14 +66,16 @@ fun RecordingSettingsScreen(
               title = { Text("Recording Settings") },
               navigationIcon = {
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
-              })
+              },
+          )
         },
     ) { paddingValues ->
       Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
         SaveToOptions(
             dataSavers = dataSavers,
             preferencesManager = preferencesManager,
-            fileSystemSettingsViewModel = fileSystemSettingsViewModel)
+            fileSystemSettingsViewModel = fileSystemSettingsViewModel,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -91,7 +93,8 @@ fun RecordingSettingsScreen(
               if (recordingName.isEmpty()) {
                 Text("Recording name is required", color = MaterialTheme.colorScheme.error)
               }
-            })
+            },
+        )
 
         CheckboxWithLabel(
             label = "Add timestamp to recording name",
@@ -100,7 +103,8 @@ fun RecordingSettingsScreen(
             onCheckedChange = {
               appendTimestamp = it
               preferencesManager.recordingNameAppendTimestamp = it
-            })
+            },
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -111,7 +115,8 @@ fun RecordingSettingsScreen(
             onCheckedChange = {
               recordingStopOnDisconnect = it
               preferencesManager.recordingStopOnDisconnect = it
-            })
+            },
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -121,9 +126,10 @@ fun RecordingSettingsScreen(
             enabled =
                 connectedDevices.isNotEmpty() &&
                     recordingName.isNotEmpty() &&
-                    isAnyDataSaverEnabled) {
-              Text("Start Recording")
-            }
+                    isAnyDataSaverEnabled,
+        ) {
+          Text("Start Recording")
+        }
       }
     }
   }

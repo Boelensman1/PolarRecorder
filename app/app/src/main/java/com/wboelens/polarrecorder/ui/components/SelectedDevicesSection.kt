@@ -15,12 +15,13 @@ fun SelectedDevicesSection(
     selectedDevices: List<DeviceViewModel.Device>,
     lastDataTimestamps: Map<String, Long>,
     batteryLevels: Map<String, Int>,
-    lastData: Map<String, Map<PolarDeviceDataType, Float?>>
+    lastData: Map<String, Map<PolarDeviceDataType, Float?>>,
 ) {
   Text(
       "Devices:",
       style = MaterialTheme.typography.titleMedium,
-      modifier = Modifier.padding(bottom = 8.dp))
+      modifier = Modifier.padding(bottom = 8.dp),
+  )
 
   selectedDevices.forEach { device ->
     val lastTimestamp = lastDataTimestamps[device.info.deviceId]
@@ -36,6 +37,7 @@ fun SelectedDevicesSection(
         timeSinceLastData = timeSinceLastData,
         lastTimestamp = lastTimestamp,
         batteryLevel = batteryLevel,
-        deviceLastData = deviceLastData)
+        deviceLastData = deviceLastData,
+    )
   }
 }

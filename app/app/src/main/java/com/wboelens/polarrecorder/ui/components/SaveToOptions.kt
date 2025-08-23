@@ -32,7 +32,7 @@ import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 fun SaveToOptions(
     dataSavers: DataSavers,
     preferencesManager: PreferencesManager,
-    fileSystemSettingsViewModel: FileSystemSettingsViewModel
+    fileSystemSettingsViewModel: FileSystemSettingsViewModel,
 ) {
   var showMqttSettings by remember { mutableStateOf(false) }
   var mqttConfig by remember { mutableStateOf(preferencesManager.mqttConfig) }
@@ -46,7 +46,8 @@ fun SaveToOptions(
     Text(
         text = "Save to:",
         style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onBackground)
+        color = MaterialTheme.colorScheme.onBackground,
+    )
     Spacer(modifier = Modifier.height(4.dp))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -65,7 +66,8 @@ fun SaveToOptions(
             } else {
               dataSavers.fileSystem.disable()
             }
-          })
+          },
+      )
       IconButton(onClick = { showFilesystemSettings = true }) {
         Icon(Icons.Default.Settings, contentDescription = "File Settings")
       }
@@ -85,7 +87,8 @@ fun SaveToOptions(
             } else {
               dataSavers.mqtt.disable()
             }
-          })
+          },
+      )
       IconButton(onClick = { showMqttSettings = true }) {
         Icon(Icons.Default.Settings, contentDescription = "MQTT Settings")
       }
@@ -104,7 +107,8 @@ fun SaveToOptions(
           }
           showMqttSettings = false
         },
-        initialConfig = mqttConfig)
+        initialConfig = mqttConfig,
+    )
   }
 
   if (showFilesystemSettings) {

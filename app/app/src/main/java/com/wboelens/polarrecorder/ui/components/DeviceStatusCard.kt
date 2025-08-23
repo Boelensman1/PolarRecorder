@@ -59,7 +59,7 @@ fun DeviceStatusCard(
     timeSinceLastData: Long?,
     lastTimestamp: Long?,
     batteryLevel: Int?,
-    deviceLastData: Map<PolarDeviceDataType, Float?>
+    deviceLastData: Map<PolarDeviceDataType, Float?>,
 ) {
   var isExpanded by remember { mutableStateOf(false) }
 
@@ -74,122 +74,137 @@ fun DeviceStatusCard(
   Card(
       modifier =
           Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { isExpanded = !isExpanded },
-      colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.1f))) {
-        Column(modifier = Modifier.padding(16.dp)) {
-          // Collapsed state - always visible
+      colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.1f)),
+  ) {
+    Column(modifier = Modifier.padding(16.dp)) {
+      // Collapsed state - always visible
+      Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(deviceName, style = MaterialTheme.typography.titleSmall, color = statusColor)
+          Spacer(modifier = Modifier.height(4.dp))
           Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                  Text(deviceName, style = MaterialTheme.typography.titleSmall, color = statusColor)
-                  Spacer(modifier = Modifier.height(4.dp))
-                  Row(
-                      verticalAlignment = Alignment.CenterVertically,
-                      horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(
-                            imageVector =
-                                when {
-                                  !connected -> Icons.Default.Error
-                                  timeSinceLastData == null -> Icons.Default.Error
-                                  timeSinceLastData > STALLED_AFTER -> Icons.Default.Warning
-                                  else -> Icons.Default.CheckCircle
-                                },
-                            contentDescription = null,
-                            tint = statusColor,
-                            modifier = Modifier.size(16.dp))
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(6.dp),
+          ) {
+            Icon(
+                imageVector =
+                    when {
+                      !connected -> Icons.Default.Error
+                      timeSinceLastData == null -> Icons.Default.Error
+                      timeSinceLastData > STALLED_AFTER -> Icons.Default.Warning
+                      else -> Icons.Default.CheckCircle
+                    },
+                contentDescription = null,
+                tint = statusColor,
+                modifier = Modifier.size(16.dp),
+            )
 
-                        Text(
-                            when {
-                              !connected -> "Disconnected"
-                              timeSinceLastData == null -> "No data received"
-                              timeSinceLastData > STALLED_AFTER -> "Data stalled"
-                              else ->
-                                  lastTimestamp?.let {
-                                    "Last data received: ${formatRelativeTime(it)}"
-                                  } ?: "Receiving data"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = statusColor)
-                      }
-                  if (batteryLevel != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 2.dp)) {
-                          Icon(
-                              imageVector = getBatteryIcon(batteryLevel),
-                              contentDescription = null,
-                              tint = statusColor,
-                              modifier = Modifier.size(16.dp))
-                          Spacer(modifier = Modifier.size(4.dp))
-                          Text(
-                              "Battery: $batteryLevel%",
-                              style = MaterialTheme.typography.bodySmall,
-                              color = statusColor)
-                        }
-                  }
-                }
-                Icon(
-                    imageVector =
-                        if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = statusColor.copy(alpha = 0.7f),
-                    modifier = Modifier.size(20.dp))
+            Text(
+                when {
+                  !connected -> "Disconnected"
+                  timeSinceLastData == null -> "No data received"
+                  timeSinceLastData > STALLED_AFTER -> "Data stalled"
+                  else ->
+                      lastTimestamp?.let { "Last data received: ${formatRelativeTime(it)}" }
+                          ?: "Receiving data"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = statusColor,
+            )
+          }
+          if (batteryLevel != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 2.dp),
+            ) {
+              Icon(
+                  imageVector = getBatteryIcon(batteryLevel),
+                  contentDescription = null,
+                  tint = statusColor,
+                  modifier = Modifier.size(16.dp),
+              )
+              Spacer(modifier = Modifier.size(4.dp))
+              Text(
+                  "Battery: $batteryLevel%",
+                  style = MaterialTheme.typography.bodySmall,
+                  color = statusColor,
+              )
+            }
+          }
+        }
+        Icon(
+            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            contentDescription = if (isExpanded) "Collapse" else "Expand",
+            tint = statusColor.copy(alpha = 0.7f),
+            modifier = Modifier.size(20.dp),
+        )
+      }
+
+      // Expanded state - animated visibility
+      AnimatedVisibility(
+          visible = isExpanded,
+          enter = expandVertically(animationSpec = tween(300)),
+          exit = shrinkVertically(animationSpec = tween(300)),
+      ) {
+        Column(modifier = Modifier.padding(top = 16.dp)) {
+
+          // Data chips section
+          if (deviceLastData.isNotEmpty()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 8.dp),
+            ) {
+              Text(
+                  "Live Data Preview:",
+                  style = MaterialTheme.typography.bodySmall,
+                  color = statusColor.copy(alpha = 0.8f),
+              )
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+              deviceLastData.forEach { (type, value) ->
+                SensorDataChip(type = type, value = value, color = statusColor)
               }
-
-          // Expanded state - animated visibility
-          AnimatedVisibility(
-              visible = isExpanded,
-              enter = expandVertically(animationSpec = tween(300)),
-              exit = shrinkVertically(animationSpec = tween(300))) {
-                Column(modifier = Modifier.padding(top = 16.dp)) {
-
-                  // Data chips section
-                  if (deviceLastData.isNotEmpty()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp)) {
-                          Text(
-                              "Live Data Preview:",
-                              style = MaterialTheme.typography.bodySmall,
-                              color = statusColor.copy(alpha = 0.8f))
-                        }
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                          deviceLastData.forEach { (type, value) ->
-                            SensorDataChip(type = type, value = value, color = statusColor)
-                          }
-                        }
-                  }
-                }
-              }
+            }
+          }
         }
       }
+    }
+  }
 }
 
 @Composable
 private fun SensorDataChip(type: PolarDeviceDataType, value: Float?, color: Color) {
   Card(
       colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
-      modifier = Modifier.padding(0.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-              Icon(
-                  imageVector = getDataTypeIcon(type),
-                  contentDescription = null,
-                  tint = color,
-                  modifier = Modifier.size(14.dp))
-              Text(
-                  "${type.name}: ${value?.let { String.format(Locale.US, "%.1f", it) } ?: "-"}",
-                  style = MaterialTheme.typography.bodySmall,
-                  color = color,
-                  maxLines = 1,
-                  overflow = TextOverflow.Ellipsis)
-            }
-      }
+      modifier = Modifier.padding(0.dp),
+  ) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+    ) {
+      Icon(
+          imageVector = getDataTypeIcon(type),
+          contentDescription = null,
+          tint = color,
+          modifier = Modifier.size(14.dp),
+      )
+      Text(
+          "${type.name}: ${value?.let { String.format(Locale.US, "%.1f", it) } ?: "-"}",
+          style = MaterialTheme.typography.bodySmall,
+          color = color,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+      )
+    }
+  }
 }
 
 private fun getBatteryIcon(batteryLevel: Int): ImageVector {

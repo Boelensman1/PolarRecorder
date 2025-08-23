@@ -46,7 +46,7 @@ fun DataSaverInitializationScreen(
     recordingManager: RecordingManager,
     preferencesManager: PreferencesManager,
     onBackPressed: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
 ) {
   val selectedDevices by deviceViewModel.selectedDevices.observeAsState(emptyList())
   val enabledSavers = dataSavers.asList().filter { it.isEnabled.collectAsState().value }
@@ -99,15 +99,17 @@ fun DataSaverInitializationScreen(
               title = { Text("Initializing Data Savers") },
               navigationIcon = {
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
-              })
-        }) { paddingValues ->
-          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            enabledSavers.forEach { saver ->
-              DataSaverInitializationItem(saver = saver)
-              Spacer(modifier = Modifier.height(8.dp))
-            }
-          }
+              },
+          )
         }
+    ) { paddingValues ->
+      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+        enabledSavers.forEach { saver ->
+          DataSaverInitializationItem(saver = saver)
+          Spacer(modifier = Modifier.height(8.dp))
+        }
+      }
+    }
   }
 }
 
@@ -118,42 +120,47 @@ private fun DataSaverInitializationItem(saver: DataSaver) {
   Row(
       modifier = Modifier.fillMaxWidth().padding(8.dp),
       horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.Top) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-              text = saver.javaClass.simpleName.replace("DataSaver", ""),
-              style = MaterialTheme.typography.bodyLarge)
-          Text(
-              text =
-                  when (initState) {
-                    InitializationState.NOT_STARTED -> "Initializing..."
-                    InitializationState.SUCCESS -> "Ready"
-                    InitializationState.FAILED -> "Failed"
-                  },
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+      verticalAlignment = Alignment.Top,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+          text = saver.javaClass.simpleName.replace("DataSaver", ""),
+          style = MaterialTheme.typography.bodyLarge,
+      )
+      Text(
+          text =
+              when (initState) {
+                InitializationState.NOT_STARTED -> "Initializing..."
+                InitializationState.SUCCESS -> "Ready"
+                InitializationState.FAILED -> "Failed"
+              },
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
 
-        Box(modifier = Modifier.size(24.dp).padding(4.dp), contentAlignment = Alignment.Center) {
-          when (initState) {
-            InitializationState.NOT_STARTED -> {
-              CircularProgressIndicator(modifier = Modifier.fillMaxSize(), strokeWidth = 2.dp)
-            }
-            InitializationState.SUCCESS -> {
-              Icon(
-                  imageVector = Icons.Default.CheckCircle,
-                  contentDescription = "Initialized",
-                  tint = MaterialTheme.colorScheme.primary,
-                  modifier = Modifier.fillMaxSize())
-            }
-            InitializationState.FAILED -> {
-              Icon(
-                  imageVector = Icons.Default.Error,
-                  contentDescription = "Failed",
-                  tint = MaterialTheme.colorScheme.error,
-                  modifier = Modifier.fillMaxSize())
-            }
-          }
+    Box(modifier = Modifier.size(24.dp).padding(4.dp), contentAlignment = Alignment.Center) {
+      when (initState) {
+        InitializationState.NOT_STARTED -> {
+          CircularProgressIndicator(modifier = Modifier.fillMaxSize(), strokeWidth = 2.dp)
+        }
+        InitializationState.SUCCESS -> {
+          Icon(
+              imageVector = Icons.Default.CheckCircle,
+              contentDescription = "Initialized",
+              tint = MaterialTheme.colorScheme.primary,
+              modifier = Modifier.fillMaxSize(),
+          )
+        }
+        InitializationState.FAILED -> {
+          Icon(
+              imageVector = Icons.Default.Error,
+              contentDescription = "Failed",
+              tint = MaterialTheme.colorScheme.error,
+              modifier = Modifier.fillMaxSize(),
+          )
         }
       }
+    }
+  }
 }

@@ -66,7 +66,8 @@ class MainActivity : ComponentActivity() {
             logViewModel,
             deviceViewModel,
             preferencesManager,
-            dataSavers)
+            dataSavers,
+        )
 
     registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
       if (result.resultCode == RESULT_OK) {
@@ -96,74 +97,81 @@ class MainActivity : ComponentActivity() {
           NavHost(
               navController = navController,
               startDestination = "deviceSelection",
-              modifier = Modifier.padding(paddingValues)) {
-                composable("deviceSelection") {
-                  DeviceSelectionScreen(
-                      deviceViewModel = deviceViewModel,
-                      polarManager = polarManager,
-                      onContinue = { navController.navigate("deviceConnection") })
-                }
-                composable("deviceConnection") {
-                  DeviceConnectionScreen(
-                      deviceViewModel = deviceViewModel,
-                      polarManager = polarManager,
-                      onBackPressed = { navController.navigateUp() },
-                      onContinue = { navController.navigate("deviceSettings") })
-                }
-                composable("deviceSettings") {
-                  // skip device connection screen
-                  val backAction = {
-                    polarManager.disconnectAllDevices()
-                    navController.navigate("deviceSelection") {
-                      popUpTo("deviceSelection") { inclusive = true }
-                    }
-                  }
-
-                  BackHandler(onBack = backAction)
-                  DeviceSettingsScreen(
-                      deviceViewModel = deviceViewModel,
-                      polarManager = polarManager,
-                      onBackPressed = backAction,
-                      onContinue = { navController.navigate("recordingSettings") })
-                }
-                composable("recordingSettings") {
-                  RecordingSettingsScreen(
-                      deviceViewModel = deviceViewModel,
-                      fileSystemSettingsViewModel = fileSystemViewModel,
-                      dataSavers = dataSavers,
-                      preferencesManager = preferencesManager,
-                      onBackPressed = { navController.navigateUp() },
-                      onContinue = { navController.navigate("dataSaverInitialization") })
-                }
-                composable("dataSaverInitialization") {
-                  DataSaverInitializationScreen(
-                      dataSavers = dataSavers,
-                      deviceViewModel = deviceViewModel,
-                      recordingManager = recordingManager,
-                      preferencesManager = preferencesManager,
-                      onBackPressed = { navController.navigateUp() },
-                      onContinue = { navController.navigate("recording") })
-                }
-                composable("recording") {
-                  // skip data saver initialisation screen
-                  val backAction = {
-                    if (recordingManager.isRecording.value) {
-                      recordingManager.stopRecording()
-                    }
-                    navController.navigate("recordingSettings") {
-                      popUpTo("recordingSettings") { inclusive = true }
-                    }
-                  }
-
-                  BackHandler(onBack = backAction)
-                  RecordingScreen(
-                      deviceViewModel = deviceViewModel,
-                      recordingManager = recordingManager,
-                      dataSavers = dataSavers,
-                      onBackPressed = backAction,
-                      onRestartRecording = { navController.navigate("dataSaverInitialization") })
+              modifier = Modifier.padding(paddingValues),
+          ) {
+            composable("deviceSelection") {
+              DeviceSelectionScreen(
+                  deviceViewModel = deviceViewModel,
+                  polarManager = polarManager,
+                  onContinue = { navController.navigate("deviceConnection") },
+              )
+            }
+            composable("deviceConnection") {
+              DeviceConnectionScreen(
+                  deviceViewModel = deviceViewModel,
+                  polarManager = polarManager,
+                  onBackPressed = { navController.navigateUp() },
+                  onContinue = { navController.navigate("deviceSettings") },
+              )
+            }
+            composable("deviceSettings") {
+              // skip device connection screen
+              val backAction = {
+                polarManager.disconnectAllDevices()
+                navController.navigate("deviceSelection") {
+                  popUpTo("deviceSelection") { inclusive = true }
                 }
               }
+
+              BackHandler(onBack = backAction)
+              DeviceSettingsScreen(
+                  deviceViewModel = deviceViewModel,
+                  polarManager = polarManager,
+                  onBackPressed = backAction,
+                  onContinue = { navController.navigate("recordingSettings") },
+              )
+            }
+            composable("recordingSettings") {
+              RecordingSettingsScreen(
+                  deviceViewModel = deviceViewModel,
+                  fileSystemSettingsViewModel = fileSystemViewModel,
+                  dataSavers = dataSavers,
+                  preferencesManager = preferencesManager,
+                  onBackPressed = { navController.navigateUp() },
+                  onContinue = { navController.navigate("dataSaverInitialization") },
+              )
+            }
+            composable("dataSaverInitialization") {
+              DataSaverInitializationScreen(
+                  dataSavers = dataSavers,
+                  deviceViewModel = deviceViewModel,
+                  recordingManager = recordingManager,
+                  preferencesManager = preferencesManager,
+                  onBackPressed = { navController.navigateUp() },
+                  onContinue = { navController.navigate("recording") },
+              )
+            }
+            composable("recording") {
+              // skip data saver initialisation screen
+              val backAction = {
+                if (recordingManager.isRecording.value) {
+                  recordingManager.stopRecording()
+                }
+                navController.navigate("recordingSettings") {
+                  popUpTo("recordingSettings") { inclusive = true }
+                }
+              }
+
+              BackHandler(onBack = backAction)
+              RecordingScreen(
+                  deviceViewModel = deviceViewModel,
+                  recordingManager = recordingManager,
+                  dataSavers = dataSavers,
+                  onBackPressed = backAction,
+                  onRestartRecording = { navController.navigate("dataSaverInitialization") },
+              )
+            }
+          }
         }
       }
     }

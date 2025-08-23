@@ -18,7 +18,7 @@ fun RecordingControls(
     isFileSystemEnabled: Boolean,
     recordingManager: RecordingManager,
     dataSavers: DataSavers,
-    onRestartRecording: () -> Unit
+    onRestartRecording: () -> Unit,
 ) {
   val context = LocalContext.current
 
@@ -30,9 +30,10 @@ fun RecordingControls(
           onRestartRecording()
         }
       },
-      modifier = Modifier.fillMaxWidth()) {
-        Text(if (isRecording) "Stop Recording" else "Restart Recording")
-      }
+      modifier = Modifier.fillMaxWidth(),
+  ) {
+    Text(if (isRecording) "Stop Recording" else "Restart Recording")
+  }
 
   if (!isRecording && isFileSystemEnabled) {
     @Suppress("SwallowedException")
@@ -46,9 +47,10 @@ fun RecordingControls(
               Toast.makeText(context, "No file explorer app found", Toast.LENGTH_SHORT).show()
             }
           },
-          modifier = Modifier.fillMaxWidth()) {
-            Text("Open Recording Directory")
-          }
+          modifier = Modifier.fillMaxWidth(),
+      ) {
+        Text("Open Recording Directory")
+      }
     }
   }
 }

@@ -45,7 +45,7 @@ fun SnackbarMessageDisplayer(
 fun LogMessageSnackbarHost(
     snackbarHostState: SnackbarHostState,
     logType: LogViewModel.LogType? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
   SnackbarHost(hostState = snackbarHostState, modifier = modifier) { data ->
     val containerColor =

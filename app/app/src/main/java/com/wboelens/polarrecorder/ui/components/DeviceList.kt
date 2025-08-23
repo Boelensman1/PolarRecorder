@@ -30,7 +30,8 @@ fun DeviceList(deviceViewModel: DeviceViewModel, isBLEEnabled: Boolean) {
       Text(
           text = "Please enable Bluetooth to scan for devices",
           style = MaterialTheme.typography.titleMedium,
-          color = MaterialTheme.colorScheme.error)
+          color = MaterialTheme.colorScheme.error,
+      )
       return
     }
   }
@@ -40,19 +41,22 @@ fun DeviceList(deviceViewModel: DeviceViewModel, isBLEEnabled: Boolean) {
   Text(
       text = "List of available devices:",
       style = MaterialTheme.typography.titleMedium,
-      color = MaterialTheme.colorScheme.onBackground)
+      color = MaterialTheme.colorScheme.onBackground,
+  )
   Spacer(modifier = Modifier.height(4.dp))
 
   LazyColumn(
       modifier = Modifier.fillMaxWidth(),
       verticalArrangement = Arrangement.spacedBy(8.dp),
-      contentPadding = PaddingValues(8.dp)) {
-        items(devices) { device ->
-          DeviceItem(
-              device = device,
-              onSelect = { deviceViewModel.toggleIsSelected(device.info.deviceId) })
-        }
-      }
+      contentPadding = PaddingValues(8.dp),
+  ) {
+    items(devices) { device ->
+      DeviceItem(
+          device = device,
+          onSelect = { deviceViewModel.toggleIsSelected(device.info.deviceId) },
+      )
+    }
+  }
 }
 
 @Composable
@@ -61,13 +65,15 @@ private fun DeviceItem(device: DeviceViewModel.Device, onSelect: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween) {
-          Text(
-              text = device.info.name,
-              style = MaterialTheme.typography.bodyLarge,
-              modifier = Modifier.weight(1f))
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+      Text(
+          text = device.info.name,
+          style = MaterialTheme.typography.bodyLarge,
+          modifier = Modifier.weight(1f),
+      )
 
-          Checkbox(checked = device.isSelected, onCheckedChange = { onSelect() })
-        }
+      Checkbox(checked = device.isSelected, onCheckedChange = { onSelect() })
+    }
   }
 }

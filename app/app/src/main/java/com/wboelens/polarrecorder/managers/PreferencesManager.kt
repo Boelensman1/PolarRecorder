@@ -45,16 +45,25 @@ class PreferencesManager(context: Context) {
               mPref.getBoolean(Preferences.MQTT_USE_SSL.key, Preferences.MQTT_USE_SSL.defaultValue),
           username =
               mPref.getString(
-                  Preferences.MQTT_USERNAME.key, Preferences.MQTT_USERNAME.defaultValue)!!,
+                  Preferences.MQTT_USERNAME.key,
+                  Preferences.MQTT_USERNAME.defaultValue,
+              )!!,
           password =
               mPref.getString(
-                  Preferences.MQTT_PASSWORD.key, Preferences.MQTT_PASSWORD.defaultValue)!!,
+                  Preferences.MQTT_PASSWORD.key,
+                  Preferences.MQTT_PASSWORD.defaultValue,
+              )!!,
           clientId =
               mPref.getString(
-                  Preferences.MQTT_CLIENT_ID.key, Preferences.MQTT_CLIENT_ID.defaultValue)!!,
+                  Preferences.MQTT_CLIENT_ID.key,
+                  Preferences.MQTT_CLIENT_ID.defaultValue,
+              )!!,
           topicPrefix =
               mPref.getString(
-                  Preferences.MQTT_TOPIC_PREFIX.key, Preferences.MQTT_TOPIC_PREFIX.defaultValue)!!)
+                  Preferences.MQTT_TOPIC_PREFIX.key,
+                  Preferences.MQTT_TOPIC_PREFIX.defaultValue,
+              )!!,
+      )
     }
     set(config) {
       mPref.edit().apply {
@@ -81,11 +90,14 @@ class PreferencesManager(context: Context) {
           baseDirectory =
               mPref.getString(
                   Preferences.FILE_SYSTEM_BASE_DIRECTORY.key,
-                  Preferences.FILE_SYSTEM_BASE_DIRECTORY.defaultValue)!!,
+                  Preferences.FILE_SYSTEM_BASE_DIRECTORY.defaultValue,
+              )!!,
           splitAtSizeMb =
               mPref.getInt(
                   Preferences.FILE_SYSTEM_RECORDING_SPLIT_AT_SIZE_MB.key,
-                  Preferences.FILE_SYSTEM_RECORDING_SPLIT_AT_SIZE_MB.defaultValue))
+                  Preferences.FILE_SYSTEM_RECORDING_SPLIT_AT_SIZE_MB.defaultValue,
+              ),
+      )
     }
     set(config) {
       mPref.edit().apply {
@@ -98,7 +110,9 @@ class PreferencesManager(context: Context) {
   var fileSystemEnabled: Boolean
     get() =
         mPref.getBoolean(
-            Preferences.FILE_SYSTEM_ENABLED.key, Preferences.FILE_SYSTEM_ENABLED.defaultValue)
+            Preferences.FILE_SYSTEM_ENABLED.key,
+            Preferences.FILE_SYSTEM_ENABLED.defaultValue,
+        )
     set(enabled) {
       mPref.edit().putBoolean(Preferences.FILE_SYSTEM_ENABLED.key, enabled).apply()
     }
@@ -114,7 +128,8 @@ class PreferencesManager(context: Context) {
     get() =
         mPref.getBoolean(
             Preferences.RECORDING_NAME_APPEND_TIMESTAMP.key,
-            Preferences.RECORDING_NAME_APPEND_TIMESTAMP.defaultValue)
+            Preferences.RECORDING_NAME_APPEND_TIMESTAMP.defaultValue,
+        )
     set(enabled) {
       mPref.edit().putBoolean(Preferences.RECORDING_NAME_APPEND_TIMESTAMP.key, enabled).apply()
     }
@@ -123,7 +138,8 @@ class PreferencesManager(context: Context) {
     get() =
         mPref.getBoolean(
             Preferences.RECORDING_STOP_ON_DISCONNECT.key,
-            Preferences.RECORDING_STOP_ON_DISCONNECT.defaultValue)
+            Preferences.RECORDING_STOP_ON_DISCONNECT.defaultValue,
+        )
     set(name) {
       mPref.edit().putBoolean(Preferences.RECORDING_STOP_ON_DISCONNECT.key, name).apply()
     }

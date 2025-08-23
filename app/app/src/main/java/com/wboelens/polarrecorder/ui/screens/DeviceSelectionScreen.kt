@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 fun DeviceSelectionScreen(
     deviceViewModel: DeviceViewModel,
     polarManager: PolarManager,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
 ) {
   val selectedDevices by deviceViewModel.selectedDevices.observeAsState(emptyList())
   val state = rememberPullToRefreshState()
@@ -51,31 +51,36 @@ fun DeviceSelectionScreen(
               title = { Text("Select Devices") },
               actions = {
                 IconButton(onClick = onRefresh) { Icon(Icons.Filled.Refresh, "Trigger Refresh") }
-              })
-        }) { paddingValues ->
-          PullToRefreshBox(
-              modifier = Modifier.fillMaxSize().padding(paddingValues),
-              state = state,
-              isRefreshing = isRefreshing.value && isBLEEnabled.value,
-              onRefresh = onRefresh,
+              },
+          )
+        }
+    ) { paddingValues ->
+      PullToRefreshBox(
+          modifier = Modifier.fillMaxSize().padding(paddingValues),
+          state = state,
+          isRefreshing = isRefreshing.value && isBLEEnabled.value,
+          onRefresh = onRefresh,
+      ) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+          DeviceList(
+              deviceViewModel = deviceViewModel,
+              isBLEEnabled = polarManager.isBLEEnabled.value,
+          )
+
+          Spacer(modifier = Modifier.weight(1f))
+
+          Button(
+              onClick = {
+                polarManager.stopPeriodicScanning()
+                onContinue()
+              },
+              enabled = selectedDevices.isNotEmpty(),
+              modifier = Modifier.align(Alignment.End),
           ) {
-            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-              DeviceList(
-                  deviceViewModel = deviceViewModel, isBLEEnabled = polarManager.isBLEEnabled.value)
-
-              Spacer(modifier = Modifier.weight(1f))
-
-              Button(
-                  onClick = {
-                    polarManager.stopPeriodicScanning()
-                    onContinue()
-                  },
-                  enabled = selectedDevices.isNotEmpty(),
-                  modifier = Modifier.align(Alignment.End)) {
-                    Text("Connect Devices")
-                  }
-            }
+            Text("Connect Devices")
           }
         }
+      }
+    }
   }
 }

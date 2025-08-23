@@ -39,7 +39,7 @@ fun DeviceSettingsScreen(
     deviceViewModel: DeviceViewModel,
     polarManager: PolarManager,
     onBackPressed: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
 ) {
   val connectedDevices by deviceViewModel.connectedDevices.observeAsState(emptyList())
   var currentDeviceIndex by remember { mutableIntStateOf(0) }
@@ -52,61 +52,65 @@ fun DeviceSettingsScreen(
               title = { Text("Device Settings") },
               navigationIcon = {
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
-              })
-        }) { paddingValues ->
-          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            Text(
-                text = "Configure device settings",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 16.dp))
+              },
+          )
+        }
+    ) { paddingValues ->
+      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+        Text(
+            text = "Configure device settings",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp),
+        )
 
-            connectedDevices.forEachIndexed { index, device ->
-              Card(
-                  modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                  onClick = {
-                    currentDeviceIndex = index
-                    showSettingsDialog = true
-                  }) {
-                    Row(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                          Column {
-                            Text(
-                                text = device.info.name,
-                                style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                text =
-                                    if (device.dataTypes.isEmpty()) "Click to configure settings"
-                                    else "Device configured",
-                                style = MaterialTheme.typography.bodyMedium)
-                          }
-                          Icon(
-                              imageVector =
-                                  if (device.dataTypes.isEmpty()) Icons.Default.ArrowForward
-                                  else Icons.Default.CheckCircle,
-                              contentDescription =
-                                  if (device.dataTypes.isEmpty()) "Configure device"
-                                  else "Device configured",
-                              tint =
-                                  if (device.dataTypes.isEmpty()) MaterialTheme.colorScheme.primary
-                                  else MaterialTheme.colorScheme.secondary)
-                        }
-                  }
+        connectedDevices.forEachIndexed { index, device ->
+          Card(
+              modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+              onClick = {
+                currentDeviceIndex = index
+                showSettingsDialog = true
+              },
+          ) {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+              Column {
+                Text(text = device.info.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text =
+                        if (device.dataTypes.isEmpty()) "Click to configure settings"
+                        else "Device configured",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+              }
+              Icon(
+                  imageVector =
+                      if (device.dataTypes.isEmpty()) Icons.Default.ArrowForward
+                      else Icons.Default.CheckCircle,
+                  contentDescription =
+                      if (device.dataTypes.isEmpty()) "Configure device" else "Device configured",
+                  tint =
+                      if (device.dataTypes.isEmpty()) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.secondary,
+              )
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Button(
-                onClick = onContinue,
-                enabled =
-                    connectedDevices.isNotEmpty() &&
-                        connectedDevices.all { it.dataTypes.isNotEmpty() },
-                modifier = Modifier.align(androidx.compose.ui.Alignment.End)) {
-                  Text("Continue")
-                }
           }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = onContinue,
+            enabled =
+                connectedDevices.isNotEmpty() && connectedDevices.all { it.dataTypes.isNotEmpty() },
+            modifier = Modifier.align(androidx.compose.ui.Alignment.End),
+        ) {
+          Text("Continue")
+        }
+      }
+    }
   }
 
   if (showSettingsDialog && currentDeviceIndex < connectedDevices.size) {
@@ -120,6 +124,7 @@ fun DeviceSettingsScreen(
           deviceViewModel.updateDeviceDataTypes(device.info.deviceId, dataTypes)
         },
         initialDataTypeSettings = device.sensorSettings,
-        initialDataTypes = device.dataTypes)
+        initialDataTypes = device.dataTypes,
+    )
   }
 }

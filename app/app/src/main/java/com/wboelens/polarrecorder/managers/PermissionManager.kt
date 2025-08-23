@@ -17,37 +17,43 @@ class PermissionManager(private val activity: Activity) {
                 Manifest.permission.BLUETOOTH_SCAN,
                 Manifest.permission.BLUETOOTH_CONNECT,
                 Manifest.permission.FOREGROUND_SERVICE,
-                Manifest.permission.POST_NOTIFICATIONS)
+                Manifest.permission.POST_NOTIFICATIONS,
+            )
           }
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
                 Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.FOREGROUND_SERVICE)
+                Manifest.permission.FOREGROUND_SERVICE,
+            )
           }
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
             arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.FOREGROUND_SERVICE)
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.FOREGROUND_SERVICE,
+            )
           }
           else -> {
             arrayOf(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.BLUETOOTH,
-                Manifest.permission.BLUETOOTH_ADMIN)
+                Manifest.permission.BLUETOOTH_ADMIN,
+            )
           }
         }
 
   private val permissionLauncher =
       (activity as ComponentActivity).registerForActivityResult(
-          ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val allGranted = permissions.all { it.value }
-            if (allGranted) {
-              pendingPermissionCallback?.invoke()
-            } else {
-              showPermissionRationaleMessage()
-            }
-          }
+          ActivityResultContracts.RequestMultiplePermissions()
+      ) { permissions ->
+        val allGranted = permissions.all { it.value }
+        if (allGranted) {
+          pendingPermissionCallback?.invoke()
+        } else {
+          showPermissionRationaleMessage()
+        }
+      }
 
   private var pendingPermissionCallback: (() -> Unit)? = null
 

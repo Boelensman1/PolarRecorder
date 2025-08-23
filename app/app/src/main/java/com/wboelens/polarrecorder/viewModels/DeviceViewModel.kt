@@ -17,7 +17,7 @@ enum class ConnectionState {
   FETCHING_SETTINGS,
   CONNECTED,
   FAILED,
-  NOT_CONNECTABLE
+  NOT_CONNECTABLE,
 }
 
 class DeviceViewModel : ViewModel() {
@@ -27,7 +27,7 @@ class DeviceViewModel : ViewModel() {
       val connectionState: ConnectionState,
       val dataTypes: Set<PolarDeviceDataType> = emptySet(),
       val sensorSettings: Map<PolarDeviceDataType, PolarSensorSetting> = emptyMap(),
-      val firmwareVersion: String? = null
+      val firmwareVersion: String? = null,
   )
 
   private val _devices = MutableLiveData<List<Device>>(emptyList())
@@ -89,7 +89,7 @@ class DeviceViewModel : ViewModel() {
 
   fun updateDeviceSensorSettings(
       deviceId: String,
-      sensorSettings: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>
+      sensorSettings: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
   ) {
     updateDevice(deviceId) { device ->
       val deviceSettings = mutableMapOf<PolarDeviceDataType, PolarSensorSetting>()
@@ -106,7 +106,7 @@ class DeviceViewModel : ViewModel() {
 
   fun getDeviceSensorSettingsForDataType(
       deviceId: String,
-      dataType: PolarDeviceDataType
+      dataType: PolarDeviceDataType,
   ): PolarSensorSetting {
     return _devices.value?.find { it.info.deviceId == deviceId }?.sensorSettings?.get(dataType)
         ?: PolarSensorSetting(emptyMap())
