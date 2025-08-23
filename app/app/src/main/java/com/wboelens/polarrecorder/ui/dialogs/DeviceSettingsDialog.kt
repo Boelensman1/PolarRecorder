@@ -29,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,31 +45,28 @@ import com.wboelens.polarrecorder.managers.PolarApiResult
 import com.wboelens.polarrecorder.managers.PolarDeviceSettings
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null, sdkModeEnabled = false)
 
 data class DeviceSettingState(
-  val isLoading: Boolean = false,
-  val resultMessage: String? = null,
-  val isSuccess: Boolean = false
+    val isLoading: Boolean = false,
+    val resultMessage: String? = null,
+    val isSuccess: Boolean = false,
 )
 
 @Composable
 fun DeviceSettingsDialog(
-  deviceId: String,
-  polarManager: PolarManager,
-  onDismiss: () -> Unit,
-  onDataTypeSettingsSelected:
-  (
-    Map<PolarDeviceDataType, Map<SettingType, Int>>,
-    Set<PolarDeviceDataType>
-  ) -> Unit,
-  initialDataTypeSettings: Map<PolarDeviceDataType, PolarSensorSetting>? = emptyMap(),
-  initialDataTypes: Set<PolarDeviceDataType> = emptySet()
+    deviceId: String,
+    polarManager: PolarManager,
+    onDismiss: () -> Unit,
+    onDataTypeSettingsSelected:
+        (Map<PolarDeviceDataType, Map<SettingType, Int>>, Set<PolarDeviceDataType>) -> Unit,
+    initialDataTypeSettings: Map<PolarDeviceDataType, PolarSensorSetting>? = emptyMap(),
+    initialDataTypes: Set<PolarDeviceDataType> = emptySet(),
 ) {
   var availableSettingsMap by remember {
     mutableStateOf<Map<PolarDeviceDataType, PolarSensorSetting>>(emptyMap())
@@ -188,31 +184,22 @@ fun DeviceSettingsDialog(
 
   Dialog(onDismissRequest = onDismiss) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .heightIn(max = 600.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp).heightIn(max = 600.dp),
     ) {
       Column(
-          modifier = Modifier
-              .padding(16.dp)
-              .fillMaxWidth(),
+          modifier = Modifier.padding(16.dp).fillMaxWidth(),
       ) {
         Text(text = "Settings - Device $deviceId", style = MaterialTheme.typography.titleLarge)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
         ) {
           Column {
             if (isLoading) {
               Box(
-                  modifier = Modifier
-                      .fillMaxWidth()
-                      .padding(32.dp),
+                  modifier = Modifier.fillMaxWidth().padding(32.dp),
                   contentAlignment = Alignment.Center,
               ) {
                 CircularProgressIndicator()
@@ -262,18 +249,18 @@ fun DeviceSettingsDialog(
 
 @Composable
 private fun DeviceSettingsContent(
-  deviceSettings: PolarDeviceSettings,
-  isTimeManagementAvailable: Boolean,
-  onSetTime: () -> Unit,
-  onToggleSdkMode: () -> Unit,
-  timeSetState: DeviceSettingState,
-  sdkModeSetState: DeviceSettingState,
-  availableDataTypes: Set<PolarDeviceDataType>,
-  selectedDataTypes: Set<PolarDeviceDataType>,
-  onDataTypesChanged: (Set<PolarDeviceDataType>) -> Unit,
-  availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
-  selectedSettingsMap: Map<PolarDeviceDataType, Map<SettingType, Int>>,
-  onSettingsChanged: (Map<PolarDeviceDataType, Map<SettingType, Int>>) -> Unit
+    deviceSettings: PolarDeviceSettings,
+    isTimeManagementAvailable: Boolean,
+    onSetTime: () -> Unit,
+    onToggleSdkMode: () -> Unit,
+    timeSetState: DeviceSettingState,
+    sdkModeSetState: DeviceSettingState,
+    availableDataTypes: Set<PolarDeviceDataType>,
+    selectedDataTypes: Set<PolarDeviceDataType>,
+    onDataTypesChanged: (Set<PolarDeviceDataType>) -> Unit,
+    availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
+    selectedSettingsMap: Map<PolarDeviceDataType, Map<SettingType, Int>>,
+    onSettingsChanged: (Map<PolarDeviceDataType, Map<SettingType, Int>>) -> Unit,
 ) {
   DeviceSettingsSection(
       deviceSettings = deviceSettings,
@@ -296,11 +283,11 @@ private fun DeviceSettingsContent(
 
 @Composable
 private fun DataTypeSettingsDialog(
-  dataType: PolarDeviceDataType,
-  availableSettings: PolarSensorSetting,
-  selectedSettings: Map<SettingType, Int>,
-  onDismiss: () -> Unit,
-  onSettingsChanged: (Map<SettingType, Int>) -> Unit
+    dataType: PolarDeviceDataType,
+    availableSettings: PolarSensorSetting,
+    selectedSettings: Map<SettingType, Int>,
+    onDismiss: () -> Unit,
+    onSettingsChanged: (Map<SettingType, Int>) -> Unit,
 ) {
   var tempSettings by remember { mutableStateOf(selectedSettings) }
 
@@ -332,10 +319,10 @@ private fun DataTypeSettingsDialog(
 
 @Composable
 private fun SettingSection(
-  settingType: SettingType,
-  options: List<Int>,
-  selectedValue: Int?,
-  onValueSelected: (Int) -> Unit
+    settingType: SettingType,
+    options: List<Int>,
+    selectedValue: Int?,
+    onValueSelected: (Int) -> Unit,
 ) {
   var showHelpDialog by remember { mutableStateOf(false) }
 
@@ -352,9 +339,7 @@ private fun SettingSection(
       Icon(
           imageVector = Icons.Default.Info,
           contentDescription = "Help",
-          modifier = Modifier
-              .size(20.dp)
-              .clickable { showHelpDialog = true },
+          modifier = Modifier.size(20.dp).clickable { showHelpDialog = true },
           tint = MaterialTheme.colorScheme.primary,
       )
     }
@@ -363,9 +348,7 @@ private fun SettingSection(
 
     options.forEach { value ->
       Row(
-          modifier = Modifier
-              .fillMaxWidth()
-              .padding(vertical = 4.dp),
+          modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
           verticalAlignment = Alignment.CenterVertically,
       ) {
         RadioButton(selected = value == selectedValue, onClick = { onValueSelected(value) })
@@ -389,12 +372,12 @@ private fun SettingSection(
 
 @Composable
 private fun DeviceSettingsSection(
-  deviceSettings: PolarDeviceSettings,
-  isTimeManagementAvailable: Boolean,
-  onSetTime: () -> Unit,
-  onToggleSdkMode: () -> Unit,
-  timeSetState: DeviceSettingState,
-  sdkModeSetState: DeviceSettingState
+    deviceSettings: PolarDeviceSettings,
+    isTimeManagementAvailable: Boolean,
+    onSetTime: () -> Unit,
+    onToggleSdkMode: () -> Unit,
+    timeSetState: DeviceSettingState,
+    sdkModeSetState: DeviceSettingState,
 ) {
   Column {
     if (isTimeManagementAvailable) {
@@ -402,8 +385,7 @@ private fun DeviceSettingsSection(
           title = "Time",
           content = {
             deviceSettings.deviceTimeOnConnect?.let { calendar ->
-              val dateFormat =
-                  SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+              val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
               val deviceTimeText = dateFormat.format(calendar.time)
 
               Text(
@@ -460,14 +442,14 @@ private fun DeviceSettingsSection(
 
 @Composable
 private fun SettingItem(
-  title: String,
-  content: @Composable () -> Unit,
-  buttonText: String,
-  isLoading: Boolean,
-  loadingText: String,
-  result: String?,
-  isSuccess: Boolean,
-  onAction: () -> Unit
+    title: String,
+    content: @Composable () -> Unit,
+    buttonText: String,
+    isLoading: Boolean,
+    loadingText: String,
+    result: String?,
+    isSuccess: Boolean,
+    onAction: () -> Unit,
 ) {
   Column {
     Text(text = title, style = MaterialTheme.typography.titleMedium)
@@ -506,12 +488,12 @@ private fun SettingItem(
 
 @Composable
 private fun DataTypeSection(
-  availableTypes: Set<PolarDeviceDataType>,
-  selectedTypes: Set<PolarDeviceDataType>,
-  onSelectionChanged: (Set<PolarDeviceDataType>) -> Unit,
-  availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
-  selectedSettingsMap: Map<PolarDeviceDataType, Map<SettingType, Int>>,
-  onSettingsChanged: (Map<PolarDeviceDataType, Map<SettingType, Int>>) -> Unit
+    availableTypes: Set<PolarDeviceDataType>,
+    selectedTypes: Set<PolarDeviceDataType>,
+    onSelectionChanged: (Set<PolarDeviceDataType>) -> Unit,
+    availableSettingsMap: Map<PolarDeviceDataType, PolarSensorSetting>,
+    selectedSettingsMap: Map<PolarDeviceDataType, Map<SettingType, Int>>,
+    onSettingsChanged: (Map<PolarDeviceDataType, Map<SettingType, Int>>) -> Unit,
 ) {
   var showSettingsDialog by remember { mutableStateOf(false) }
   var selectedDataTypeForSettings by remember { mutableStateOf<PolarDeviceDataType?>(null) }
@@ -538,8 +520,10 @@ private fun DataTypeSection(
             },
         )
 
-        if (selectedTypes.contains(dataType) &&
-          availableSettingsMap[dataType]?.settings?.isNotEmpty() == true) {
+        if (
+            selectedTypes.contains(dataType) &&
+                availableSettingsMap[dataType]?.settings?.isNotEmpty() == true
+        ) {
           IconButton(
               onClick = {
                 selectedDataTypeForSettings = dataType
@@ -610,25 +594,21 @@ private fun getSettingTypeDisplayText(settingType: SettingType): String {
 private fun getSettingTypeHelpText(settingType: SettingType): String {
   return when (settingType) {
     SettingType.SAMPLE_RATE ->
-      "The number of samples per second (Hz). Higher sample rates provide more detailed data but consume more battery and storage space."
+        "The number of samples per second (Hz). Higher sample rates provide more detailed data but consume more battery and storage space."
 
     SettingType.RESOLUTION ->
-      "The precision of each measurement in bits. Higher resolution provides more precise data but increases file size."
+        "The precision of each measurement in bits. Higher resolution provides more precise data but increases file size."
 
     SettingType.RANGE ->
-      "The measurement range of the sensor. Higher ranges can detect larger movements but may reduce sensitivity to small changes."
+        "The measurement range of the sensor. Higher ranges can detect larger movements but may reduce sensitivity to small changes."
 
-    SettingType.CHANNELS ->
-      "The number of measurement channels. These represent different sensors."
+    SettingType.CHANNELS -> "The number of measurement channels. These represent different sensors."
 
     else -> "No additional information available for this setting type."
   }
 }
 
-private fun getSettingValueDisplayText(
-  settingType: SettingType,
-  value: Int
-): String {
+private fun getSettingValueDisplayText(settingType: SettingType, value: Int): String {
   return when (settingType) {
     SettingType.SAMPLE_RATE -> "${value} Hz"
     SettingType.RESOLUTION -> "${value} bits"

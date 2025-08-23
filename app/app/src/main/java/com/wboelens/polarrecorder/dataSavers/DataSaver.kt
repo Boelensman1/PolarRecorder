@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class InitializationState {
   NOT_STARTED,
   SUCCESS,
-  FAILED
+  FAILED,
 }
 
 abstract class DataSaver(
-  protected val logRepository: LogRepository,
-  protected val preferencesManager: PreferencesManager
+    protected val logRepository: LogRepository,
+    protected val preferencesManager: PreferencesManager,
 ) {
   // Track first message status
   var firstMessageSaved = mutableMapOf<String, Boolean>()
@@ -25,8 +25,7 @@ abstract class DataSaver(
   abstract val isConfigured: Boolean
 
   // Property to check if a saver is enabled
-  @Suppress("VariableNaming")
-  protected val _isEnabled = MutableStateFlow(false)
+  @Suppress("VariableNaming") protected val _isEnabled = MutableStateFlow(false)
   val isEnabled: StateFlow<Boolean> = _isEnabled.asStateFlow()
 
   protected val _isInitialized = MutableStateFlow(InitializationState.NOT_STARTED)
@@ -41,19 +40,19 @@ abstract class DataSaver(
 
   // Method to handle incoming data
   abstract fun saveData(
-    phoneTimestamp: Long,
-    deviceId: String,
-    recordingName: String,
-    dataType: String,
-    data: Any
+      phoneTimestamp: Long,
+      deviceId: String,
+      recordingName: String,
+      dataType: String,
+      data: Any,
   )
 
   open fun createJSONPayload(
-    phoneTimestamp: Long,
-    deviceId: String,
-    recordingName: String,
-    dataType: String,
-    data: Any
+      phoneTimestamp: Long,
+      deviceId: String,
+      recordingName: String,
+      dataType: String,
+      data: Any,
   ): String {
     return gson.toJson(
         mapOf(
@@ -68,8 +67,8 @@ abstract class DataSaver(
 
   // Initialise if needed
   open fun initSaving(
-    recordingName: String,
-    deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+      recordingName: String,
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     // Reset initialization state when starting a new initialization
     _isInitialized.value = InitializationState.NOT_STARTED

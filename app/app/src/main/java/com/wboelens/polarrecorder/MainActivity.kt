@@ -42,12 +42,15 @@ class MainActivity : ComponentActivity() {
 
   private val polarManager: PolarManager
     get() = polarRecorderApplication.polarManager
+
   private lateinit var permissionManager: PermissionManager
 
   private val recordingManager: RecordingManager
     get() = polarRecorderApplication.recordingManager
+
   private val preferencesManager: PreferencesManager
     get() = polarRecorderApplication.preferencesManager
+
   private val dataSavers: DataSavers
     get() = polarRecorderApplication.dataSavers
 
@@ -71,11 +74,12 @@ class MainActivity : ComponentActivity() {
     }
 
     val isRecordingInProgress = recordingManager.isRecording.value
-    val startDestination = if (isRecordingInProgress) {
-      "recording"
-    } else {
-      "deviceSelection"
-    }
+    val startDestination =
+        if (isRecordingInProgress) {
+          "recording"
+        } else {
+          "deviceSelection"
+        }
 
     setContent {
       AppTheme {

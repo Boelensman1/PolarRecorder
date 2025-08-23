@@ -14,5 +14,4 @@ abstract class BaseRepository {
   fun cleanup() {
     repositoryScope.cancel()
   }
-
 }

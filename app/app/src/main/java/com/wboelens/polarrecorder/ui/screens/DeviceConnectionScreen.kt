@@ -37,10 +37,10 @@ import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceConnectionScreen(
-  deviceViewModel: DeviceViewModel,
-  polarManager: PolarManager,
-  onBackPressed: () -> Unit,
-  onContinue: () -> Unit
+    deviceViewModel: DeviceViewModel,
+    polarManager: PolarManager,
+    onBackPressed: () -> Unit,
+    onContinue: () -> Unit,
 ) {
   val selectedDevices by deviceViewModel.selectedDevices.observeAsState(emptyList())
   val allConnected = selectedDevices.all { it.connectionState == ConnectionState.CONNECTED }
@@ -73,10 +73,7 @@ fun DeviceConnectionScreen(
         },
     ) { paddingValues ->
       Column(
-          modifier = Modifier
-              .fillMaxSize()
-              .padding(paddingValues)
-              .padding(16.dp),
+          modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
       ) {
         selectedDevices.forEach { device ->
           DeviceConnectionItem(device = device)
@@ -90,9 +87,7 @@ fun DeviceConnectionScreen(
 @Composable
 private fun DeviceConnectionItem(device: Device) {
   Row(
-      modifier = Modifier
-          .fillMaxWidth()
-          .padding(8.dp),
+      modifier = Modifier.fillMaxWidth().padding(8.dp),
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.Top,
   ) {
@@ -116,9 +111,7 @@ private fun DeviceConnectionItem(device: Device) {
     }
 
     Box(
-        modifier = Modifier
-            .size(24.dp)
-            .padding(4.dp),
+        modifier = Modifier.size(24.dp).padding(4.dp),
         contentAlignment = Alignment.Center,
     ) {
       when (device.connectionState) {

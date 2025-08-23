@@ -29,11 +29,11 @@ import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordingScreen(
-  deviceViewModel: DeviceViewModel,
-  recordingManager: RecordingManager,
-  dataSavers: DataSavers,
-  onBackPressed: () -> Unit,
-  onRestartRecording: () -> Unit
+    deviceViewModel: DeviceViewModel,
+    recordingManager: RecordingManager,
+    dataSavers: DataSavers,
+    onBackPressed: () -> Unit,
+    onRestartRecording: () -> Unit,
 ) {
   val isRecording by recordingManager.isRecording.collectAsState(initial = false)
   val selectedDevices = deviceViewModel.selectedDevices.observeAsState(emptyList()).value
@@ -54,10 +54,7 @@ fun RecordingScreen(
         },
     ) { paddingValues ->
       Column(
-          modifier = Modifier
-              .fillMaxSize()
-              .padding(paddingValues)
-              .padding(16.dp),
+          modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
       ) {
         RecordingControls(
             isRecording = isRecording,

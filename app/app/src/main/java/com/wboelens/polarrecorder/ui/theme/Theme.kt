@@ -21,7 +21,7 @@ import androidx.core.view.WindowCompat
 
 @Immutable
 data class ExtendedColorScheme(
-  val warning: ColorFamily,
+    val warning: ColorFamily,
 )
 
 private val lightScheme =
@@ -326,10 +326,10 @@ val extendedDarkHighContrast =
 
 @Immutable
 data class ColorFamily(
-  val color: Color,
-  val onColor: Color,
-  val colorContainer: Color,
-  val onColorContainer: Color
+    val color: Color,
+    val onColor: Color,
+    val colorContainer: Color,
+    val onColorContainer: Color,
 )
 
 val unspecified_scheme =
@@ -340,10 +340,10 @@ val LocalExtendedColorScheme =
 
 @Composable
 fun AppTheme(
-  darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
-  content: @Composable() () -> Unit
+    dynamicColor: Boolean = true,
+    content: @Composable() () -> Unit,
 ) {
   val colorScheme =
       when {

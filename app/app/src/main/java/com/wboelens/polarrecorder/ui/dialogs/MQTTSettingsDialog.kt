@@ -29,9 +29,9 @@ import com.wboelens.polarrecorder.dataSavers.MQTTConfig
 
 @Composable
 fun MQTTSettingsDialog(
-  onDismiss: () -> Unit,
-  onSave: (String, Int, Boolean, String?, String?, String, String) -> Unit,
-  initialConfig: MQTTConfig
+    onDismiss: () -> Unit,
+    onSave: (String, Int, Boolean, String?, String?, String, String) -> Unit,
+    initialConfig: MQTTConfig,
 ) {
   var host by remember { mutableStateOf(initialConfig.host) }
   var port by remember { mutableStateOf((initialConfig.port.takeIf { it > 0 } ?: 1883).toString()) }
@@ -46,9 +46,7 @@ fun MQTTSettingsDialog(
       title = { Text("MQTT Settings") },
       text = {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
         ) {
           TextField(
               value = host,
@@ -88,7 +86,8 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false,
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
                   ),
           )
           Spacer(modifier = Modifier.height(8.dp))
@@ -100,7 +99,8 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false,
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
                   ),
               visualTransformation = PasswordVisualTransformation(),
           )
@@ -113,7 +113,8 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false,
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
                   ),
           )
           Text(
@@ -131,7 +132,8 @@ fun MQTTSettingsDialog(
               singleLine = true,
               keyboardOptions =
                   KeyboardOptions(
-                      capitalization = KeyboardCapitalization.None, autoCorrect = false,
+                      capitalization = KeyboardCapitalization.None,
+                      autoCorrect = false,
                   ),
           )
           Text(

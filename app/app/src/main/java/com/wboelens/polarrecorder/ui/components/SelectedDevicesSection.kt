@@ -12,10 +12,10 @@ import com.wboelens.polarrecorder.viewModels.Device
 
 @Composable
 fun SelectedDevicesSection(
-  selectedDevices: List<Device>,
-  lastDataTimestamps: Map<String, Long>,
-  batteryLevels: Map<String, Int>,
-  lastData: Map<String, Map<PolarDeviceDataType, Float?>>
+    selectedDevices: List<Device>,
+    lastDataTimestamps: Map<String, Long>,
+    batteryLevels: Map<String, Int>,
+    lastData: Map<String, Map<PolarDeviceDataType, Float?>>,
 ) {
   Text(
       "Devices:",

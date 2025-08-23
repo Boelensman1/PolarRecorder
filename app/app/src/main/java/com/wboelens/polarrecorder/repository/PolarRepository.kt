@@ -28,17 +28,18 @@ class PolarRepository() : BaseRepository() {
           )
 
   val connectedDevices: StateFlow<List<Device>> =
-      _devices.map { devices ->
-        devices.filter { device -> device.connectionState == ConnectionState.CONNECTED }
-      }.stateIn(
-          scope = repositoryScope,
-          started = SharingStarted.WhileSubscribed(5000),
-          initialValue = emptyList(),
-      )
+      _devices
+          .map { devices ->
+            devices.filter { device -> device.connectionState == ConnectionState.CONNECTED }
+          }
+          .stateIn(
+              scope = repositoryScope,
+              started = SharingStarted.WhileSubscribed(5000),
+              initialValue = emptyList(),
+          )
 
   private val _batteryLevels = MutableStateFlow<Map<String, Int>>(emptyMap())
-  val batteryLevels: StateFlow<Map<String, Int>> =
-      _batteryLevels.asStateFlow()
+  val batteryLevels: StateFlow<Map<String, Int>> = _batteryLevels.asStateFlow()
 
   fun addDevice(device: PolarDeviceInfo) {
     val currentDevices = _devices.value?.toMutableList() ?: mutableListOf()
@@ -71,7 +72,7 @@ class PolarRepository() : BaseRepository() {
 
   fun getConnectionState(deviceId: String): ConnectionState {
     return _devices.value?.find { it.info.deviceId == deviceId }?.connectionState
-      ?: ConnectionState.NOT_CONNECTABLE
+        ?: ConnectionState.NOT_CONNECTABLE
   }
 
   fun toggleIsSelected(deviceId: String) {
@@ -83,8 +84,8 @@ class PolarRepository() : BaseRepository() {
   }
 
   fun updateDeviceSensorSettings(
-    deviceId: String,
-    sensorSettings: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>
+      deviceId: String,
+      sensorSettings: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
   ) {
     updateDevice(deviceId) { device ->
       val deviceSettings = mutableMapOf<PolarDeviceDataType, PolarSensorSetting>()
@@ -100,19 +101,16 @@ class PolarRepository() : BaseRepository() {
   }
 
   fun getDeviceSensorSettingsForDataType(
-    deviceId: String,
-    dataType: PolarDeviceDataType
+      deviceId: String,
+      dataType: PolarDeviceDataType,
   ): PolarSensorSetting {
     return _devices.value?.find { it.info.deviceId == deviceId }?.sensorSettings?.get(dataType)
-      ?: PolarSensorSetting(emptyMap())
+        ?: PolarSensorSetting(emptyMap())
   }
 
   fun updateBatteryLevel(deviceId: String, level: Int) {
     val current = _batteryLevels.value
-    val changed = current.toMutableMap().also {
-      it[deviceId] = level
-    }
+    val changed = current.toMutableMap().also { it[deviceId] = level }
     _batteryLevels.value = changed
   }
-
 }

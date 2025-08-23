@@ -18,16 +18,16 @@ enum class ConnectionState {
   FETCHING_SETTINGS,
   CONNECTED,
   FAILED,
-  NOT_CONNECTABLE
+  NOT_CONNECTABLE,
 }
 
 data class Device(
-  val info: PolarDeviceInfo,
-  val isSelected: Boolean = false,
-  val connectionState: ConnectionState,
-  val dataTypes: Set<PolarDeviceDataType> = emptySet(),
-  val sensorSettings: Map<PolarDeviceDataType, PolarSensorSetting> = emptyMap(),
-  val firmwareVersion: String? = null
+    val info: PolarDeviceInfo,
+    val isSelected: Boolean = false,
+    val connectionState: ConnectionState,
+    val dataTypes: Set<PolarDeviceDataType> = emptySet(),
+    val sensorSettings: Map<PolarDeviceDataType, PolarSensorSetting> = emptyMap(),
+    val firmwareVersion: String? = null,
 )
 
 class DeviceViewModel : ViewModel() {
@@ -68,8 +68,8 @@ class DeviceViewModel : ViewModel() {
   }
 
   fun updateDeviceSensorSettings(
-    deviceId: String,
-    sensorSettings: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>
+      deviceId: String,
+      sensorSettings: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
   ) {
     polarRepository.updateDeviceSensorSettings(deviceId, sensorSettings)
   }

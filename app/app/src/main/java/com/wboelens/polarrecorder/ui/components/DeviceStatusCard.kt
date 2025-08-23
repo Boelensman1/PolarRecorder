@@ -54,12 +54,12 @@ private const val STALLED_AFTER = 5000
 
 @Composable
 fun DeviceStatusCard(
-  deviceName: String,
-  connected: Boolean,
-  timeSinceLastData: Long?,
-  lastTimestamp: Long?,
-  batteryLevel: Int?,
-  deviceLastData: Map<PolarDeviceDataType, Float?>
+    deviceName: String,
+    connected: Boolean,
+    timeSinceLastData: Long?,
+    lastTimestamp: Long?,
+    batteryLevel: Int?,
+    deviceLastData: Map<PolarDeviceDataType, Float?>,
 ) {
   var isExpanded by remember { mutableStateOf(false) }
 
@@ -73,10 +73,7 @@ fun DeviceStatusCard(
 
   Card(
       modifier =
-          Modifier
-              .fillMaxWidth()
-              .padding(vertical = 4.dp)
-              .clickable { isExpanded = !isExpanded },
+          Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { isExpanded = !isExpanded },
       colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.1f)),
   ) {
     Column(modifier = Modifier.padding(16.dp)) {
@@ -112,9 +109,8 @@ fun DeviceStatusCard(
                   timeSinceLastData == null -> "No data received"
                   timeSinceLastData > STALLED_AFTER -> "Data stalled"
                   else ->
-                    lastTimestamp?.let {
-                      "Last data received: ${formatRelativeTime(it)}"
-                    } ?: "Receiving data"
+                      lastTimestamp?.let { "Last data received: ${formatRelativeTime(it)}" }
+                          ?: "Receiving data"
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = statusColor,
@@ -141,8 +137,7 @@ fun DeviceStatusCard(
           }
         }
         Icon(
-            imageVector =
-                if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
             contentDescription = if (isExpanded) "Collapse" else "Expand",
             tint = statusColor.copy(alpha = 0.7f),
             modifier = Modifier.size(20.dp),

@@ -7,20 +7,20 @@ import androidx.documentfile.provider.DocumentFile
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.repository.LogRepository
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.IOException
 
 data class FileSystemDataSaverConfig(val baseDirectory: String = "", val splitAtSizeMb: Int = 0)
 
 class FileSystemDataSaver(
-  private val context: Context,
-  logRepository: LogRepository,
-  preferencesManager: PreferencesManager
+    private val context: Context,
+    logRepository: LogRepository,
+    preferencesManager: PreferencesManager,
 ) : DataSaver(logRepository, preferencesManager) {
 
   companion object {
@@ -51,7 +51,9 @@ class FileSystemDataSaver(
 
   override fun enable() {
     if (config.baseDirectory.isEmpty()) {
-      this@FileSystemDataSaver.logRepository.addLogError("Base directory must be configured before starting")
+      this@FileSystemDataSaver.logRepository.addLogError(
+          "Base directory must be configured before starting"
+      )
       return
     }
 
@@ -60,16 +62,22 @@ class FileSystemDataSaver(
       val userPickedDir = DocumentFile.fromTreeUri(context, selectedUri)
 
       if (userPickedDir == null) {
-        this@FileSystemDataSaver.logRepository.addLogMessage("pickedDir is null, could not construct uri")
+        this@FileSystemDataSaver.logRepository.addLogMessage(
+            "pickedDir is null, could not construct uri"
+        )
         return
       }
 
       pickedDir = userPickedDir
       setEnabled(true)
-      this@FileSystemDataSaver.logRepository.addLogMessage("File system recording enabled at: ${userPickedDir.uri}")
+      this@FileSystemDataSaver.logRepository.addLogMessage(
+          "File system recording enabled at: ${userPickedDir.uri}"
+      )
     } catch (e: SecurityException) {
       _isEnabled.value = false
-      this@FileSystemDataSaver.logRepository.addLogError("Permission denied accessing directory: ${e.message}")
+      this@FileSystemDataSaver.logRepository.addLogError(
+          "Permission denied accessing directory: ${e.message}"
+      )
     } catch (e: IllegalArgumentException) {
       _isEnabled.value = false
       this@FileSystemDataSaver.logRepository.addLogError("Invalid directory URI: ${e.message}")
@@ -105,7 +113,9 @@ class FileSystemDataSaver(
         try {
           streamPair.second.close()
         } catch (e: IOException) {
-          this@FileSystemDataSaver.logRepository.addLogError("[$key] Error closing old stream: ${e.message}")
+          this@FileSystemDataSaver.logRepository.addLogError(
+              "[$key] Error closing old stream: ${e.message}"
+          )
         }
 
         filePartNumbers[key] = (filePartNumbers[key] ?: 1) + 1
@@ -119,7 +129,9 @@ class FileSystemDataSaver(
             val newStream = context.contentResolver.openOutputStream(newFile.uri, "wa")
             if (newStream != null) {
               outputStreams[key] = Pair(newFile, newStream)
-              this@FileSystemDataSaver.logRepository.addLogMessage("[$key] Created new file part: $fileName")
+              this@FileSystemDataSaver.logRepository.addLogMessage(
+                  "[$key] Created new file part: $fileName"
+              )
             }
           }
         } catch (e: SecurityException) {
@@ -128,7 +140,9 @@ class FileSystemDataSaver(
           )
           outputStreams.remove(key)
         } catch (e: IOException) {
-          this@FileSystemDataSaver.logRepository.addLogError("[$key] I/O error while creating new file part: ${e.message}")
+          this@FileSystemDataSaver.logRepository.addLogError(
+              "[$key] I/O error while creating new file part: ${e.message}"
+          )
           outputStreams.remove(key)
         } catch (e: IllegalArgumentException) {
           this@FileSystemDataSaver.logRepository.addLogError(
@@ -141,11 +155,11 @@ class FileSystemDataSaver(
   }
 
   override fun saveData(
-    phoneTimestamp: Long,
-    deviceId: String,
-    recordingName: String,
-    dataType: String,
-    data: Any
+      phoneTimestamp: Long,
+      deviceId: String,
+      recordingName: String,
+      dataType: String,
+      data: Any,
   ) {
     val key = "$deviceId/$dataType"
     val lock = rotationLocks.getOrPut(key) { Any() }
@@ -176,15 +190,17 @@ class FileSystemDataSaver(
         )
         checkAndRotateFile(deviceId, dataType)
       } catch (e: IllegalStateException) {
-        this@FileSystemDataSaver.logRepository.addLogError("[$deviceId] Failed to save data to file system: ${e.message}")
+        this@FileSystemDataSaver.logRepository.addLogError(
+            "[$deviceId] Failed to save data to file system: ${e.message}"
+        )
       }
     }
   }
 
   @Suppress("NestedBlockDepth", "ReturnCount")
   override fun initSaving(
-    recordingName: String,
-    deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+      recordingName: String,
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     super.initSaving(recordingName, deviceIdsWithInfo)
     filePartNumbers.clear()
@@ -210,13 +226,17 @@ class FileSystemDataSaver(
       }
 
       if (pickedDir == null) {
-        this@FileSystemDataSaver.logRepository.addLogError("Cannot init file system saving: pickedDir is null")
+        this@FileSystemDataSaver.logRepository.addLogError(
+            "Cannot init file system saving: pickedDir is null"
+        )
         _isInitialized.value = InitializationState.FAILED
         return
       }
 
       if (recordingName.isEmpty()) {
-        this@FileSystemDataSaver.logRepository.addLogError("Cannot init file system saving: recordingName is empty")
+        this@FileSystemDataSaver.logRepository.addLogError(
+            "Cannot init file system saving: recordingName is empty"
+        )
         _isInitialized.value = InitializationState.FAILED
         return
       }
@@ -248,7 +268,7 @@ class FileSystemDataSaver(
 
           val file =
               currentRecordingDir.findFile(fileName)
-                ?: currentRecordingDir.createFile("application/jsonl", fileName)
+                  ?: currentRecordingDir.createFile("application/jsonl", fileName)
 
           if (file == null) {
             this@FileSystemDataSaver.logRepository.addLogError(
@@ -276,9 +296,13 @@ class FileSystemDataSaver(
 
       // Set initialization state to SUCCESS if we reach this point
       _isInitialized.value = InitializationState.SUCCESS
-      this@FileSystemDataSaver.logRepository.addLogMessage("File system data saver initialized successfully")
+      this@FileSystemDataSaver.logRepository.addLogMessage(
+          "File system data saver initialized successfully"
+      )
     } catch (e: Exception) {
-      this@FileSystemDataSaver.logRepository.addLogError("Failed to initialize file system data saver: ${e.message}")
+      this@FileSystemDataSaver.logRepository.addLogError(
+          "Failed to initialize file system data saver: ${e.message}"
+      )
       _isInitialized.value = InitializationState.FAILED
     }
   }
@@ -291,7 +315,9 @@ class FileSystemDataSaver(
       try {
         stream.close()
       } catch (e: IOException) {
-        this@FileSystemDataSaver.logRepository.addLogError("[$key] Failed to close output stream: ${e.message}")
+        this@FileSystemDataSaver.logRepository.addLogError(
+            "[$key] Failed to close output stream: ${e.message}"
+        )
       }
     }
     outputStreams.clear()

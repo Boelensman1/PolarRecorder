@@ -35,13 +35,13 @@ fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float
   return when (dataType) {
     PolarBleApi.PolarDeviceDataType.HR -> (data as PolarHrData).samples.lastOrNull()?.hr?.toFloat()
     PolarBleApi.PolarDeviceDataType.PPI ->
-      (data as PolarPpiData).samples.lastOrNull()?.ppi?.toFloat()
+        (data as PolarPpiData).samples.lastOrNull()?.ppi?.toFloat()
 
     PolarBleApi.PolarDeviceDataType.ACC ->
-      (data as PolarAccelerometerData).samples.lastOrNull()?.x?.toFloat()
+        (data as PolarAccelerometerData).samples.lastOrNull()?.x?.toFloat()
 
     PolarBleApi.PolarDeviceDataType.PPG ->
-      (data as PolarPpgData).samples.lastOrNull()?.channelSamples?.lastOrNull()?.toFloat()
+        (data as PolarPpgData).samples.lastOrNull()?.channelSamples?.lastOrNull()?.toFloat()
 
     PolarBleApi.PolarDeviceDataType.ECG -> {
       val ecgData = data as PolarEcgData
@@ -53,22 +53,22 @@ fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float
 
     PolarBleApi.PolarDeviceDataType.GYRO -> (data as PolarGyroData).samples.lastOrNull()?.x
     PolarBleApi.PolarDeviceDataType.TEMPERATURE ->
-      (data as PolarTemperatureData).samples.lastOrNull()?.temperature
+        (data as PolarTemperatureData).samples.lastOrNull()?.temperature
 
     PolarBleApi.PolarDeviceDataType.MAGNETOMETER ->
-      (data as PolarMagnetometerData).samples.lastOrNull()?.x
+        (data as PolarMagnetometerData).samples.lastOrNull()?.x
 
     else -> throw IllegalArgumentException("Unsupported data type: $dataType")
   }
 }
 
 class RecordingManager(
-  private val context: Context,
-  private val polarManager: PolarManager,
-  private val logRepository: LogRepository,
-  private val polarRepository: PolarRepository,
-  private val preferencesManager: PreferencesManager,
-  private val dataSavers: DataSavers
+    private val context: Context,
+    private val polarManager: PolarManager,
+    private val logRepository: LogRepository,
+    private val polarRepository: PolarRepository,
+    private val preferencesManager: PreferencesManager,
+    private val dataSavers: DataSavers,
 ) {
   companion object {
     private const val RETRY_COUNT = 3L
@@ -140,19 +140,15 @@ class RecordingManager(
 
   init {
     this.jobs = buildList {
-      this += MainScope().launch {
-        polarRepository.connectedDevices
-            .collect {
-              connectedDevicesObserver.onChanged(it)
-            }
-      }
+      this +=
+          MainScope().launch {
+            polarRepository.connectedDevices.collect { connectedDevicesObserver.onChanged(it) }
+          }
 
-      this += MainScope().launch {
-        logRepository.logMessages
-            .collect {
-              logMessagesObserver.onChanged(it)
-            }
-      }
+      this +=
+          MainScope().launch {
+            logRepository.logMessages.collect { logMessagesObserver.onChanged(it) }
+          }
     }
   }
 
@@ -273,8 +269,8 @@ class RecordingManager(
   }
 
   private fun startStreamForDevice(
-    deviceId: String,
-    dataType: PolarBleApi.PolarDeviceDataType
+      deviceId: String,
+      dataType: PolarBleApi.PolarDeviceDataType,
   ): Disposable {
     val selectedSensorSettings =
         polarRepository.getDeviceSensorSettingsForDataType(deviceId, dataType)
@@ -315,10 +311,10 @@ class RecordingManager(
                     PolarBleApi.PolarDeviceDataType.ECG -> (data as PolarEcgData).samples
                     PolarBleApi.PolarDeviceDataType.GYRO -> (data as PolarGyroData).samples
                     PolarBleApi.PolarDeviceDataType.TEMPERATURE ->
-                      (data as PolarTemperatureData).samples
+                        (data as PolarTemperatureData).samples
 
                     PolarBleApi.PolarDeviceDataType.MAGNETOMETER ->
-                      (data as PolarMagnetometerData).samples
+                        (data as PolarMagnetometerData).samples
 
                     else -> throw IllegalArgumentException("Unsupported data type: $dataType")
                   }

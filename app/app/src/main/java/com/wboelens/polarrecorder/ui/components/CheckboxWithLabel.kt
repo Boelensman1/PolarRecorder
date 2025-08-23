@@ -13,11 +13,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun CheckboxWithLabel(
-  label: String,
-  checked: Boolean = false,
-  fullWidth: Boolean = false,
-  modifier: Modifier = Modifier,
-  onCheckedChange: (Boolean) -> Unit = {}
+    label: String,
+    checked: Boolean = false,
+    fullWidth: Boolean = false,
+    modifier: Modifier = Modifier,
+    onCheckedChange: (Boolean) -> Unit = {},
 ) {
   Row(
       verticalAlignment = Alignment.CenterVertically,

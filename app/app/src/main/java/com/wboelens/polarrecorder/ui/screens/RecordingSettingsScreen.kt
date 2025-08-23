@@ -37,12 +37,12 @@ import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordingSettingsScreen(
-  deviceViewModel: DeviceViewModel,
-  fileSystemSettingsViewModel: FileSystemSettingsViewModel,
-  dataSavers: DataSavers,
-  preferencesManager: PreferencesManager,
-  onBackPressed: () -> Unit,
-  onContinue: () -> Unit
+    deviceViewModel: DeviceViewModel,
+    fileSystemSettingsViewModel: FileSystemSettingsViewModel,
+    dataSavers: DataSavers,
+    preferencesManager: PreferencesManager,
+    onBackPressed: () -> Unit,
+    onContinue: () -> Unit,
 ) {
   val connectedDevices = deviceViewModel.connectedDevices.observeAsState(emptySet()).value
   var recordingName by remember { mutableStateOf(preferencesManager.recordingName) }
@@ -57,7 +57,7 @@ fun RecordingSettingsScreen(
   val datasaversList = dataSavers.asList()
   val enabledStates = datasaversList.map { it.isEnabled.collectAsState() }
   val isAnyDataSaverEnabled by
-  remember(enabledStates) { derivedStateOf { enabledStates.any { it.value } } }
+      remember(enabledStates) { derivedStateOf { enabledStates.any { it.value } } }
 
   MaterialTheme {
     Scaffold(
@@ -71,10 +71,7 @@ fun RecordingSettingsScreen(
         },
     ) { paddingValues ->
       Column(
-          modifier = Modifier
-              .fillMaxSize()
-              .padding(paddingValues)
-              .padding(16.dp),
+          modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
       ) {
         SaveToOptions(
             dataSavers = dataSavers,

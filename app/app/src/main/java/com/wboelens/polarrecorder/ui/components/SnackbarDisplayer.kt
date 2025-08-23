@@ -14,9 +14,7 @@ import com.wboelens.polarrecorder.viewModels.LogType
 import com.wboelens.polarrecorder.viewModels.LogViewModel
 
 @Composable
-fun SnackbarMessageDisplayer(
-  logViewModel: LogViewModel
-): Pair<SnackbarHostState, LogType?> {
+fun SnackbarMessageDisplayer(logViewModel: LogViewModel): Pair<SnackbarHostState, LogType?> {
   val snackbarHostState = remember { SnackbarHostState() }
   // Track the current log type
   val currentLogType = remember { mutableStateOf<LogType?>(null) }
@@ -44,9 +42,9 @@ fun SnackbarMessageDisplayer(
 
 @Composable
 fun LogMessageSnackbarHost(
-  snackbarHostState: SnackbarHostState,
-  logType: LogType? = null,
-  modifier: Modifier = Modifier
+    snackbarHostState: SnackbarHostState,
+    logType: LogType? = null,
+    modifier: Modifier = Modifier,
 ) {
   SnackbarHost(hostState = snackbarHostState, modifier = modifier) { data ->
     val containerColor =

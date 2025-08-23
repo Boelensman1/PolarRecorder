@@ -31,9 +31,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceSelectionScreen(
-  deviceViewModel: DeviceViewModel,
-  polarManager: PolarManager,
-  onContinue: () -> Unit
+    deviceViewModel: DeviceViewModel,
+    polarManager: PolarManager,
+    onContinue: () -> Unit,
 ) {
   val selectedDevices by deviceViewModel.selectedDevices.observeAsState(emptyList())
   val state = rememberPullToRefreshState()
@@ -56,20 +56,17 @@ fun DeviceSelectionScreen(
         },
     ) { paddingValues ->
       PullToRefreshBox(
-          modifier = Modifier
-              .fillMaxSize()
-              .padding(paddingValues),
+          modifier = Modifier.fillMaxSize().padding(paddingValues),
           state = state,
           isRefreshing = isRefreshing.value && isBLEEnabled.value,
           onRefresh = onRefresh,
       ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
         ) {
           DeviceList(
-              deviceViewModel = deviceViewModel, isBLEEnabled = polarManager.isBLEEnabled.value,
+              deviceViewModel = deviceViewModel,
+              isBLEEnabled = polarManager.isBLEEnabled.value,
           )
 
           Spacer(modifier = Modifier.weight(1f))

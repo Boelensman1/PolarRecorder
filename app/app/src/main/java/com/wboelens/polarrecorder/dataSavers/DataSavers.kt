@@ -5,9 +5,9 @@ import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.repository.LogRepository
 
 class DataSavers(
-  context: Context,
-  logRepository: LogRepository,
-  preferencesManager: PreferencesManager,
+    context: Context,
+    logRepository: LogRepository,
+    preferencesManager: PreferencesManager,
 ) {
   val mqtt: MQTTDataSaver = MQTTDataSaver(logRepository, preferencesManager)
   val fileSystem: FileSystemDataSaver =

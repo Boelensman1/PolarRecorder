@@ -10,17 +10,17 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 data class MQTTConfig(
-  val host: String = "",
-  val port: Int,
-  val useSSL: Boolean,
-  val username: String? = null,
-  val password: String? = null,
-  val clientId: String = "PolarRecorder_${UUID.randomUUID()}",
-  val topicPrefix: String = "polar_recorder"
+    val host: String = "",
+    val port: Int,
+    val useSSL: Boolean,
+    val username: String? = null,
+    val password: String? = null,
+    val clientId: String = "PolarRecorder_${UUID.randomUUID()}",
+    val topicPrefix: String = "polar_recorder",
 )
 
 class MQTTDataSaver(logRepository: LogRepository, preferencesManager: PreferencesManager) :
-  DataSaver(logRepository, preferencesManager) {
+    DataSaver(logRepository, preferencesManager) {
   private var mqttClient: Mqtt3AsyncClient? = null
 
   private lateinit var config: MQTTConfig
@@ -62,7 +62,9 @@ class MQTTDataSaver(logRepository: LogRepository, preferencesManager: Preference
           it.disconnect()
         }
       } catch (e: Exception) {
-        this@MQTTDataSaver.logRepository.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
+        this@MQTTDataSaver.logRepository.addLogError(
+            "Failed to disconnect from MQTT broker: ${e.message}"
+        )
       }
     }
     mqttClient = null
@@ -70,8 +72,8 @@ class MQTTDataSaver(logRepository: LogRepository, preferencesManager: Preference
   }
 
   override fun initSaving(
-    recordingName: String,
-    deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>
+      recordingName: String,
+      deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     super.initSaving(recordingName, deviceIdsWithInfo)
 
@@ -104,7 +106,9 @@ class MQTTDataSaver(logRepository: LogRepository, preferencesManager: Preference
       // Connect asynchronously
       connectBuilder.send().whenComplete { _, throwable ->
         if (throwable != null) {
-          this@MQTTDataSaver.logRepository.addLogError("Failed to connect to MQTT broker: ${throwable.message}")
+          this@MQTTDataSaver.logRepository.addLogError(
+              "Failed to connect to MQTT broker: ${throwable.message}"
+          )
           _isInitialized.value = InitializationState.FAILED
         } else {
           mqttClient = client
@@ -125,11 +129,11 @@ class MQTTDataSaver(logRepository: LogRepository, preferencesManager: Preference
   }
 
   override fun saveData(
-    phoneTimestamp: Long,
-    deviceId: String,
-    recordingName: String,
-    dataType: String,
-    data: Any
+      phoneTimestamp: Long,
+      deviceId: String,
+      recordingName: String,
+      dataType: String,
+      data: Any,
   ) {
     val topic = "${config.topicPrefix}/$dataType/$deviceId"
     val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, dataType, data)
@@ -162,7 +166,9 @@ class MQTTDataSaver(logRepository: LogRepository, preferencesManager: Preference
           it.disconnect()
         }
       } catch (e: Exception) {
-        this@MQTTDataSaver.logRepository.addLogError("Error during MQTT client cleanup: ${e.message}")
+        this@MQTTDataSaver.logRepository.addLogError(
+            "Error during MQTT client cleanup: ${e.message}"
+        )
       }
     }
     mqttClient = null

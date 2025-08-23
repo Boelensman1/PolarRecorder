@@ -52,14 +52,15 @@ class PolarRecorderApplication : Application() {
     _preferencesManager = PreferencesManager(applicationContext)
     _dataSavers = DataSavers(applicationContext, logRepository, preferencesManager)
 
-    _recordingManager = RecordingManager(
-        applicationContext,
-        polarManager,
-        logRepository,
-        polarRepository,
-        preferencesManager,
-        dataSavers,
-    )
+    _recordingManager =
+        RecordingManager(
+            applicationContext,
+            polarManager,
+            logRepository,
+            polarRepository,
+            preferencesManager,
+            dataSavers,
+        )
   }
 
   override fun onTerminate() {

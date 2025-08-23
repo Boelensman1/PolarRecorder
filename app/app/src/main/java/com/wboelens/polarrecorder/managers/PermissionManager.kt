@@ -11,39 +11,40 @@ import androidx.activity.result.contract.ActivityResultContracts
 class PermissionManager(private val activity: Activity) {
   private val requiredPermissions: Array<String>
     get() =
-      when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
-          arrayOf(
-              Manifest.permission.BLUETOOTH_SCAN,
-              Manifest.permission.BLUETOOTH_CONNECT,
-              Manifest.permission.FOREGROUND_SERVICE,
-              Manifest.permission.POST_NOTIFICATIONS,
-          )
-        }
+        when {
+          Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+            arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.FOREGROUND_SERVICE,
+                Manifest.permission.POST_NOTIFICATIONS,
+            )
+          }
 
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-          arrayOf(
-              Manifest.permission.BLUETOOTH_SCAN,
-              Manifest.permission.BLUETOOTH_CONNECT,
-              Manifest.permission.FOREGROUND_SERVICE,
-          )
-        }
+          Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            arrayOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.FOREGROUND_SERVICE,
+            )
+          }
 
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
-          arrayOf(
-              Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.FOREGROUND_SERVICE,
-          )
-        }
+          Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.FOREGROUND_SERVICE,
+            )
+          }
 
-        else -> {
-          arrayOf(
-              Manifest.permission.ACCESS_COARSE_LOCATION,
-              Manifest.permission.ACCESS_FINE_LOCATION,
-              Manifest.permission.BLUETOOTH,
-              Manifest.permission.BLUETOOTH_ADMIN,
-          )
+          else -> {
+            arrayOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+            )
+          }
         }
-      }
 
   private val permissionLauncher =
       (activity as ComponentActivity).registerForActivityResult(

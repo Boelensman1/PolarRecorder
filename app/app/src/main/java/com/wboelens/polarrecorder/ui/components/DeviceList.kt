@@ -63,15 +63,11 @@ fun DeviceList(deviceViewModel: DeviceViewModel, isBLEEnabled: Boolean) {
 @Composable
 private fun DeviceItem(device: Device, onSelect: () -> Unit) {
   Card(
-      modifier = Modifier
-          .fillMaxWidth()
-          .height(72.dp),
+      modifier = Modifier.fillMaxWidth().height(72.dp),
       onClick = onSelect,
   ) {
     Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {

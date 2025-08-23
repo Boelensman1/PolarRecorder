@@ -12,7 +12,7 @@ data class LogEntry(val message: String, val type: LogType, val timestamp: Long)
 enum class LogType {
   SUCCESS,
   NORMAL,
-  ERROR
+  ERROR,
 }
 
 class LogViewModel : ViewModel() {
@@ -24,7 +24,7 @@ class LogViewModel : ViewModel() {
 
   private lateinit var _logMessages: LiveData<List<LogEntry>>
   val logMessages: LiveData<List<LogEntry>>
-      get() = _logMessages
+    get() = _logMessages
 
   // Property to hold the snackbar messages queue, used to display snackbars with log messages
   private lateinit var _snackbarMessagesQueue: StateFlow<List<LogEntry>>
@@ -32,9 +32,7 @@ class LogViewModel : ViewModel() {
   val snackbarMessagesQueue: StateFlow<List<LogEntry>>
     get() = _snackbarMessagesQueue
 
-  init {
-
-  }
+  init {}
 
   fun setup(logRepository: LogRepository) {
     this.logRepository = logRepository

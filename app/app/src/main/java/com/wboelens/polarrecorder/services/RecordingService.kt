@@ -57,7 +57,9 @@ class RecordingService : Service() {
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
       val channel =
           NotificationChannel(
-              CHANNEL_ID, "Recording Service Channel", NotificationManager.IMPORTANCE_LOW,
+              CHANNEL_ID,
+              "Recording Service Channel",
+              NotificationManager.IMPORTANCE_LOW,
           )
       val manager = getSystemService(NotificationManager::class.java)
       manager.createNotificationChannel(channel)
