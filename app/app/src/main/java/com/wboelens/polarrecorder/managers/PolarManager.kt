@@ -61,6 +61,20 @@ class PolarManager(
     private const val MAX_RETRY_ERRORS = 6L
     private const val FEATURE_POLL_MAX_WAIT = 5000L // 5 seconds max wait for features
     private const val FEATURE_POLL_INTERVAL = 500L // Poll every 500ms
+
+    /** Data types that this app knows how to stream and process. */
+    val SUPPORTED_DATA_TYPES =
+        setOf(
+            PolarDeviceDataType.HR,
+            PolarDeviceDataType.PPI,
+            PolarDeviceDataType.ACC,
+            PolarDeviceDataType.PPG,
+            PolarDeviceDataType.ECG,
+            PolarDeviceDataType.GYRO,
+            PolarDeviceDataType.TEMPERATURE,
+            PolarDeviceDataType.SKIN_TEMPERATURE,
+            PolarDeviceDataType.MAGNETOMETER,
+        )
   }
 
   private var scanDisposable: Disposable? = null
@@ -287,8 +301,18 @@ class PolarManager(
               }
         }
         .flatMap { types ->
+          // Filter out unsupported data types to prevent crashes
+          val supportedTypes = types.filter { it in SUPPORTED_DATA_TYPES }
+          val unsupportedTypes = types.filterNot { it in SUPPORTED_DATA_TYPES }
+          if (unsupportedTypes.isNotEmpty()) {
+            logState.addLogMessage(
+                "Ignoring unsupported data types: ${unsupportedTypes.joinToString { it.name }}",
+                withSnackbar = true,
+            )
+          }
+
           val settingsRequests =
-              types.map { dataType ->
+              supportedTypes.map { dataType ->
                 getStreamSettings(deviceId, dataType).map { Triple(dataType, it.first, it.second) }
               }
 
@@ -303,7 +327,7 @@ class PolarManager(
                               triple.third as PolarSensorSetting,
                           )
                     }
-            DeviceStreamCapabilities(types.toSet(), settings)
+            DeviceStreamCapabilities(supportedTypes.toSet(), settings)
           }
         }
   }

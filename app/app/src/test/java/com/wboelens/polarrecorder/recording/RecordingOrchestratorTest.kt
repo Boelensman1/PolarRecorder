@@ -600,6 +600,44 @@ class RecordingOrchestratorTest {
     }
   }
 
+  // ==================== Unsupported Data Types Tests ====================
+
+  /**
+   * Tests that verify the app would crash if unsupported data types reach the orchestrator.
+   *
+   * Note: The fix for this issue is in PolarManager.fetchDeviceCapabilities(), which filters out
+   * unsupported data types before they are stored in device capabilities. This test verifies the
+   * crash would happen if that filter didn't exist.
+   */
+  @Nested
+  inner class UnsupportedDataTypes {
+
+    @Test
+    fun `startRecording with unsupported data type throws IllegalArgumentException`() {
+      // Setup a device with PRESSURE (unsupported) data type
+      // This simulates what would happen if PolarManager did not filter unsupported types
+      val device = createDevice("DEVICE_001", dataTypes = setOf(PolarDeviceDataType.PRESSURE))
+      selectedDevicesFlow.value = listOf(device)
+      connectedDevicesFlow.value = listOf(device)
+
+      val dataSaver = createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      every { dataSavers.asList() } returns listOf(dataSaver)
+      every { dataSavers.enabledCount } returns 1
+      every { deviceState.getDeviceDataTypes("DEVICE_001") } returns
+          setOf(PolarDeviceDataType.PRESSURE)
+      every { deviceState.getDeviceSensorSettingsForDataType(any(), any()) } returns
+          PolarSensorSetting(emptyMap())
+
+      // PolarManager.startStreaming throws for unsupported types
+      every { polarManager.startStreaming(any(), PolarDeviceDataType.PRESSURE, any()) } throws
+          IllegalArgumentException("Unsupported data type: PRESSURE")
+
+      org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
+        orchestrator.startRecording("Test Recording")
+      }
+    }
+  }
+
   // ==================== cleanup() Tests ====================
 
   @Nested
