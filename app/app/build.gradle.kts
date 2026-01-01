@@ -23,7 +23,7 @@ android {
 
   defaultConfig {
     applicationId = "com.wboelens.polarrecorder"
-    minSdk = 24
+    minSdk = 26
     targetSdk = 35
     versionCode = 21
     versionName = "2.0.3"
