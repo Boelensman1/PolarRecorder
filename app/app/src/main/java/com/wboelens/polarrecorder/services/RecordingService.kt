@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class RecordingService : Service() {
   companion object {
     const val ACTION_START_RECORDING = "com.wboelens.polarrecorder.START_RECORDING"
@@ -150,6 +151,7 @@ class RecordingService : Service() {
 
   override fun onBind(intent: Intent?): IBinder = binder
 
+  @Suppress("NestedBlockDepth")
   private fun handleConnectedDevicesChange(devices: List<Device>) {
     if (!_recordingState.value.isRecording) {
       return

@@ -11,8 +11,6 @@ import com.polar.sdk.api.model.PolarPpgData
 import com.polar.sdk.api.model.PolarPpiData
 import com.polar.sdk.api.model.PolarTemperatureData
 
-data class DeviceInfoForDataSaver(val deviceName: String, val dataTypes: Set<String>)
-
 fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float? {
   return when (dataType) {
     PolarBleApi.PolarDeviceDataType.HR -> (data as PolarHrData).samples.lastOrNull()?.hr?.toFloat()

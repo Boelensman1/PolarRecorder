@@ -38,7 +38,12 @@ data class Device(
  * Application-scoped state holder for device information. This class survives Activity restarts and
  * holds the source of truth for device state. ViewModels delegate to this class.
  */
+@Suppress("TooManyFunctions")
 class DeviceState {
+  companion object {
+    private const val SUBSCRIPTION_TIMEOUT_MS = 5000L
+  }
+
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   private val _devices = MutableStateFlow<List<Device>>(emptyList())
@@ -47,12 +52,12 @@ class DeviceState {
   val selectedDevices: StateFlow<List<Device>> =
       _devices
           .map { devices -> devices.filter { it.isSelected } }
-          .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+          .stateIn(scope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), emptyList())
 
   val connectedDevices: StateFlow<List<Device>> =
       _devices
           .map { devices -> devices.filter { it.connectionState == ConnectionState.CONNECTED } }
-          .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+          .stateIn(scope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), emptyList())
 
   private val _batteryLevels = MutableStateFlow<Map<String, Int>>(emptyMap())
   val batteryLevels: StateFlow<Map<String, Int>> = _batteryLevels.asStateFlow()
