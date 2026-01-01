@@ -19,7 +19,7 @@ ktfmt .
 ./gradlew :app:test
 
 # Run a single test class
-./gradlew :app:test --tests "com.wboelens.polarrecorder.LogViewModelTest"
+./gradlew :app:testDebugUnitTest --tests "com.wboelens.polarrecorder.LogViewModelTest"
 
 # Run instrumented tests (requires device/emulator)
 ./gradlew :app:connectedAndroidTest
