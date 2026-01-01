@@ -396,6 +396,54 @@ class RecordingOrchestratorTest {
 
       assertTrue(orchestrator.lastDataTimestamps.value.isEmpty())
     }
+
+    @Test
+    fun `stopRecording saves recording stopped message to data savers`() {
+      val dataSaver = createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      val device = createDevice("DEVICE_001")
+      selectedDevicesFlow.value = listOf(device)
+      connectedDevicesFlow.value = listOf(device)
+      every { dataSavers.asList() } returns listOf(dataSaver)
+      every { dataSavers.enabledCount } returns 1
+      every { deviceState.getDeviceDataTypes("DEVICE_001") } returns setOf(PolarDeviceDataType.HR)
+      every { deviceState.getDeviceSensorSettingsForDataType(any(), any()) } returns
+          PolarSensorSetting(emptyMap())
+      every { polarManager.startStreaming(any(), any(), any()) } returns Flowable.never<Any>()
+
+      // Track pending messages (simulating the async queue behavior of real LogState)
+      val pendingMessages = mutableListOf<LogEntry>()
+
+      // When addLogMessage is called, add to pending queue but DON'T update logMessagesFlow
+      // This simulates the async Handler.post behavior where the StateFlow isn't updated yet
+      every { logState.addLogMessage(any(), any()) } answers
+          {
+            val message = firstArg<String>()
+            pendingMessages.add(LogEntry(message, LogType.NORMAL, clock.time))
+          }
+
+      // When flushQueueSync is called, move pending messages to logMessagesFlow
+      every { logState.flushQueueSync() } answers
+          {
+            logMessagesFlow.value = pendingMessages.toList()
+          }
+
+      orchestrator.startRecording("Test Recording")
+      orchestrator.stopRecording()
+
+      // Verify "Recording stopped" was saved to data savers
+      verify {
+        dataSaver.saveData(
+            any(),
+            "DEVICE_001",
+            "Test Recording",
+            "LOG",
+            match { data ->
+              @Suppress("UNCHECKED_CAST")
+              (data as List<Map<String, String>>).any { it["message"] == "Recording stopped" }
+            },
+        )
+      }
+    }
   }
 
   // ==================== handleDevicesChanged() Tests ====================

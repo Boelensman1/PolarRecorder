@@ -146,6 +146,10 @@ class RecordingOrchestrator(
 
     logState.addLogMessage("Recording stopped")
 
+    // Flush the log queue synchronously to ensure the "Recording stopped" message
+    // is in the StateFlow before we save
+    logState.flushQueueSync()
+
     // Save any remaining log messages
     saveUnsavedLogMessages(logState.logMessages.value)
 

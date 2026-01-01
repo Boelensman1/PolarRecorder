@@ -69,6 +69,14 @@ class LogState {
     Handler(Looper.getMainLooper()).post { flushQueue() }
   }
 
+  /**
+   * Flushes the queue synchronously. Use when you need to ensure all queued messages are in the
+   * StateFlow before reading.
+   */
+  fun flushQueueSync() {
+    flushQueue()
+  }
+
   private fun flushQueue() {
     val newEntries = mutableListOf<LogEntry>()
     while (true) {
