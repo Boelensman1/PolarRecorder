@@ -6,6 +6,8 @@ import android.content.Context
 import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.managers.PreferencesManager
+import com.wboelens.polarrecorder.recording.AndroidAppInfoProvider
+import com.wboelens.polarrecorder.recording.RecordingOrchestrator
 import com.wboelens.polarrecorder.services.RecordingService
 import com.wboelens.polarrecorder.services.RecordingServiceConnection
 import com.wboelens.polarrecorder.state.DeviceState
@@ -27,12 +29,16 @@ class PolarRecorderApplication : Application() {
   // Managers are initialized lazily when first Activity starts
   private var _polarManager: PolarManager? = null
   private var _dataSavers: DataSavers? = null
+  private var _recordingOrchestrator: RecordingOrchestrator? = null
 
   val polarManager: PolarManager?
     get() = _polarManager
 
   val dataSavers: DataSavers?
     get() = _dataSavers
+
+  val recordingOrchestrator: RecordingOrchestrator?
+    get() = _recordingOrchestrator
 
   // Service connection for recording control
   private var _serviceConnection: RecordingServiceConnection? = null
@@ -50,6 +56,15 @@ class PolarRecorderApplication : Application() {
     if (_polarManager == null) {
       _dataSavers = DataSavers(applicationContext, logState, preferencesManager)
       _polarManager = PolarManager(applicationContext, deviceState, logState)
+      _recordingOrchestrator =
+          RecordingOrchestrator(
+              polarManager = _polarManager!!,
+              deviceState = deviceState,
+              logState = logState,
+              preferencesManager = preferencesManager,
+              dataSavers = _dataSavers!!,
+              appInfoProvider = AndroidAppInfoProvider(applicationContext),
+          )
     }
   }
 
@@ -89,10 +104,12 @@ class PolarRecorderApplication : Application() {
    */
   fun cleanupIfNotRecording() {
     if (!isRecordingActive) {
+      _recordingOrchestrator?.cleanup()
       _polarManager?.cleanup()
       deviceState.cleanup()
       _polarManager = null
       _dataSavers = null
+      _recordingOrchestrator = null
     }
   }
 }
