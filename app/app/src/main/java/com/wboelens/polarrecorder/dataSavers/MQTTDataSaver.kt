@@ -5,7 +5,7 @@ import com.hivemq.client.mqtt.datatypes.MqttQos
 import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
-import com.wboelens.polarrecorder.viewModels.LogViewModel
+import com.wboelens.polarrecorder.state.LogState
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
@@ -25,8 +25,8 @@ data class MQTTConfig(
 }
 
 @Suppress("TooGenericExceptionCaught")
-class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesManager) :
-    DataSaver(logViewModel, preferencesManager) {
+class MQTTDataSaver(logState: LogState, preferencesManager: PreferencesManager) :
+    DataSaver(logState, preferencesManager) {
   private var mqttClient: Mqtt3AsyncClient? = null
 
   private lateinit var config: MQTTConfig
@@ -54,7 +54,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
 
   override fun enable() {
     if (config.host.isEmpty()) {
-      logViewModel.addLogError("Broker host must be configured before starting")
+      logState.addLogError("Broker host must be configured before starting")
       return
     }
 
@@ -68,7 +68,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
           it.disconnect()
         }
       } catch (e: Exception) {
-        logViewModel.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
+        logState.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
       }
     }
     mqttClient = null
@@ -111,7 +111,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       // Connect asynchronously
       connectBuilder.send().whenComplete { _, throwable ->
         if (throwable != null) {
-          logViewModel.addLogError("Failed to connect to MQTT broker: ${throwable.message}")
+          logState.addLogError("Failed to connect to MQTT broker: ${throwable.message}")
           _isInitialized.value = InitializationState.FAILED
         } else {
           mqttClient = client
@@ -121,12 +121,12 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
               .initialDelay(1, TimeUnit.SECONDS)
               .maxDelay(5, TimeUnit.SECONDS)
               .build())*/
-          logViewModel.addLogMessage("Connected to MQTT broker")
+          logState.addLogMessage("Connected to MQTT broker")
           _isInitialized.value = InitializationState.SUCCESS
         }
       }
     } catch (e: Exception) {
-      logViewModel.addLogError("Failed to connect to MQTT broker: ${e.message}")
+      logState.addLogError("Failed to connect to MQTT broker: ${e.message}")
       _isInitialized.value = InitializationState.FAILED
     }
   }
@@ -151,13 +151,13 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
             .send()
 
         if (!firstMessageSaved["$deviceId/$dataType"]!!) {
-          logViewModel.addLogMessage(
+          logState.addLogMessage(
               "Successfully published first $dataType data to MQTT topic: $topic")
           firstMessageSaved["$deviceId/$dataType"] = true
         }
-      } ?: run { logViewModel.addLogError("MQTT client not initialized") }
+      } ?: run { logState.addLogError("MQTT client not initialized") }
     } catch (e: Exception) {
-      logViewModel.addLogError("Failed to publish MQTT message: ${e.message}")
+      logState.addLogError("Failed to publish MQTT message: ${e.message}")
     }
   }
 
@@ -168,7 +168,7 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
           it.disconnect()
         }
       } catch (e: Exception) {
-        logViewModel.addLogError("Error during MQTT client cleanup: ${e.message}")
+        logState.addLogError("Error during MQTT client cleanup: ${e.message}")
       }
     }
     mqttClient = null

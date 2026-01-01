@@ -10,13 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.wboelens.polarrecorder.dataSavers.DataSavers
-import com.wboelens.polarrecorder.managers.RecordingManager
+import com.wboelens.polarrecorder.services.RecordingServiceConnection
 
 @Composable
 fun RecordingControls(
     isRecording: Boolean,
     isFileSystemEnabled: Boolean,
-    recordingManager: RecordingManager,
+    serviceConnection: RecordingServiceConnection,
     dataSavers: DataSavers,
     onRestartRecording: () -> Unit,
 ) {
@@ -25,7 +25,7 @@ fun RecordingControls(
   Button(
       onClick = {
         if (isRecording) {
-          recordingManager.stopRecording()
+          serviceConnection.stopRecordingService()
         } else {
           onRestartRecording()
         }

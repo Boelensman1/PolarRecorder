@@ -2,16 +2,15 @@ package com.wboelens.polarrecorder.dataSavers
 
 import android.content.Context
 import com.wboelens.polarrecorder.managers.PreferencesManager
-import com.wboelens.polarrecorder.viewModels.LogViewModel
+import com.wboelens.polarrecorder.state.LogState
 
 class DataSavers(
     context: Context,
-    logViewModel: LogViewModel,
+    logState: LogState,
     preferencesManager: PreferencesManager,
 ) {
-  val mqtt: MQTTDataSaver = MQTTDataSaver(logViewModel, preferencesManager)
-  val fileSystem: FileSystemDataSaver =
-      FileSystemDataSaver(context, logViewModel, preferencesManager)
+  val mqtt: MQTTDataSaver = MQTTDataSaver(logState, preferencesManager)
+  val fileSystem: FileSystemDataSaver = FileSystemDataSaver(context, logState, preferencesManager)
 
   private val savers = mutableListOf<DataSaver>()
 

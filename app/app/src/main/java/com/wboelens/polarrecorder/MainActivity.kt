@@ -10,6 +10,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,7 +20,7 @@ import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.managers.PermissionManager
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.managers.PreferencesManager
-import com.wboelens.polarrecorder.managers.RecordingManager
+import com.wboelens.polarrecorder.services.RecordingServiceConnection
 import com.wboelens.polarrecorder.ui.components.LogMessageSnackbarHost
 import com.wboelens.polarrecorder.ui.components.SnackbarMessageDisplayer
 import com.wboelens.polarrecorder.ui.screens.DataSaverInitializationScreen
@@ -31,44 +33,57 @@ import com.wboelens.polarrecorder.ui.theme.AppTheme
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 import com.wboelens.polarrecorder.viewModels.FileSystemSettingsViewModel
 import com.wboelens.polarrecorder.viewModels.LogViewModel
+import com.wboelens.polarrecorder.viewModels.ViewModelFactory
 
 class MainActivity : ComponentActivity() {
-  private val deviceViewModel: DeviceViewModel by viewModels()
-  private val logViewModel: LogViewModel by viewModels()
+  // Get Application instance for accessing Application-scoped state
+  private val app: PolarRecorderApplication
+    get() = application as PolarRecorderApplication
+
+  // ViewModels use factory to inject Application-scoped state
+  private val deviceViewModel: DeviceViewModel by viewModels {
+    ViewModelFactory(app.deviceState, app.logState)
+  }
+  private val logViewModel: LogViewModel by viewModels {
+    ViewModelFactory(app.deviceState, app.logState)
+  }
   private val fileSystemViewModel: FileSystemSettingsViewModel by viewModels()
+
+  // These are now retrieved from Application
   private lateinit var polarManager: PolarManager
   private lateinit var permissionManager: PermissionManager
-  private lateinit var recordingManager: RecordingManager
   private lateinit var preferencesManager: PreferencesManager
   private lateinit var dataSavers: DataSavers
 
+  // Service connection for recording control
+  private lateinit var serviceConnection: RecordingServiceConnection
+
   companion object {
-    private const val TAG = "PolarManager"
+    private const val TAG = "MainActivity"
   }
 
   @Suppress("LongMethod")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     Log.d(TAG, "onCreate: Initializing MainActivity")
-    Log.d(TAG, "onCreate: Initializing MainActivity")
 
-    // Load saved settings
-    this.preferencesManager = PreferencesManager(applicationContext)
+    // Get preferences from Application (always available)
+    preferencesManager = app.preferencesManager
 
-    // Init datasavers
-    this.dataSavers = DataSavers(applicationContext, logViewModel, this.preferencesManager)
+    // Initialize managers in Application (creates them if they don't exist)
+    app.ensureManagersInitialized()
+
+    // Get references to Application-scoped managers
+    polarManager = app.polarManager!!
+    dataSavers = app.dataSavers!!
+
+    // Get service connection from Application
+    serviceConnection = app.getServiceConnection()
+
+    // Determine start destination based on recording state
+    val startDestination = if (app.isRecordingActive) "recording" else "deviceSelection"
 
     permissionManager = PermissionManager(this)
-    polarManager = PolarManager(applicationContext, deviceViewModel, logViewModel)
-    recordingManager =
-        RecordingManager(
-            applicationContext,
-            polarManager,
-            logViewModel,
-            deviceViewModel,
-            preferencesManager,
-            dataSavers,
-        )
 
     registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
       if (result.resultCode == RESULT_OK) {
@@ -97,7 +112,7 @@ class MainActivity : ComponentActivity() {
             paddingValues ->
           NavHost(
               navController = navController,
-              startDestination = "deviceSelection",
+              startDestination = startDestination,
               modifier = Modifier.padding(paddingValues),
           ) {
             composable("deviceSelection") {
@@ -146,17 +161,26 @@ class MainActivity : ComponentActivity() {
               DataSaverInitializationScreen(
                   dataSavers = dataSavers,
                   deviceViewModel = deviceViewModel,
-                  recordingManager = recordingManager,
+                  serviceConnection = serviceConnection,
                   preferencesManager = preferencesManager,
                   onBackPressed = { navController.navigateUp() },
                   onContinue = { navController.navigate("recording") },
               )
             }
             composable("recording") {
+              // Observe recording state from service
+              val binder by serviceConnection.binder.collectAsState()
+              val recordingState by
+                  binder?.recordingState?.collectAsState()
+                      ?: androidx.compose.runtime.remember {
+                        androidx.compose.runtime.mutableStateOf(
+                            com.wboelens.polarrecorder.services.RecordingState())
+                      }
+
               // skip data saver initialisation screen
               val backAction = {
-                if (recordingManager.isRecording.value) {
-                  recordingManager.stopRecording()
+                if (recordingState.isRecording) {
+                  serviceConnection.stopRecordingService()
                 }
                 navController.navigate("recordingSettings") {
                   popUpTo("recordingSettings") { inclusive = true }
@@ -166,7 +190,7 @@ class MainActivity : ComponentActivity() {
               BackHandler(onBack = backAction)
               RecordingScreen(
                   deviceViewModel = deviceViewModel,
-                  recordingManager = recordingManager,
+                  serviceConnection = serviceConnection,
                   dataSavers = dataSavers,
                   onBackPressed = backAction,
                   onRestartRecording = { navController.navigate("dataSaverInitialization") },
@@ -178,9 +202,26 @@ class MainActivity : ComponentActivity() {
     }
   }
 
+  override fun onStart() {
+    super.onStart()
+    // Always bind to service to observe state
+    serviceConnection.bind()
+    Log.d(TAG, "Service bound")
+  }
+
+  override fun onStop() {
+    super.onStop()
+    // Unbind from service (service keeps running if recording)
+    serviceConnection.unbind()
+    Log.d(TAG, "Service unbound")
+  }
+
   override fun onDestroy() {
     super.onDestroy()
-    polarManager.cleanup()
-    recordingManager.cleanup()
+    // Only cleanup managers if no recording is active
+    // Managers will persist in Application scope if recording continues
+    if (!app.isRecordingActive) {
+      app.cleanupIfNotRecording()
+    }
   }
 }

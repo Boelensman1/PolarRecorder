@@ -30,7 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.managers.PolarManager
-import com.wboelens.polarrecorder.viewModels.ConnectionState
+import com.wboelens.polarrecorder.state.ConnectionState
+import com.wboelens.polarrecorder.state.Device
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,7 +82,7 @@ fun DeviceConnectionScreen(
 }
 
 @Composable
-private fun DeviceConnectionItem(device: DeviceViewModel.Device) {
+private fun DeviceConnectionItem(device: Device) {
   Row(
       modifier = Modifier.fillMaxWidth().padding(8.dp),
       horizontalArrangement = Arrangement.SpaceBetween,

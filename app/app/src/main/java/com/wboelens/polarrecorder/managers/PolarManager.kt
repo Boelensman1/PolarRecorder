@@ -16,9 +16,9 @@ import com.polar.sdk.api.errors.PolarInvalidArgument
 import com.polar.sdk.api.model.PolarDeviceInfo
 import com.polar.sdk.api.model.PolarHealthThermometerData
 import com.polar.sdk.api.model.PolarSensorSetting
-import com.wboelens.polarrecorder.viewModels.ConnectionState
-import com.wboelens.polarrecorder.viewModels.DeviceViewModel
-import com.wboelens.polarrecorder.viewModels.LogViewModel
+import com.wboelens.polarrecorder.state.ConnectionState
+import com.wboelens.polarrecorder.state.DeviceState
+import com.wboelens.polarrecorder.state.LogState
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
@@ -51,8 +51,8 @@ sealed class PolarApiResult<out T> {
 @Suppress("TooManyFunctions", "TooGenericExceptionCaught")
 class PolarManager(
     private val context: Context,
-    private val deviceViewModel: DeviceViewModel,
-    private val logViewModel: LogViewModel,
+    private val deviceState: DeviceState,
+    private val logState: LogState,
 ) {
   companion object {
     private const val TAG = "PolarManager"
@@ -108,9 +108,8 @@ class PolarManager(
           }
 
           override fun deviceConnected(polarDeviceInfo: PolarDeviceInfo) {
-            logViewModel.addLogMessage(
-                "Fetching capabilities for device ${polarDeviceInfo.deviceId}")
-            deviceViewModel.updateConnectionState(
+            logState.addLogMessage("Fetching capabilities for device ${polarDeviceInfo.deviceId}")
+            deviceState.updateConnectionState(
                 polarDeviceInfo.deviceId,
                 ConnectionState.FETCHING_CAPABILITIES,
             )
@@ -144,7 +143,7 @@ class PolarManager(
                           capabilities = fetchDeviceCapabilities(polarDeviceInfo.deviceId).await()
                         } catch (error: Throwable) {
                           Log.e(TAG, "Failed to fetch device capabilities", error)
-                          logViewModel.addLogError(
+                          logState.addLogError(
                               "Failed to fetch device capabilities for " +
                                   "${polarDeviceInfo.deviceId} (${error}), " +
                                   "falling back to alternative method",
@@ -154,9 +153,9 @@ class PolarManager(
                               fetchDeviceCapabilitiesViaFallback(polarDeviceInfo.deviceId)
                         }
 
-                        logViewModel.addLogMessage(
+                        logState.addLogMessage(
                             "Fetching settings for device ${polarDeviceInfo.deviceId}")
-                        deviceViewModel.updateConnectionState(
+                        deviceState.updateConnectionState(
                             polarDeviceInfo.deviceId,
                             ConnectionState.FETCHING_SETTINGS,
                         )
@@ -166,11 +165,11 @@ class PolarManager(
                           finishConnectDevice(polarDeviceInfo, capabilities, settings)
                         } else {
                           // alternate method also failed, disconnect
-                          deviceViewModel.updateConnectionState(
+                          deviceState.updateConnectionState(
                               polarDeviceInfo.deviceId,
                               ConnectionState.FAILED,
                           )
-                          logViewModel.addLogMessage(
+                          logState.addLogMessage(
                               "Failed to connect to device, could not fetch capabilities.")
                           api.disconnectFromDevice(polarDeviceInfo.deviceId)
                         }
@@ -180,24 +179,24 @@ class PolarManager(
           }
 
           override fun deviceConnecting(polarDeviceInfo: PolarDeviceInfo) {
-            deviceViewModel.updateConnectionState(
+            deviceState.updateConnectionState(
                 polarDeviceInfo.deviceId,
                 ConnectionState.CONNECTING,
             )
-            logViewModel.addLogMessage("Connecting to device ${polarDeviceInfo.deviceId}")
+            logState.addLogMessage("Connecting to device ${polarDeviceInfo.deviceId}")
           }
 
           override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
             deviceCapabilities.remove(polarDeviceInfo.deviceId)
-            if (deviceViewModel.getConnectionState(polarDeviceInfo.deviceId) ===
+            if (deviceState.getConnectionState(polarDeviceInfo.deviceId) ===
                 ConnectionState.DISCONNECTING) {
               // a disconnect was requested, so this disconnect is expected
-              logViewModel.addLogMessage("Device ${polarDeviceInfo.deviceId} disconnected")
+              logState.addLogMessage("Device ${polarDeviceInfo.deviceId} disconnected")
             } else {
-              logViewModel.addLogError("Device ${polarDeviceInfo.deviceId} disconnected")
+              logState.addLogError("Device ${polarDeviceInfo.deviceId} disconnected")
             }
 
-            deviceViewModel.updateConnectionState(
+            deviceState.updateConnectionState(
                 polarDeviceInfo.deviceId,
                 ConnectionState.DISCONNECTED,
             )
@@ -214,28 +213,28 @@ class PolarManager(
           override fun disInformationReceived(identifier: String, uuid: UUID, value: String) {
             when (uuid) {
               BleDisClient.SOFTWARE_REVISION_STRING -> {
-                logViewModel.addLogMessage(
+                logState.addLogMessage(
                     "DIS info received for device $identifier: [FirmwareVersion]: $value")
-                deviceViewModel.updateFirmwareVersion(identifier, value)
+                deviceState.updateFirmwareVersion(identifier, value)
               }
               BleDisClient.FIRMWARE_REVISION_STRING -> {
-                logViewModel.addLogMessage(
+                logState.addLogMessage(
                     "DIS info received for device $identifier: [FirmwareRevision]: $value")
               }
               BleDisClient.HARDWARE_REVISION_STRING -> {
-                logViewModel.addLogMessage(
+                logState.addLogMessage(
                     "DIS info received for device $identifier: [HardwareRevision]: $value")
               }
               BleDisClient.MODEL_NUMBER_STRING -> {
-                logViewModel.addLogMessage(
+                logState.addLogMessage(
                     "DIS info received for device $identifier: [ModelNumber]: $value")
               }
               BleDisClient.SERIAL_NUMBER_STRING -> {
-                logViewModel.addLogMessage(
+                logState.addLogMessage(
                     "DIS info received for device $identifier: [SerialNumber]: $value")
               }
               BleDisClient.MANUFACTURER_NAME_STRING -> {
-                logViewModel.addLogMessage(
+                logState.addLogMessage(
                     "DIS info received for device $identifier: [ManufacturerName]: $value")
               }
               else -> {
@@ -258,7 +257,7 @@ class PolarManager(
           override fun batteryLevelReceived(identifier: String, level: Int) {
             Log.d(TAG, "Battery level for device $identifier: $level")
             deviceBatteryLevels[identifier] = level
-            deviceViewModel.updateBatteryLevel(identifier, level)
+            deviceState.updateBatteryLevel(identifier, level)
           }
         })
   }
@@ -279,7 +278,7 @@ class PolarManager(
                 Pair(error, attempt)
               }
               .flatMap { (error, attempt) ->
-                logViewModel.addLogError(
+                logState.addLogError(
                     "Failed to fetch stream capabilities (attempt $attempt/$MAX_RETRY_ERRORS): ${error.message}",
                     false,
                 )
@@ -342,7 +341,7 @@ class PolarManager(
           try {
             deviceTime = getTime(deviceId)
           } catch (e: Exception) {
-            logViewModel.addLogError("Failed to fetch device time (${e.message})", false)
+            logState.addLogError("Failed to fetch device time (${e.message})", false)
           }
         }
 
@@ -350,7 +349,7 @@ class PolarManager(
           try {
             deviceSdkMode = getSdkMode(deviceId)
           } catch (e: Exception) {
-            logViewModel.addLogError("Failed to fetch device sdk mode (${e.message})", false)
+            logState.addLogError("Failed to fetch device sdk mode (${e.message})", false)
           }
         }
 
@@ -367,10 +366,10 @@ class PolarManager(
   ) {
     deviceCapabilities[polarDeviceInfo.deviceId] = capabilities
     deviceSettings[polarDeviceInfo.deviceId] = settings
-    logViewModel.addLogMessage(
+    logState.addLogMessage(
         "Device ${polarDeviceInfo.deviceId} Connected",
     )
-    deviceViewModel.updateConnectionState(polarDeviceInfo.deviceId, ConnectionState.CONNECTED)
+    deviceState.updateConnectionState(polarDeviceInfo.deviceId, ConnectionState.CONNECTED)
   }
 
   fun getDeviceCapabilities(deviceId: String): DeviceStreamCapabilities? {
@@ -400,23 +399,21 @@ class PolarManager(
       api.connectToDevice(deviceId)
     } catch (e: PolarInvalidArgument) {
       Log.e(TAG, "Connection failed: ${e.message}", e)
-      deviceViewModel.updateConnectionState(deviceId, ConnectionState.FAILED)
+      deviceState.updateConnectionState(deviceId, ConnectionState.FAILED)
     }
   }
 
   fun disconnectDevice(deviceId: String) {
     try {
       api.disconnectFromDevice(deviceId)
-      deviceViewModel.updateConnectionState(deviceId, ConnectionState.DISCONNECTING)
+      deviceState.updateConnectionState(deviceId, ConnectionState.DISCONNECTING)
     } catch (e: PolarInvalidArgument) {
       Log.e(TAG, "Disconnect failed: ${e.message}", e)
     }
   }
 
   fun disconnectAllDevices() {
-    deviceViewModel.connectedDevices.value?.forEach { device ->
-      disconnectDevice(device.info.deviceId)
-    }
+    deviceState.connectedDevices.value.forEach { device -> disconnectDevice(device.info.deviceId) }
   }
 
   fun scanForDevices() {
@@ -428,9 +425,9 @@ class PolarManager(
         api.searchForDevice()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
-                { deviceInfo -> deviceViewModel.addDevice(deviceInfo) },
+                { deviceInfo -> deviceState.addDevice(deviceInfo) },
                 { error ->
-                  logViewModel.addLogMessage("Scan error: ${error.message}")
+                  logState.addLogMessage("Scan error: ${error.message}")
 
                   Log.d(TAG, "Stopping scan")
                   _isRefreshing.value = false
@@ -505,13 +502,13 @@ class PolarManager(
 
   suspend fun setTime(deviceId: String, calendar: Calendar): PolarApiResult<Nothing> =
       withContext(Dispatchers.IO) {
-        logViewModel.addLogMessage("Setting time for $deviceId to ${calendar.time}")
+        logState.addLogMessage("Setting time for $deviceId to ${calendar.time}")
         return@withContext try {
           api.setLocalTime(deviceId, calendar).await()
-          logViewModel.addLogSuccess("Setting time for $deviceId succeeded")
+          logState.addLogSuccess("Setting time for $deviceId succeeded")
           PolarApiResult.Success()
         } catch (e: Exception) {
-          logViewModel.addLogError("Setting time of $deviceId failed: ${e.message}")
+          logState.addLogError("Setting time of $deviceId failed: ${e.message}")
           PolarApiResult.Failure("Set time failed", e)
         }
       }
@@ -522,17 +519,17 @@ class PolarManager(
 
   suspend fun setSdkMode(deviceId: String, newSdkMode: Boolean): PolarApiResult<Nothing> =
       withContext(Dispatchers.IO) {
-        logViewModel.addLogMessage("Setting sdk mode for $deviceId to $newSdkMode")
+        logState.addLogMessage("Setting sdk mode for $deviceId to $newSdkMode")
         return@withContext try {
           if (newSdkMode) {
             api.enableSDKMode(deviceId).await()
           } else {
             api.disableSDKMode(deviceId).await()
           }
-          logViewModel.addLogSuccess("Setting sdk mode for $deviceId succeeded")
+          logState.addLogSuccess("Setting sdk mode for $deviceId succeeded")
           PolarApiResult.Success()
         } catch (e: Exception) {
-          logViewModel.addLogError("Setting sdk mode of $deviceId failed: ${e.message}")
+          logState.addLogError("Setting sdk mode of $deviceId failed: ${e.message}")
           PolarApiResult.Failure("Set sdk mode failed", e)
         }
       }

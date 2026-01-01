@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -35,7 +36,7 @@ import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.dataSavers.InitializationState
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
-import com.wboelens.polarrecorder.managers.RecordingManager
+import com.wboelens.polarrecorder.services.RecordingServiceConnection
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +44,7 @@ import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 fun DataSaverInitializationScreen(
     dataSavers: DataSavers,
     deviceViewModel: DeviceViewModel,
-    recordingManager: RecordingManager,
+    serviceConnection: RecordingServiceConnection,
     preferencesManager: PreferencesManager,
     onBackPressed: () -> Unit,
     onContinue: () -> Unit,
@@ -61,21 +62,22 @@ fun DataSaverInitializationScreen(
         device.info.deviceId to DeviceInfoForDataSaver(device.info.name, dataTypesWithLog.toSet())
       }
 
-  // Initialize data savers & set recording name
-  LaunchedEffect(Unit) {
-    // set recording name
-    recordingManager.currentRecordingName =
-        if (preferencesManager.recordingNameAppendTimestamp) {
-          val timestamp =
-              java.text
-                  .SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
-                  .format(java.util.Date())
-          "${preferencesManager.recordingName}_$timestamp"
-        } else preferencesManager.recordingName
-
-    enabledSavers.forEach { saver ->
-      saver.initSaving(recordingManager.currentRecordingName, deviceIdsWithInfo)
+  // Compute recording name
+  val recordingName = remember {
+    if (preferencesManager.recordingNameAppendTimestamp) {
+      val timestamp =
+          java.text
+              .SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
+              .format(java.util.Date())
+      "${preferencesManager.recordingName}_$timestamp"
+    } else {
+      preferencesManager.recordingName
     }
+  }
+
+  // Initialize data savers
+  LaunchedEffect(Unit) {
+    enabledSavers.forEach { saver -> saver.initSaving(recordingName, deviceIdsWithInfo) }
   }
 
   // Check if all savers are initialized
@@ -87,7 +89,7 @@ fun DataSaverInitializationScreen(
   // Auto-continue when all savers are initialized
   LaunchedEffect(allSuccess) {
     if (allSuccess) {
-      recordingManager.startRecording()
+      serviceConnection.startRecordingService(recordingName, deviceIdsWithInfo)
       onContinue()
     }
   }

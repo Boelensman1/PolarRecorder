@@ -1,118 +1,58 @@
 package com.wboelens.polarrecorder.viewModels
 
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.map
+import androidx.lifecycle.asLiveData
 import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
 import com.polar.sdk.api.model.PolarDeviceInfo
 import com.polar.sdk.api.model.PolarSensorSetting
+import com.wboelens.polarrecorder.state.ConnectionState
+import com.wboelens.polarrecorder.state.Device
+import com.wboelens.polarrecorder.state.DeviceState
 
-enum class ConnectionState {
-  DISCONNECTED,
-  DISCONNECTING,
-  CONNECTING,
-  FETCHING_CAPABILITIES,
-  FETCHING_SETTINGS,
-  CONNECTED,
-  FAILED,
-  NOT_CONNECTABLE,
-}
+/**
+ * ViewModel that delegates to an Application-scoped DeviceState. This allows the UI to observe
+ * device state via LiveData while the actual state survives Activity restarts.
+ */
+class DeviceViewModel(private val deviceState: DeviceState) : ViewModel() {
 
-class DeviceViewModel : ViewModel() {
-  data class Device(
-      val info: PolarDeviceInfo,
-      val isSelected: Boolean = false,
-      val connectionState: ConnectionState,
-      val dataTypes: Set<PolarDeviceDataType> = emptySet(),
-      val sensorSettings: Map<PolarDeviceDataType, PolarSensorSetting> = emptyMap(),
-      val firmwareVersion: String? = null,
-  )
+  val allDevices: LiveData<List<Device>> = deviceState.allDevices.asLiveData()
 
-  private val _devices = MutableLiveData<List<Device>>(emptyList())
+  val selectedDevices: LiveData<List<Device>> = deviceState.selectedDevices.asLiveData()
 
-  val allDevices: LiveData<List<Device>> = _devices
+  val connectedDevices: LiveData<List<Device>> = deviceState.connectedDevices.asLiveData()
 
-  val selectedDevices: LiveData<List<Device>> =
-      _devices.map { devices -> devices.filter { device -> device.isSelected } }
+  val batteryLevels: LiveData<Map<String, Int>> = deviceState.batteryLevels.asLiveData()
 
-  val connectedDevices: LiveData<List<Device>> =
-      _devices.map { devices ->
-        devices.filter { device -> device.connectionState == ConnectionState.CONNECTED }
-      }
+  fun addDevice(device: PolarDeviceInfo) = deviceState.addDevice(device)
 
-  private val _batteryLevels = mutableStateMapOf<String, Int>()
-  val batteryLevels: LiveData<Map<String, Int>> = MutableLiveData(_batteryLevels)
+  fun updateConnectionState(deviceId: String, state: ConnectionState) =
+      deviceState.updateConnectionState(deviceId, state)
 
-  fun addDevice(device: PolarDeviceInfo) {
-    val currentDevices = _devices.value?.toMutableList() ?: mutableListOf()
-    if (currentDevices.none { it.info.deviceId == device.deviceId }) {
-      val connectionState =
-          if (device.isConnectable) ConnectionState.DISCONNECTED
-          else ConnectionState.NOT_CONNECTABLE
-      currentDevices.add(Device(info = device, connectionState = connectionState))
-      _devices.value = currentDevices
-    }
-  }
+  fun updateFirmwareVersion(deviceId: String, firmwareVersion: String) =
+      deviceState.updateFirmwareVersion(deviceId, firmwareVersion)
 
-  private fun updateDevice(deviceId: String, update: (Device) -> Device) {
-    val currentDevices = _devices.value?.toMutableList() ?: mutableListOf()
-    val deviceIndex = currentDevices.indexOfFirst { it.info.deviceId == deviceId }
+  fun getConnectionState(deviceId: String): ConnectionState =
+      deviceState.getConnectionState(deviceId)
 
-    if (deviceIndex != -1) {
-      currentDevices[deviceIndex] = update(currentDevices[deviceIndex])
-      _devices.value = currentDevices
-    }
-  }
+  fun toggleIsSelected(deviceId: String) = deviceState.toggleIsSelected(deviceId)
 
-  fun updateConnectionState(deviceId: String, state: ConnectionState) {
-    updateDevice(deviceId) { device -> device.copy(connectionState = state) }
-  }
-
-  fun updateFirmwareVersion(deviceId: String, firmwareVersion: String) {
-    updateDevice(deviceId) { device -> device.copy(firmwareVersion = firmwareVersion) }
-  }
-
-  fun getConnectionState(deviceId: String): ConnectionState {
-    return _devices.value?.find { it.info.deviceId == deviceId }?.connectionState
-        ?: ConnectionState.NOT_CONNECTABLE
-  }
-
-  fun toggleIsSelected(deviceId: String) {
-    updateDevice(deviceId) { device -> device.copy(isSelected = !device.isSelected) }
-  }
-
-  fun updateDeviceDataTypes(deviceId: String, dataTypes: Set<PolarDeviceDataType>) {
-    updateDevice(deviceId) { device -> device.copy(dataTypes = dataTypes) }
-  }
+  fun updateDeviceDataTypes(deviceId: String, dataTypes: Set<PolarDeviceDataType>) =
+      deviceState.updateDeviceDataTypes(deviceId, dataTypes)
 
   fun updateDeviceSensorSettings(
       deviceId: String,
       sensorSettings: Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>,
-  ) {
-    updateDevice(deviceId) { device ->
-      val deviceSettings = mutableMapOf<PolarDeviceDataType, PolarSensorSetting>()
-      sensorSettings.forEach { (dataType, settings) ->
-        deviceSettings[dataType] = PolarSensorSetting(settings)
-      }
-      device.copy(sensorSettings = deviceSettings)
-    }
-  }
+  ) = deviceState.updateDeviceSensorSettings(deviceId, sensorSettings)
 
-  fun getDeviceDataTypes(deviceId: String): Set<PolarDeviceDataType> {
-    return _devices.value?.find { it.info.deviceId == deviceId }?.dataTypes ?: emptySet()
-  }
+  fun getDeviceDataTypes(deviceId: String): Set<PolarDeviceDataType> =
+      deviceState.getDeviceDataTypes(deviceId)
 
   fun getDeviceSensorSettingsForDataType(
       deviceId: String,
       dataType: PolarDeviceDataType,
-  ): PolarSensorSetting {
-    return _devices.value?.find { it.info.deviceId == deviceId }?.sensorSettings?.get(dataType)
-        ?: PolarSensorSetting(emptyMap())
-  }
+  ): PolarSensorSetting = deviceState.getDeviceSensorSettingsForDataType(deviceId, dataType)
 
-  fun updateBatteryLevel(deviceId: String, level: Int) {
-    _batteryLevels[deviceId] = level
-  }
+  fun updateBatteryLevel(deviceId: String, level: Int) =
+      deviceState.updateBatteryLevel(deviceId, level)
 }

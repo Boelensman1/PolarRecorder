@@ -21,7 +21,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.dataSavers.DataSavers
-import com.wboelens.polarrecorder.managers.RecordingManager
+import com.wboelens.polarrecorder.services.RecordingServiceConnection
+import com.wboelens.polarrecorder.services.RecordingState
 import com.wboelens.polarrecorder.ui.components.RecordingControls
 import com.wboelens.polarrecorder.ui.components.SelectedDevicesSection
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
@@ -30,17 +31,32 @@ import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 @Composable
 fun RecordingScreen(
     deviceViewModel: DeviceViewModel,
-    recordingManager: RecordingManager,
+    serviceConnection: RecordingServiceConnection,
     dataSavers: DataSavers,
     onBackPressed: () -> Unit,
     onRestartRecording: () -> Unit,
 ) {
-  val isRecording by recordingManager.isRecording.collectAsState(initial = false)
+  val binder by serviceConnection.binder.collectAsState()
+  val recordingState by
+      binder?.recordingState?.collectAsState()
+          ?: androidx.compose.runtime.remember {
+            androidx.compose.runtime.mutableStateOf(RecordingState())
+          }
+  val isRecording = recordingState.isRecording
+
   val selectedDevices = deviceViewModel.selectedDevices.observeAsState(emptyList()).value
-  val lastDataTimestamps by recordingManager.lastDataTimestamps.collectAsState()
+  val lastDataTimestamps by
+      binder?.lastDataTimestamps?.collectAsState()
+          ?: androidx.compose.runtime.remember {
+            androidx.compose.runtime.mutableStateOf(emptyMap())
+          }
   val batteryLevels by deviceViewModel.batteryLevels.observeAsState(emptyMap())
   val isFileSystemEnabled by dataSavers.fileSystem.isEnabled.collectAsState()
-  val lastData by recordingManager.lastData.collectAsState()
+  val lastData by
+      binder?.lastData?.collectAsState()
+          ?: androidx.compose.runtime.remember {
+            androidx.compose.runtime.mutableStateOf(emptyMap())
+          }
 
   MaterialTheme {
     Scaffold(
@@ -56,7 +72,7 @@ fun RecordingScreen(
             RecordingControls(
                 isRecording = isRecording,
                 isFileSystemEnabled = isFileSystemEnabled,
-                recordingManager = recordingManager,
+                serviceConnection = serviceConnection,
                 dataSavers = dataSavers,
                 onRestartRecording = onRestartRecording,
             )
