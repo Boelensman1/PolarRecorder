@@ -59,6 +59,8 @@ class PolarManager(
     private const val SCAN_INTERVAL = 30000L // 30 seconds between scans
     private const val SCAN_DURATION = 10000L // 10 seconds per scan
     private const val MAX_RETRY_ERRORS = 6L
+    private const val FEATURE_POLL_MAX_WAIT = 5000L // 5 seconds max wait for features
+    private const val FEATURE_POLL_INTERVAL = 500L // Poll every 500ms
   }
 
   private var scanDisposable: Disposable? = null
@@ -119,8 +121,25 @@ class PolarManager(
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe({ _ -> // Explicitly using Consumer<Unit> overload
                       MainScope().launch {
-                        // Wait a bit so that FEATURE_DEVICE_INFO is more likely to be ready
-                        kotlinx.coroutines.delay(1000)
+                        // Poll for feature readiness
+                        var waitTime = 0L
+                        val maxWaitTime = FEATURE_POLL_MAX_WAIT
+                        val pollInterval = FEATURE_POLL_INTERVAL
+
+                        while (waitTime < maxWaitTime) {
+                          kotlinx.coroutines.delay(pollInterval)
+                          waitTime += pollInterval
+
+                          val readyFeatures = deviceFeatureReadiness[polarDeviceInfo.deviceId]
+                          if (readyFeatures?.contains(
+                              PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO) == true ||
+                              readyFeatures?.contains(
+                                  PolarBleApi.PolarBleSdkFeature
+                                      .FEATURE_POLAR_ONLINE_STREAMING) == true) {
+                            break
+                          }
+                        }
+
                         var capabilities: DeviceStreamCapabilities?
                         try {
                           capabilities = fetchDeviceCapabilities(polarDeviceInfo.deviceId).await()
@@ -265,14 +284,18 @@ class PolarManager(
         }
         .flatMap { getAvailableOnlineStreamDataTypes(deviceId) }
         .retryWhen { errors ->
-          errors.take(MAX_RETRY_ERRORS).flatMap { error ->
-            logViewModel.addLogError(
-                "Failed to fetch stream capabilities (${error}), retrying",
-                false,
-            )
-            // Wait 2 seconds before retrying
-            Flowable.timer(2, TimeUnit.SECONDS)
-          }
+          errors
+              .zipWith(Flowable.range(1, MAX_RETRY_ERRORS.toInt())) { error, attempt ->
+                Pair(error, attempt)
+              }
+              .flatMap { (error, attempt) ->
+                logViewModel.addLogError(
+                    "Failed to fetch stream capabilities (attempt $attempt/$MAX_RETRY_ERRORS): ${error.message}",
+                    false,
+                )
+                // Wait 2 seconds before retrying
+                Flowable.timer(2, TimeUnit.SECONDS)
+              }
         }
         .flatMap { types ->
           val settingsRequests =
