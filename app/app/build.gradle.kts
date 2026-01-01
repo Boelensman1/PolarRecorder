@@ -54,6 +54,9 @@ android {
 dependencies {
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.core.testing)
+  testImplementation(libs.mockk)
+  testImplementation(libs.turbine)
+  testImplementation(libs.kotlinx.coroutines.test)
   coreLibraryDesugaring(libs.android.desugar)
 
   implementation(libs.androidx.core.ktx)
