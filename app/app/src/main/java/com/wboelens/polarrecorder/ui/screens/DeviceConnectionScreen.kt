@@ -69,15 +69,14 @@ fun DeviceConnectionScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
+        }) { paddingValues ->
+          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+            selectedDevices.forEach { device ->
+              DeviceConnectionItem(device = device)
+              Spacer(modifier = Modifier.height(8.dp))
+            }
+          }
         }
-    ) { paddingValues ->
-      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-        selectedDevices.forEach { device ->
-          DeviceConnectionItem(device = device)
-          Spacer(modifier = Modifier.height(8.dp))
-        }
-      }
-    }
   }
 }
 

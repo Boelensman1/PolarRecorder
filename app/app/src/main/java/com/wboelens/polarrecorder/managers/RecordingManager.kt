@@ -187,8 +187,7 @@ class RecordingManager(
     if (disconnectedDevices.isNotEmpty()) {
       val disconnectedNames = disconnectedDevices.map { it.info.name }.joinToString(", ")
       logViewModel.addLogError(
-          "Cannot start recording: Some selected devices are not connected: $disconnectedNames"
-      )
+          "Cannot start recording: Some selected devices are not connected: $disconnectedNames")
       return
     }
 
@@ -203,8 +202,7 @@ class RecordingManager(
         enabledDataSavers.filter { it.isInitialized.value != InitializationState.SUCCESS }
     if (uninitializedSavers.isNotEmpty()) {
       logViewModel.addLogError(
-          "Cannot start recording: Data savers are not initialized. Please go through the initialization process first."
-      )
+          "Cannot start recording: Data savers are not initialized. Please go through the initialization process first.")
       return
     }
 

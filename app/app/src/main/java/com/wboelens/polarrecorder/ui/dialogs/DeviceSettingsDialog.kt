@@ -78,8 +78,7 @@ fun DeviceSettingsDialog(
     mutableStateOf(
         initialDataTypeSettings?.mapValues { (_, sensorSetting) ->
           sensorSetting.settings.mapValues { (_, values) -> values.firstOrNull() ?: 0 }
-        } ?: emptyMap()
-    )
+        } ?: emptyMap())
   }
 
   var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -512,22 +511,19 @@ private fun DataTypeSection(
             },
         )
 
-        if (
-            selectedTypes.contains(dataType) &&
-                availableSettingsMap[dataType]?.settings?.isNotEmpty() == true
-        ) {
+        if (selectedTypes.contains(dataType) &&
+            availableSettingsMap[dataType]?.settings?.isNotEmpty() == true) {
           IconButton(
               onClick = {
                 selectedDataTypeForSettings = dataType
                 showSettingsDialog = true
+              }) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings for ${getDataTypeDisplayText(dataType)}",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
               }
-          ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings for ${getDataTypeDisplayText(dataType)}",
-                tint = MaterialTheme.colorScheme.primary,
-            )
-          }
         }
       }
     }
@@ -551,8 +547,7 @@ private fun DataTypeSection(
           onSettingsChanged(
               selectedSettingsMap.toMutableMap().apply {
                 this[selectedDataTypeForSettings!!] = newSettings
-              }
-          )
+              })
           showSettingsDialog = false
         },
     )

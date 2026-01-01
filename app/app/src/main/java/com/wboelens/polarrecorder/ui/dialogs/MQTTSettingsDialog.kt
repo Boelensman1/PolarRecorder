@@ -155,10 +155,9 @@ fun MQTTSettingsDialog(
                   clientId,
               )
               onDismiss()
+            }) {
+              Text("Save")
             }
-        ) {
-          Text("Save")
-        }
       },
       dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
   )

@@ -51,27 +51,26 @@ fun RecordingScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
-        }
-    ) { paddingValues ->
-      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-        RecordingControls(
-            isRecording = isRecording,
-            isFileSystemEnabled = isFileSystemEnabled,
-            recordingManager = recordingManager,
-            dataSavers = dataSavers,
-            onRestartRecording = onRestartRecording,
-        )
+        }) { paddingValues ->
+          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+            RecordingControls(
+                isRecording = isRecording,
+                isFileSystemEnabled = isFileSystemEnabled,
+                recordingManager = recordingManager,
+                dataSavers = dataSavers,
+                onRestartRecording = onRestartRecording,
+            )
 
-        if (isRecording) {
-          Spacer(modifier = Modifier.height(8.dp))
-          SelectedDevicesSection(
-              selectedDevices = selectedDevices,
-              lastDataTimestamps = lastDataTimestamps,
-              batteryLevels = batteryLevels,
-              lastData = lastData,
-          )
+            if (isRecording) {
+              Spacer(modifier = Modifier.height(8.dp))
+              SelectedDevicesSection(
+                  selectedDevices = selectedDevices,
+                  lastDataTimestamps = lastDataTimestamps,
+                  batteryLevels = batteryLevels,
+                  lastData = lastData,
+              )
+            }
+          }
         }
-      }
-    }
   }
 }

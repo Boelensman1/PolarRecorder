@@ -45,15 +45,14 @@ class PermissionManager(private val activity: Activity) {
 
   private val permissionLauncher =
       (activity as ComponentActivity).registerForActivityResult(
-          ActivityResultContracts.RequestMultiplePermissions()
-      ) { permissions ->
-        val allGranted = permissions.all { it.value }
-        if (allGranted) {
-          pendingPermissionCallback?.invoke()
-        } else {
-          showPermissionRationaleMessage()
-        }
-      }
+          ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val allGranted = permissions.all { it.value }
+            if (allGranted) {
+              pendingPermissionCallback?.invoke()
+            } else {
+              showPermissionRationaleMessage()
+            }
+          }
 
   private var pendingPermissionCallback: (() -> Unit)? = null
 

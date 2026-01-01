@@ -53,34 +53,33 @@ fun DeviceSelectionScreen(
                 IconButton(onClick = onRefresh) { Icon(Icons.Filled.Refresh, "Trigger Refresh") }
               },
           )
-        }
-    ) { paddingValues ->
-      PullToRefreshBox(
-          modifier = Modifier.fillMaxSize().padding(paddingValues),
-          state = state,
-          isRefreshing = isRefreshing.value && isBLEEnabled.value,
-          onRefresh = onRefresh,
-      ) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-          DeviceList(
-              deviceViewModel = deviceViewModel,
-              isBLEEnabled = polarManager.isBLEEnabled.value,
-          )
-
-          Spacer(modifier = Modifier.weight(1f))
-
-          Button(
-              onClick = {
-                polarManager.stopPeriodicScanning()
-                onContinue()
-              },
-              enabled = selectedDevices.isNotEmpty(),
-              modifier = Modifier.align(Alignment.End),
+        }) { paddingValues ->
+          PullToRefreshBox(
+              modifier = Modifier.fillMaxSize().padding(paddingValues),
+              state = state,
+              isRefreshing = isRefreshing.value && isBLEEnabled.value,
+              onRefresh = onRefresh,
           ) {
-            Text("Connect Devices")
+            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+              DeviceList(
+                  deviceViewModel = deviceViewModel,
+                  isBLEEnabled = polarManager.isBLEEnabled.value,
+              )
+
+              Spacer(modifier = Modifier.weight(1f))
+
+              Button(
+                  onClick = {
+                    polarManager.stopPeriodicScanning()
+                    onContinue()
+                  },
+                  enabled = selectedDevices.isNotEmpty(),
+                  modifier = Modifier.align(Alignment.End),
+              ) {
+                Text("Connect Devices")
+              }
+            }
           }
         }
-      }
-    }
   }
 }

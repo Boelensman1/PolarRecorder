@@ -101,15 +101,14 @@ fun DataSaverInitializationScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
+        }) { paddingValues ->
+          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+            enabledSavers.forEach { saver ->
+              DataSaverInitializationItem(saver = saver)
+              Spacer(modifier = Modifier.height(8.dp))
+            }
+          }
         }
-    ) { paddingValues ->
-      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-        enabledSavers.forEach { saver ->
-          DataSaverInitializationItem(saver = saver)
-          Spacer(modifier = Modifier.height(8.dp))
-        }
-      }
-    }
   }
 }
 
