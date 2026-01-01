@@ -472,7 +472,9 @@ class PolarManager(
         PolarDeviceDataType.ACC,
         PolarDeviceDataType.GYRO,
         PolarDeviceDataType.MAGNETOMETER,
-        PolarDeviceDataType.PPG -> {
+        PolarDeviceDataType.PPG,
+        PolarDeviceDataType.TEMPERATURE,
+        PolarDeviceDataType.SKIN_TEMPERATURE -> {
           Log.d(TAG, "Getting stream settings for $dataType")
           api.requestStreamSettings(deviceId, dataType).flatMap { availableSettings ->
             api.requestFullStreamSettings(deviceId, dataType)
@@ -543,6 +545,8 @@ class PolarManager(
       PolarDeviceDataType.ECG -> api.startEcgStreaming(deviceId, sensorSettings)
       PolarDeviceDataType.GYRO -> api.startGyroStreaming(deviceId, sensorSettings)
       PolarDeviceDataType.TEMPERATURE -> api.startTemperatureStreaming(deviceId, sensorSettings)
+      PolarDeviceDataType.SKIN_TEMPERATURE ->
+          api.startSkinTemperatureStreaming(deviceId, sensorSettings)
       PolarDeviceDataType.MAGNETOMETER -> api.startMagnetometerStreaming(deviceId, sensorSettings)
       else -> throw IllegalArgumentException("Unsupported data type: $dataType")
     }

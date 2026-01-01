@@ -45,6 +45,8 @@ fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float
     PolarBleApi.PolarDeviceDataType.GYRO -> (data as PolarGyroData).samples.lastOrNull()?.x
     PolarBleApi.PolarDeviceDataType.TEMPERATURE ->
         (data as PolarTemperatureData).samples.lastOrNull()?.temperature
+    PolarBleApi.PolarDeviceDataType.SKIN_TEMPERATURE ->
+        (data as PolarTemperatureData).samples.lastOrNull()?.temperature
     PolarBleApi.PolarDeviceDataType.MAGNETOMETER ->
         (data as PolarMagnetometerData).samples.lastOrNull()?.x
     else -> throw IllegalArgumentException("Unsupported data type: $dataType")
@@ -289,6 +291,9 @@ class RecordingManager(
                     PolarBleApi.PolarDeviceDataType.ECG -> (data as PolarEcgData).samples
                     PolarBleApi.PolarDeviceDataType.GYRO -> (data as PolarGyroData).samples
                     PolarBleApi.PolarDeviceDataType.TEMPERATURE ->
+                        (data as PolarTemperatureData).samples
+
+                    PolarBleApi.PolarDeviceDataType.SKIN_TEMPERATURE ->
                         (data as PolarTemperatureData).samples
 
                     PolarBleApi.PolarDeviceDataType.MAGNETOMETER ->

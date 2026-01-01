@@ -562,6 +562,7 @@ private fun DataTypeSection(
 private fun getDataTypeDisplayText(dataType: PolarDeviceDataType): String {
   return when (dataType) {
     PolarDeviceDataType.TEMPERATURE -> "Temperature"
+    PolarDeviceDataType.SKIN_TEMPERATURE -> "Skin Temperature"
     PolarDeviceDataType.MAGNETOMETER -> "Magnetometer"
     PolarDeviceDataType.GYRO -> "Gyroscope"
     PolarDeviceDataType.PPI -> "PPI"
