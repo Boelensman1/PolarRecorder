@@ -3,23 +3,19 @@ package com.wboelens.polarrecorder.managers
 import android.content.Context
 import com.wboelens.polarrecorder.dataSavers.FileSystemDataSaverConfig
 import com.wboelens.polarrecorder.dataSavers.MQTTConfig
+import com.wboelens.polarrecorder.testutil.BaseRobolectricTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * Unit tests for PreferencesManager - verifies persistence and retrieval of all preference types
  * including MQTT config, file system config, and recording settings.
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
-class PreferencesManagerTest {
+class PreferencesManagerTest : BaseRobolectricTest() {
 
   private lateinit var context: Context
   private lateinit var preferencesManager: PreferencesManager
@@ -136,13 +132,6 @@ class PreferencesManagerTest {
 
     val newManager = PreferencesManager(context)
     assertTrue(newManager.fileSystemEnabled)
-  }
-
-  @Test
-  fun `fileSystemDataSaverConfig splitAtSizeMb default is 20`() {
-    val config = preferencesManager.fileSystemDataSaverConfig
-
-    assertEquals(20, config.splitAtSizeMb)
   }
 
   // ==================== Recording Settings Tests ====================

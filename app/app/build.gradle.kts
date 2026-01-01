@@ -49,6 +49,8 @@ android {
   buildFeatures { compose = true }
 
   composeOptions { kotlinCompilerExtensionVersion = "1.5.15" }
+
+  testOptions { unitTests.all { it.useJUnitPlatform() } }
 }
 
 dependencies {
@@ -66,6 +68,10 @@ dependencies {
   implementation(libs.androidx.constraintlayout)
   implementation(libs.androidx.navigation.compose)
   testImplementation(libs.junit)
+  testImplementation(libs.junit5.api)
+  testImplementation(libs.junit5.params)
+  testRuntimeOnly(libs.junit5.engine)
+  testRuntimeOnly(libs.junit.vintage.engine)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
 

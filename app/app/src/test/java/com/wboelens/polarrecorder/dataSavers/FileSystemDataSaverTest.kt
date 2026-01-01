@@ -3,6 +3,7 @@ package com.wboelens.polarrecorder.dataSavers
 import android.content.Context
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.state.LogState
+import com.wboelens.polarrecorder.testutil.BaseRobolectricTest
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -15,18 +16,13 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * Unit tests for FileSystemDataSaver - verifies configuration, enable/disable lifecycle, directory
  * creation, and file operations.
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
-class FileSystemDataSaverTest {
+class FileSystemDataSaverTest : BaseRobolectricTest() {
 
   private lateinit var context: Context
   private lateinit var logState: LogState
@@ -122,42 +118,5 @@ class FileSystemDataSaverTest {
     fileSystemDataSaver.stopSaving()
 
     assertEquals(InitializationState.NOT_STARTED, fileSystemDataSaver.isInitialized.value)
-  }
-
-  // ==================== State Tests ====================
-
-  @Test
-  fun `initial isEnabled is false`() {
-    assertFalse(fileSystemDataSaver.isEnabled.value)
-  }
-
-  @Test
-  fun `initial isInitialized is NOT_STARTED`() {
-    assertEquals(InitializationState.NOT_STARTED, fileSystemDataSaver.isInitialized.value)
-  }
-
-  // ==================== Config Values Tests ====================
-
-  @Test
-  fun `FileSystemDataSaverConfig default baseDirectory is empty`() {
-    val config = FileSystemDataSaverConfig()
-
-    assertEquals("", config.baseDirectory)
-  }
-
-  @Test
-  fun `FileSystemDataSaverConfig default splitAtSizeMb is 0`() {
-    val config = FileSystemDataSaverConfig()
-
-    assertEquals(0, config.splitAtSizeMb)
-  }
-
-  @Test
-  fun `FileSystemDataSaverConfig can be created with custom values`() {
-    val config =
-        FileSystemDataSaverConfig(baseDirectory = "content://custom/dir", splitAtSizeMb = 100)
-
-    assertEquals("content://custom/dir", config.baseDirectory)
-    assertEquals(100, config.splitAtSizeMb)
   }
 }

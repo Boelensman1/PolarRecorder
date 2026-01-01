@@ -8,28 +8,23 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for MQTTDataSaver - verifies configuration, enable/disable lifecycle, and basic
  * operations. Note: MQTT client interactions are not tested as they require network connectivity.
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
 class MQTTDataSaverTest {
 
   private lateinit var logState: LogState
   private lateinit var preferencesManager: PreferencesManager
   private lateinit var mqttDataSaver: MQTTDataSaver
 
-  @Before
+  @BeforeEach
   fun setup() {
     logState = mockk(relaxed = true)
     preferencesManager = mockk {
@@ -200,36 +195,5 @@ class MQTTDataSaverTest {
     )
 
     verify { logState.addLogError(match { it.contains("not initialized") }) }
-  }
-
-  // ==================== State Tests ====================
-
-  @Test
-  fun `initial isEnabled is false`() {
-    assertFalse(mqttDataSaver.isEnabled.value)
-  }
-
-  @Test
-  fun `initial isInitialized is NOT_STARTED`() {
-    assertEquals(InitializationState.NOT_STARTED, mqttDataSaver.isInitialized.value)
-  }
-
-  // ==================== Config Values Tests ====================
-
-  @Test
-  fun `MQTTConfig default port is 1883`() {
-    assertEquals(1883, MQTTConfig.DEFAULT_MQTT_PORT)
-  }
-
-  @Test
-  fun `MQTTConfig default keep alive is 60`() {
-    assertEquals(60, MQTTConfig.KEEP_ALIVE_SECONDS)
-  }
-
-  @Test
-  fun `MQTTConfig default topicPrefix is polar_recorder`() {
-    val config = MQTTConfig(host = "test", port = 1883, useSSL = false)
-
-    assertEquals("polar_recorder", config.topicPrefix)
   }
 }

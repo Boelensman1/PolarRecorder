@@ -3,6 +3,7 @@ package com.wboelens.polarrecorder.dataSavers
 import android.content.Context
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.state.LogState
+import com.wboelens.polarrecorder.testutil.BaseRobolectricTest
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -13,18 +14,13 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.annotation.Config
 
 /**
  * Unit tests for DataSavers container class - verifies initialization from preferences, iterator
  * access, and enabled count tracking.
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
-class DataSaversTest {
+class DataSaversTest : BaseRobolectricTest() {
 
   private lateinit var context: Context
   private lateinit var logState: LogState
@@ -135,7 +131,6 @@ class DataSaversTest {
 
     val dataSavers = DataSavers(context, logState, preferencesManager)
 
-    // Verify mqtt saver was configured (isConfigured checks host is not empty)
     assertTrue(dataSavers.mqtt.isConfigured)
   }
 
@@ -147,7 +142,6 @@ class DataSaversTest {
 
     val dataSavers = DataSavers(context, logState, preferencesManager)
 
-    // Verify file system saver was configured (isConfigured checks baseDirectory is not empty)
     assertTrue(dataSavers.fileSystem.isConfigured)
   }
 }

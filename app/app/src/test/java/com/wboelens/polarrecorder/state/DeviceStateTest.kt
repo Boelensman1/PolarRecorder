@@ -2,11 +2,9 @@ package com.wboelens.polarrecorder.state
 
 import app.cash.turbine.test
 import com.polar.sdk.api.PolarBleApi.PolarDeviceDataType
-import com.polar.sdk.api.model.PolarDeviceInfo
 import com.polar.sdk.api.model.PolarSensorSetting
-import com.wboelens.polarrecorder.testutil.TestDispatcherRule
-import io.mockk.every
-import io.mockk.mockk
+import com.wboelens.polarrecorder.testutil.BaseRobolectricTest
+import com.wboelens.polarrecorder.testutil.MockFactories
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -14,11 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * Unit tests for DeviceState - the application-scoped state holder for device information. Tests
@@ -26,11 +20,7 @@ import org.robolectric.annotation.Config
  * StateFlows.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
-class DeviceStateTest {
-
-  @get:Rule val testDispatcherRule = TestDispatcherRule()
+class DeviceStateTest : BaseRobolectricTest() {
 
   private lateinit var deviceState: DeviceState
 
@@ -44,19 +34,9 @@ class DeviceStateTest {
     deviceState.cleanup()
   }
 
-  private fun createMockDevice(
-      deviceId: String,
-      name: String = "Test Device",
-      isConnectable: Boolean = true,
-  ): PolarDeviceInfo = mockk {
-    every { this@mockk.deviceId } returns deviceId
-    every { this@mockk.name } returns name
-    every { this@mockk.isConnectable } returns isConnectable
-  }
-
   @Test
   fun `addDevice adds new device to list`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
 
     deviceState.addDevice(device)
 
@@ -67,7 +47,7 @@ class DeviceStateTest {
 
   @Test
   fun `addDevice with connectable device sets DISCONNECTED state`() {
-    val device = createMockDevice("DEVICE_001", isConnectable = true)
+    val device = MockFactories.createMockDevice("DEVICE_001", isConnectable = true)
 
     deviceState.addDevice(device)
 
@@ -77,7 +57,7 @@ class DeviceStateTest {
 
   @Test
   fun `addDevice with non-connectable device sets NOT_CONNECTABLE state`() {
-    val device = createMockDevice("DEVICE_001", isConnectable = false)
+    val device = MockFactories.createMockDevice("DEVICE_001", isConnectable = false)
 
     deviceState.addDevice(device)
 
@@ -87,8 +67,8 @@ class DeviceStateTest {
 
   @Test
   fun `addDevice ignores duplicate deviceId`() {
-    val device1 = createMockDevice("DEVICE_001", name = "First")
-    val device2 = createMockDevice("DEVICE_001", name = "Second")
+    val device1 = MockFactories.createMockDevice("DEVICE_001", name = "First")
+    val device2 = MockFactories.createMockDevice("DEVICE_001", name = "Second")
 
     deviceState.addDevice(device1)
     deviceState.addDevice(device2)
@@ -100,7 +80,7 @@ class DeviceStateTest {
 
   @Test
   fun `updateConnectionState changes device state`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
     deviceState.addDevice(device)
 
     deviceState.updateConnectionState("DEVICE_001", ConnectionState.CONNECTING)
@@ -115,7 +95,7 @@ class DeviceStateTest {
 
   @Test
   fun `getConnectionState returns correct state`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
     deviceState.addDevice(device)
 
     assertEquals(ConnectionState.DISCONNECTED, deviceState.getConnectionState("DEVICE_001"))
@@ -131,7 +111,7 @@ class DeviceStateTest {
 
   @Test
   fun `toggleIsSelected toggles selection status`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
     deviceState.addDevice(device)
     assertFalse(deviceState.allDevices.value[0].isSelected)
 
@@ -144,9 +124,9 @@ class DeviceStateTest {
 
   @Test
   fun `allDevices contains selected devices after selection`() {
-    val device1 = createMockDevice("DEVICE_001")
-    val device2 = createMockDevice("DEVICE_002")
-    val device3 = createMockDevice("DEVICE_003")
+    val device1 = MockFactories.createMockDevice("DEVICE_001")
+    val device2 = MockFactories.createMockDevice("DEVICE_002")
+    val device3 = MockFactories.createMockDevice("DEVICE_003")
     deviceState.addDevice(device1)
     deviceState.addDevice(device2)
     deviceState.addDevice(device3)
@@ -163,9 +143,9 @@ class DeviceStateTest {
 
   @Test
   fun `allDevices contains connected devices after connection`() {
-    val device1 = createMockDevice("DEVICE_001")
-    val device2 = createMockDevice("DEVICE_002")
-    val device3 = createMockDevice("DEVICE_003")
+    val device1 = MockFactories.createMockDevice("DEVICE_001")
+    val device2 = MockFactories.createMockDevice("DEVICE_002")
+    val device3 = MockFactories.createMockDevice("DEVICE_003")
     deviceState.addDevice(device1)
     deviceState.addDevice(device2)
     deviceState.addDevice(device3)
@@ -181,7 +161,7 @@ class DeviceStateTest {
 
   @Test
   fun `updateDeviceDataTypes sets data types`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
     deviceState.addDevice(device)
     val dataTypes = setOf(PolarDeviceDataType.HR, PolarDeviceDataType.ACC)
 
@@ -195,7 +175,7 @@ class DeviceStateTest {
 
   @Test
   fun `getDeviceDataTypes returns correct set`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
     deviceState.addDevice(device)
     val dataTypes = setOf(PolarDeviceDataType.ECG, PolarDeviceDataType.PPG)
     deviceState.updateDeviceDataTypes("DEVICE_001", dataTypes)
@@ -214,7 +194,7 @@ class DeviceStateTest {
 
   @Test
   fun `updateDeviceSensorSettings creates PolarSensorSetting`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
     deviceState.addDevice(device)
     val settings =
         mapOf(
@@ -258,7 +238,7 @@ class DeviceStateTest {
 
   @Test
   fun `updateFirmwareVersion sets firmware version`() {
-    val device = createMockDevice("DEVICE_001")
+    val device = MockFactories.createMockDevice("DEVICE_001")
     deviceState.addDevice(device)
 
     deviceState.updateFirmwareVersion("DEVICE_001", "1.2.3")
@@ -271,7 +251,7 @@ class DeviceStateTest {
     deviceState.allDevices.test {
       assertEquals(emptyList<Device>(), awaitItem())
 
-      val device = createMockDevice("DEVICE_001")
+      val device = MockFactories.createMockDevice("DEVICE_001")
       deviceState.addDevice(device)
 
       val updated = awaitItem()

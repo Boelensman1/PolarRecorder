@@ -1,6 +1,7 @@
 package com.wboelens.polarrecorder.state
 
 import app.cash.turbine.test
+import com.wboelens.polarrecorder.testutil.BaseRobolectricTest
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -10,9 +11,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper
 
 /**
@@ -20,9 +18,7 @@ import org.robolectric.shadows.ShadowLooper
  * entry creation, snackbar queue management, message limits, and StateFlow emissions.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
-class LogStateTest {
+class LogStateTest : BaseRobolectricTest() {
 
   private lateinit var logState: LogState
 

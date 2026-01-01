@@ -5,22 +5,17 @@ import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
 import com.wboelens.polarrecorder.state.LogState
 import io.mockk.mockk
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for the abstract DataSaver class. Uses a test implementation to verify base class
  * behavior including JSON payload creation, initialization state management, and firstMessageSaved
  * tracking.
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
 class DataSaverTest {
 
   private lateinit var logState: LogState
@@ -65,7 +60,7 @@ class DataSaverTest {
     }
   }
 
-  @Before
+  @BeforeEach
   fun setup() {
     logState = mockk(relaxed = true)
     preferencesManager = mockk(relaxed = true)

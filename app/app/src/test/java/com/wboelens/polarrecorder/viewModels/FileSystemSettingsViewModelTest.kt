@@ -1,15 +1,12 @@
 package com.wboelens.polarrecorder.viewModels
 
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.provider.DocumentsContract
 import app.cash.turbine.test
-import io.mockk.every
-import io.mockk.just
+import com.wboelens.polarrecorder.testutil.BaseRobolectricTest
+import com.wboelens.polarrecorder.testutil.MockFactories
 import io.mockk.mockk
-import io.mockk.runs
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -17,18 +14,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * Unit tests for FileSystemSettingsViewModel - verifies directory intent creation, permission
  * handling, and StateFlow updates.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
-class FileSystemSettingsViewModelTest {
+class FileSystemSettingsViewModelTest : BaseRobolectricTest() {
 
   private lateinit var viewModel: FileSystemSettingsViewModel
 
@@ -50,30 +42,12 @@ class FileSystemSettingsViewModelTest {
   }
 
   @Test
-  fun `createDirectoryIntent includes read permission flag`() {
+  fun `createDirectoryIntent includes required permission flags`() {
     val intent = viewModel.createDirectoryIntent()
 
     assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
-  }
-
-  @Test
-  fun `createDirectoryIntent includes write permission flag`() {
-    val intent = viewModel.createDirectoryIntent()
-
     assertTrue(intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
-  }
-
-  @Test
-  fun `createDirectoryIntent includes persistable permission flag`() {
-    val intent = viewModel.createDirectoryIntent()
-
     assertTrue(intent.flags and Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION != 0)
-  }
-
-  @Test
-  fun `createDirectoryIntent includes prefix permission flag`() {
-    val intent = viewModel.createDirectoryIntent()
-
     assertTrue(intent.flags and Intent.FLAG_GRANT_PREFIX_URI_PERMISSION != 0)
   }
 
@@ -86,19 +60,9 @@ class FileSystemSettingsViewModelTest {
 
   @Test
   fun `handleDirectoryResult updates selectedDirectory`() = runTest {
-    val testUri = mockk<Uri>()
-    every { testUri.toString() } returns "content://test/directory"
-    val contentResolver = mockk<ContentResolver>()
-    every {
-      contentResolver.takePersistableUriPermission(
-          testUri,
-          Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-      )
-    } just runs
-    val context = mockk<Context>()
-    every { context.contentResolver } returns contentResolver
+    val (context, _, uri) = MockFactories.createMockContextWithUri("content://test/directory")
 
-    viewModel.handleDirectoryResult(context, testUri)
+    viewModel.handleDirectoryResult(context, uri)
 
     assertEquals("content://test/directory", viewModel.selectedDirectory.value)
   }
@@ -114,23 +78,14 @@ class FileSystemSettingsViewModelTest {
 
   @Test
   fun `handleDirectoryResult takes persistable permission`() {
-    val testUri = mockk<Uri>()
-    every { testUri.toString() } returns "content://test/directory"
-    val contentResolver = mockk<ContentResolver>()
-    every {
-      contentResolver.takePersistableUriPermission(
-          testUri,
-          Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-      )
-    } just runs
-    val context = mockk<Context>()
-    every { context.contentResolver } returns contentResolver
+    val (context, contentResolver, uri) =
+        MockFactories.createMockContextWithUri("content://test/directory")
 
-    viewModel.handleDirectoryResult(context, testUri)
+    viewModel.handleDirectoryResult(context, uri)
 
     verify {
       contentResolver.takePersistableUriPermission(
-          testUri,
+          uri,
           Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
       )
     }
@@ -138,22 +93,12 @@ class FileSystemSettingsViewModelTest {
 
   @Test
   fun `selectedDirectory StateFlow emits updates`() = runTest {
-    val testUri = mockk<Uri>()
-    every { testUri.toString() } returns "content://new/directory"
-    val contentResolver = mockk<ContentResolver>()
-    every {
-      contentResolver.takePersistableUriPermission(
-          testUri,
-          Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-      )
-    } just runs
-    val context = mockk<Context>()
-    every { context.contentResolver } returns contentResolver
+    val (context, _, uri) = MockFactories.createMockContextWithUri("content://new/directory")
 
     viewModel.selectedDirectory.test {
       assertEquals("", awaitItem())
 
-      viewModel.handleDirectoryResult(context, testUri)
+      viewModel.handleDirectoryResult(context, uri)
 
       assertEquals("content://new/directory", awaitItem())
       cancelAndIgnoreRemainingEvents()
