@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-# Format code (run after changes, before testing)
+# Format code
 ktfmt .
 
 # Build
@@ -30,6 +30,13 @@ ktfmt .
 # Clean
 ./gradlew clean
 ```
+
+## After Making Changes
+
+Run these commands in order:
+1. **Format:** `ktfmt .`
+2. **Lint:** `./gradlew detekt`
+3. **Test:** `./gradlew :app:test`
 
 ## Architecture
 
