@@ -181,7 +181,8 @@ class FileSystemDataSaver(
     }
   }
 
-  @Suppress("NestedBlockDepth", "ReturnCount")
+  @Suppress(
+      "NestedBlockDepth", "ReturnCount", "CyclomaticComplexMethod", "TooGenericExceptionCaught")
   override fun initSaving(
       recordingName: String,
       deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,

@@ -17,8 +17,14 @@ data class MQTTConfig(
     val password: String? = null,
     val clientId: String = "PolarRecorder_${UUID.randomUUID()}",
     val topicPrefix: String = "polar_recorder",
-)
+) {
+  companion object {
+    const val DEFAULT_MQTT_PORT = 1883
+    const val KEEP_ALIVE_SECONDS = 60
+  }
+}
 
+@Suppress("TooGenericExceptionCaught")
 class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesManager) :
     DataSaver(logViewModel, preferencesManager) {
   private var mqttClient: Mqtt3AsyncClient? = null
@@ -90,7 +96,8 @@ class MQTTDataSaver(logViewModel: LogViewModel, preferencesManager: PreferencesM
       val client = clientBuilder.useMqttVersion3().build().toAsync()
 
       // Connect to the broker asynchronously
-      val connectBuilder = client.connectWith().cleanSession(true).keepAlive(60)
+      val connectBuilder =
+          client.connectWith().cleanSession(true).keepAlive(MQTTConfig.KEEP_ALIVE_SECONDS)
 
       // Add credentials if provided
       if (!config.username.isNullOrEmpty()) {

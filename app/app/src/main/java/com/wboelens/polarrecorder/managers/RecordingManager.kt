@@ -163,6 +163,7 @@ class RecordingManager(
     }
   }
 
+  @Suppress("ReturnCount")
   fun startRecording() {
     if (preferencesManager.recordingName === "") {
       logViewModel.addLogError("Recording name cannot be the empty string")
@@ -202,7 +203,8 @@ class RecordingManager(
         enabledDataSavers.filter { it.isInitialized.value != InitializationState.SUCCESS }
     if (uninitializedSavers.isNotEmpty()) {
       logViewModel.addLogError(
-          "Cannot start recording: Data savers are not initialized. Please go through the initialization process first.")
+          "Cannot start recording: Data savers are not initialized. " +
+              "Please go through the initialization process first.")
       return
     }
 

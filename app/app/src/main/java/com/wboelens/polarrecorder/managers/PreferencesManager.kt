@@ -7,9 +7,11 @@ import com.wboelens.polarrecorder.dataSavers.MQTTConfig
 
 data class PreferenceConfig<T>(val key: String, val defaultValue: T)
 
+private const val DEFAULT_SPLIT_SIZE_MB = 20
+
 object Preferences {
   val MQTT_HOST = PreferenceConfig("mqtt_broker_host", "")
-  val MQTT_PORT = PreferenceConfig("mqtt_broker_port", 1883)
+  val MQTT_PORT = PreferenceConfig("mqtt_broker_port", MQTTConfig.DEFAULT_MQTT_PORT)
   val MQTT_USE_SSL = PreferenceConfig("mqtt_broker_use_ssl", false)
   val MQTT_USERNAME = PreferenceConfig("mqtt_username", "")
   val MQTT_PASSWORD = PreferenceConfig("mqtt_password", "")
@@ -18,9 +20,8 @@ object Preferences {
   val MQTT_ENABLED = PreferenceConfig("mqtt_enabled", false)
 
   val FILE_SYSTEM_BASE_DIRECTORY = PreferenceConfig("file_system_base_directory", "")
-  @Suppress("MagicNumber")
   val FILE_SYSTEM_RECORDING_SPLIT_AT_SIZE_MB =
-      PreferenceConfig("file_system_recording_split_at_size_mb", 20)
+      PreferenceConfig("file_system_recording_split_at_size_mb", DEFAULT_SPLIT_SIZE_MB)
   val FILE_SYSTEM_ENABLED = PreferenceConfig("file_system_enabled", false)
 
   val RECORDING_NAME = PreferenceConfig("recording_name", "PolarRecording")

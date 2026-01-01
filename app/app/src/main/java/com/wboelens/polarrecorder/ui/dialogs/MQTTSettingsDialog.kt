@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.dataSavers.MQTTConfig
 
+@Suppress("LongMethod")
 @Composable
 fun MQTTSettingsDialog(
     onDismiss: () -> Unit,
@@ -34,7 +35,10 @@ fun MQTTSettingsDialog(
     initialConfig: MQTTConfig,
 ) {
   var host by remember { mutableStateOf(initialConfig.host) }
-  var port by remember { mutableStateOf((initialConfig.port.takeIf { it > 0 } ?: 1883).toString()) }
+  var port by remember {
+    mutableStateOf(
+        (initialConfig.port.takeIf { it > 0 } ?: MQTTConfig.DEFAULT_MQTT_PORT).toString())
+  }
   var useSSL by remember { mutableStateOf(initialConfig.useSSL) }
   var username by remember { mutableStateOf(initialConfig.username ?: "") }
   var password by remember { mutableStateOf(initialConfig.password ?: "") }
@@ -147,7 +151,7 @@ fun MQTTSettingsDialog(
             onClick = {
               onSave(
                   host,
-                  port.toIntOrNull() ?: 1883,
+                  port.toIntOrNull() ?: MQTTConfig.DEFAULT_MQTT_PORT,
                   useSSL,
                   username.takeIf { it.isNotEmpty() },
                   password.takeIf { it.isNotEmpty() },

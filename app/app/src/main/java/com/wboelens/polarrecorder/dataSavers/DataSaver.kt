@@ -28,6 +28,7 @@ abstract class DataSaver(
   @Suppress("VariableNaming") protected val _isEnabled = MutableStateFlow(false)
   val isEnabled: StateFlow<Boolean> = _isEnabled.asStateFlow()
 
+  @Suppress("VariableNaming")
   protected val _isInitialized = MutableStateFlow(InitializationState.NOT_STARTED)
   val isInitialized: StateFlow<InitializationState> = _isInitialized
 

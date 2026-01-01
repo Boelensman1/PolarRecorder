@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
     private const val TAG = "PolarManager"
   }
 
+  @Suppress("LongMethod")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     Log.d(TAG, "onCreate: Initializing MainActivity")

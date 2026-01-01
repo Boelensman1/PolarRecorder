@@ -60,7 +60,8 @@ class PermissionManager(private val activity: Activity) {
     val message =
         when {
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
-            "This app requires Bluetooth and notification permissions to connect to your Polar device and run in the background."
+            "This app requires Bluetooth and notification permissions to connect to your " +
+                "Polar device and run in the background."
           }
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             "This app requires Bluetooth permissions to connect to your Polar device and record data."

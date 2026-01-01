@@ -52,6 +52,25 @@ import java.util.Locale
 
 private const val STALLED_AFTER = 5000
 
+// Time constants for relative time formatting
+private const val MILLIS_PER_SECOND = 1000L
+private const val MILLIS_PER_MINUTE = 60_000L
+private const val MILLIS_PER_HOUR = 3_600_000L
+private const val MILLIS_PER_DAY = 86_400_000L
+
+// Animation duration
+private const val EXPAND_ANIMATION_DURATION_MS = 300
+
+// Battery level thresholds
+private const val BATTERY_FULL = 90
+private const val BATTERY_6_BAR = 75
+private const val BATTERY_5_BAR = 60
+private const val BATTERY_4_BAR = 45
+private const val BATTERY_3_BAR = 30
+private const val BATTERY_2_BAR = 15
+private const val BATTERY_1_BAR = 5
+
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun DeviceStatusCard(
     deviceName: String,
@@ -147,8 +166,8 @@ fun DeviceStatusCard(
       // Expanded state - animated visibility
       AnimatedVisibility(
           visible = isExpanded,
-          enter = expandVertically(animationSpec = tween(300)),
-          exit = shrinkVertically(animationSpec = tween(300)),
+          enter = expandVertically(animationSpec = tween(EXPAND_ANIMATION_DURATION_MS)),
+          exit = shrinkVertically(animationSpec = tween(EXPAND_ANIMATION_DURATION_MS)),
       ) {
         Column(modifier = Modifier.padding(top = 16.dp)) {
 
@@ -209,13 +228,13 @@ private fun SensorDataChip(type: PolarDeviceDataType, value: Float?, color: Colo
 
 private fun getBatteryIcon(batteryLevel: Int): ImageVector {
   return when {
-    batteryLevel >= 90 -> Icons.Default.BatteryFull
-    batteryLevel >= 75 -> Icons.Default.Battery6Bar
-    batteryLevel >= 60 -> Icons.Default.Battery5Bar
-    batteryLevel >= 45 -> Icons.Default.Battery4Bar
-    batteryLevel >= 30 -> Icons.Default.Battery3Bar
-    batteryLevel >= 15 -> Icons.Default.Battery2Bar
-    batteryLevel >= 5 -> Icons.Default.Battery1Bar
+    batteryLevel >= BATTERY_FULL -> Icons.Default.BatteryFull
+    batteryLevel >= BATTERY_6_BAR -> Icons.Default.Battery6Bar
+    batteryLevel >= BATTERY_5_BAR -> Icons.Default.Battery5Bar
+    batteryLevel >= BATTERY_4_BAR -> Icons.Default.Battery4Bar
+    batteryLevel >= BATTERY_3_BAR -> Icons.Default.Battery3Bar
+    batteryLevel >= BATTERY_2_BAR -> Icons.Default.Battery2Bar
+    batteryLevel >= BATTERY_1_BAR -> Icons.Default.Battery1Bar
     else -> Icons.Default.Battery0Bar
   }
 }
@@ -238,10 +257,10 @@ private fun formatRelativeTime(timestamp: Long): String {
   val diff = now - timestamp
 
   return when {
-    diff < 1000 -> "Just now"
-    diff < 60000 -> "${diff / 1000}s ago"
-    diff < 3600000 -> "${diff / 60000}m ago"
-    diff < 86400000 -> "${diff / 3600000}h ago"
+    diff < MILLIS_PER_SECOND -> "Just now"
+    diff < MILLIS_PER_MINUTE -> "${diff / MILLIS_PER_SECOND}s ago"
+    diff < MILLIS_PER_HOUR -> "${diff / MILLIS_PER_MINUTE}m ago"
+    diff < MILLIS_PER_DAY -> "${diff / MILLIS_PER_HOUR}h ago"
     else -> java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(timestamp)
   }
 }

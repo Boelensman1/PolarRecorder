@@ -54,6 +54,7 @@ data class DeviceSettingState(
     val isSuccess: Boolean = false,
 )
 
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun DeviceSettingsDialog(
     deviceId: String,
@@ -237,6 +238,7 @@ fun DeviceSettingsDialog(
   }
 }
 
+@Suppress("LongParameterList")
 @Composable
 private fun DeviceSettingsContent(
     deviceSettings: PolarDeviceSettings,
@@ -406,13 +408,16 @@ private fun DeviceSettingsSection(
             )
             Text(
                 text =
-                    "The SDK mode is the mode of the device in which a wider range of stream capabilities are offered, i.e higher sampling rates, wider (or narrow) ranges etc.",
+                    "The SDK mode is the mode of the device in which a wider range of " +
+                        "stream capabilities are offered, i.e higher sampling rates, " +
+                        "wider (or narrow) ranges etc.",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp),
             )
             Text(
                 text =
-                    "After enabling or disabling SDK mode, you must reconnect the device for the change to take effect.",
+                    "After enabling or disabling SDK mode, you must reconnect the device " +
+                        "for the change to take effect.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 4.dp),
@@ -431,6 +436,7 @@ private fun DeviceSettingsSection(
   }
 }
 
+@Suppress("LongParameterList")
 @Composable
 private fun SettingItem(
     title: String,
@@ -530,7 +536,8 @@ private fun DataTypeSection(
 
     Text(
         text =
-            "Warning: Some data types may conflict with each other. If recording fails or produces unexpected results, try selecting fewer data types.",
+            "Warning: Some data types may conflict with each other. If recording fails " +
+                "or produces unexpected results, try selecting fewer data types.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.error,
         modifier = Modifier.padding(vertical = 8.dp),
@@ -582,11 +589,14 @@ private fun getSettingTypeDisplayText(settingType: PolarSensorSetting.SettingTyp
 private fun getSettingTypeHelpText(settingType: PolarSensorSetting.SettingType): String {
   return when (settingType) {
     PolarSensorSetting.SettingType.SAMPLE_RATE ->
-        "The number of samples per second (Hz). Higher sample rates provide more detailed data but consume more battery and storage space."
+        "The number of samples per second (Hz). Higher sample rates provide more " +
+            "detailed data but consume more battery and storage space."
     PolarSensorSetting.SettingType.RESOLUTION ->
-        "The precision of each measurement in bits. Higher resolution provides more precise data but increases file size."
+        "The precision of each measurement in bits. Higher resolution provides more " +
+            "precise data but increases file size."
     PolarSensorSetting.SettingType.RANGE ->
-        "The measurement range of the sensor. Higher ranges can detect larger movements but may reduce sensitivity to small changes."
+        "The measurement range of the sensor. Higher ranges can detect larger " +
+            "movements but may reduce sensitivity to small changes."
     PolarSensorSetting.SettingType.CHANNELS ->
         "The number of measurement channels. These represent different sensors."
     else -> "No additional information available for this setting type."

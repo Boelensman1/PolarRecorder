@@ -48,7 +48,7 @@ sealed class PolarApiResult<out T> {
   data class Failure(val message: String, val throwable: Throwable?) : PolarApiResult<Nothing>()
 }
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "TooGenericExceptionCaught")
 class PolarManager(
     private val context: Context,
     private val deviceViewModel: DeviceViewModel,
@@ -145,7 +145,9 @@ class PolarManager(
                         } catch (error: Throwable) {
                           Log.e(TAG, "Failed to fetch device capabilities", error)
                           logViewModel.addLogError(
-                              "Failed to fetch device capabilities for ${polarDeviceInfo.deviceId} (${error}), falling back to alternative method",
+                              "Failed to fetch device capabilities for " +
+                                  "${polarDeviceInfo.deviceId} (${error}), " +
+                                  "falling back to alternative method",
                               false,
                           )
                           capabilities =
