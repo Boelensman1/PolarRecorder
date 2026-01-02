@@ -58,9 +58,12 @@ class PolarManager(
     private const val TAG = "PolarManager"
     private const val SCAN_INTERVAL = 30000L // 30 seconds between scans
     private const val SCAN_DURATION = 10000L // 10 seconds per scan
-    private const val MAX_RETRY_ERRORS = 6L
+    private const val MAX_RETRY_ERRORS = 4L
     private const val FEATURE_POLL_MAX_WAIT = 5000L // 5 seconds max wait for features
     private const val FEATURE_POLL_INTERVAL = 500L // Poll every 500ms
+
+    /** Model prefixes where getAvailableOnlineStreamDataTypes() is known to fail. */
+    private val FALLBACK_ONLY_MODEL_PREFIXES = setOf("H7")
 
     /** Data types that this app knows how to stream and process. */
     val SUPPORTED_DATA_TYPES =
@@ -108,6 +111,7 @@ class PolarManager(
   val isBLEEnabled: State<Boolean> = _isBLEEnabled
 
   private val deviceBatteryLevels = mutableMapOf<String, Int>()
+  private val deviceModelNumbers = mutableMapOf<String, String>()
 
   init {
     setupPolarApi()
@@ -202,6 +206,7 @@ class PolarManager(
 
           override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
             deviceCapabilities.remove(polarDeviceInfo.deviceId)
+            deviceModelNumbers.remove(polarDeviceInfo.deviceId)
             if (deviceState.getConnectionState(polarDeviceInfo.deviceId) ===
                 ConnectionState.DISCONNECTING) {
               // a disconnect was requested, so this disconnect is expected
@@ -242,6 +247,7 @@ class PolarManager(
               BleDisClient.MODEL_NUMBER_STRING -> {
                 logState.addLogMessage(
                     "DIS info received for device $identifier: [ModelNumber]: $value")
+                deviceModelNumbers[identifier] = value
               }
               BleDisClient.SERIAL_NUMBER_STRING -> {
                 logState.addLogMessage(
@@ -292,6 +298,13 @@ class PolarManager(
                 Pair(error, attempt)
               }
               .flatMap { (error, attempt) ->
+                // Check if model number is now available and indicates fallback-only device
+                if (shouldUseFallbackCapabilities(deviceId)) {
+                  logState.addLogMessage(
+                      "Model number received indicates fallback-only device, skipping retries")
+                  return@flatMap Flowable.error<Long>(error)
+                }
+
                 logState.addLogError(
                     "Failed to fetch stream capabilities (attempt $attempt/$MAX_RETRY_ERRORS): ${error.message}",
                     false,
@@ -409,6 +422,13 @@ class PolarManager(
       feature: PolarBleApi.PolarBleSdkFeature,
   ): Boolean {
     return deviceFeatureReadiness[deviceId]?.contains(feature) == true
+  }
+
+  private fun shouldUseFallbackCapabilities(deviceId: String): Boolean {
+    val modelNumber = deviceModelNumbers[deviceId] ?: return false
+    return FALLBACK_ONLY_MODEL_PREFIXES.any { prefix ->
+      modelNumber.startsWith(prefix, ignoreCase = true)
+    }
   }
 
   fun isTimeManagementAvailable(deviceId: String): Boolean {
