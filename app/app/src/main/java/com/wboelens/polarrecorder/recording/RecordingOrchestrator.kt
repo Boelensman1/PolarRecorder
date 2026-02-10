@@ -8,6 +8,7 @@ import com.polar.sdk.api.model.PolarHrData
 import com.polar.sdk.api.model.PolarMagnetometerData
 import com.polar.sdk.api.model.PolarPpgData
 import com.polar.sdk.api.model.PolarPpiData
+import com.polar.sdk.api.model.PolarSensorSetting
 import com.polar.sdk.api.model.PolarTemperatureData
 import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.dataSavers.InitializationState
@@ -312,6 +313,28 @@ class RecordingOrchestrator(
 
     val polarSdkVersion = polarManager.getSdkVersion()
     logState.addLogMessage("Polar SDK version: $polarSdkVersion")
+
+    // Log sensor settings for each selected device
+    deviceState.selectedDevices.value.forEach { device ->
+      logState.addLogMessage("Device: ${device.info.name} (${device.info.deviceId})")
+      device.dataTypes.forEach { dataType ->
+        val settings = device.sensorSettings[dataType]
+        val settingsStr = formatSensorSettings(settings)
+        logState.addLogMessage("  $dataType: $settingsStr")
+      }
+    }
+  }
+
+  private fun formatSensorSettings(settings: PolarSensorSetting?): String {
+    if (settings == null || settings.settings.isEmpty()) {
+      return "(no configurable settings)"
+    }
+    val parts = mutableListOf<String>()
+    settings.settings[PolarSensorSetting.SettingType.SAMPLE_RATE]?.let { parts.add("$it Hz") }
+    settings.settings[PolarSensorSetting.SettingType.RESOLUTION]?.let { parts.add("$it bits") }
+    settings.settings[PolarSensorSetting.SettingType.RANGE]?.let { parts.add("±${it}g") }
+    settings.settings[PolarSensorSetting.SettingType.CHANNELS]?.let { parts.add("$it ch") }
+    return if (parts.isEmpty()) "(no configurable settings)" else parts.joinToString(", ")
   }
 
   private fun saveUnsavedLogMessages(messages: List<LogEntry>) {
