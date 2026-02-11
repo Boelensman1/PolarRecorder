@@ -316,12 +316,14 @@ class RecordingOrchestrator(
 
     // Log sensor settings for each selected device
     deviceState.selectedDevices.value.forEach { device ->
-      logState.addLogMessage("Device: ${device.info.name} (${device.info.deviceId})")
-      device.dataTypes.forEach { dataType ->
-        val settings = device.sensorSettings[dataType]
-        val settingsStr = formatSensorSettings(settings)
-        logState.addLogMessage("  $dataType: $settingsStr")
-      }
+      val settingsParts =
+          device.dataTypes.map { dataType ->
+            val settingsStr = formatSensorSettings(device.sensorSettings[dataType])
+            "$dataType: $settingsStr"
+          }
+      val settingsJoined = settingsParts.joinToString(" | ")
+      logState.addLogMessage(
+          "Device: ${device.info.name} (${device.info.deviceId}) - $settingsJoined")
     }
   }
 
