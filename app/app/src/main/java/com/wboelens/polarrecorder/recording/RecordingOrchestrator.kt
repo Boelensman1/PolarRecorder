@@ -323,7 +323,7 @@ class RecordingOrchestrator(
           }
       val settingsJoined = settingsParts.joinToString(" | ")
       logState.addLogMessage(
-          "Device: ${device.info.name} (${device.info.deviceId}) - $settingsJoined")
+          "Device: ${device.info.name} (${device.info.deviceId}) with settings $settingsJoined")
     }
   }
 
