@@ -19,7 +19,7 @@ fun getDataFragment(dataType: PolarBleApi.PolarDeviceDataType, data: Any): Float
     PolarBleApi.PolarDeviceDataType.ACC ->
         (data as PolarAccelerometerData).samples.lastOrNull()?.x?.toFloat()
     PolarBleApi.PolarDeviceDataType.PPG ->
-        (data as PolarPpgData).samples.firstOrNull()?.channelSamples?.lastOrNull()?.toFloat()
+        (data as PolarPpgData).samples.firstOrNull()?.channelSamples?.firstOrNull()?.toFloat()
     PolarBleApi.PolarDeviceDataType.ECG -> {
       val ecgData = data as PolarEcgData
       when (val ecgSample = ecgData.samples.lastOrNull()) {
