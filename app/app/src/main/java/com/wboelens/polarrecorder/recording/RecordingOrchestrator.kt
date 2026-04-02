@@ -91,8 +91,7 @@ class RecordingOrchestrator(
     if (disconnectedDevices.isNotEmpty()) {
       val disconnectedNames = disconnectedDevices.map { it.info.name }.joinToString(", ")
       logState.addLogError(
-          "Cannot start recording: Some selected devices are not connected: $disconnectedNames"
-      )
+          "Cannot start recording: Some selected devices are not connected: $disconnectedNames")
       return StartRecordingResult.DevicesNotConnected(disconnectedNames)
     }
 
@@ -101,8 +100,7 @@ class RecordingOrchestrator(
     if (enabledDataSavers.isEmpty()) {
       logState.addLogError("Cannot start recording: No data savers are enabled")
       return StartRecordingResult.NoDataSaversEnabled(
-          "Cannot start recording: No data savers are enabled"
-      )
+          "Cannot start recording: No data savers are enabled")
     }
 
     val uninitializedSavers =
@@ -110,12 +108,10 @@ class RecordingOrchestrator(
     if (uninitializedSavers.isNotEmpty()) {
       logState.addLogError(
           "Cannot start recording: Data savers are not initialized. " +
-              "Please go through the initialization process first."
-      )
+              "Please go through the initialization process first.")
       return StartRecordingResult.DataSaversNotInitialized(
           "Cannot start recording: Data savers are not initialized. " +
-              "Please go through the initialization process first."
-      )
+              "Please go through the initialization process first.")
     }
 
     // Clear last data, timestamps, and event log when starting new recording
@@ -365,8 +361,7 @@ class RecordingOrchestrator(
           }
       val settingsJoined = settingsParts.joinToString(" | ")
       logState.addLogMessage(
-          "Device: ${device.info.name} (${device.info.deviceId}) with settings $settingsJoined"
-      )
+          "Device: ${device.info.name} (${device.info.deviceId}) with settings $settingsJoined")
     }
   }
 
@@ -387,11 +382,9 @@ class RecordingOrchestrator(
     val selectedDevices = deviceState.selectedDevices.value
     val currentRecordingName = _recordingState.value.currentRecordingName
 
-    if (
-        !_recordingState.value.isRecording ||
-            selectedDevices.isEmpty() ||
-            enabledDataSavers.isEmpty()
-    ) {
+    if (!_recordingState.value.isRecording ||
+        selectedDevices.isEmpty() ||
+        enabledDataSavers.isEmpty()) {
       return
     }
 
