@@ -287,7 +287,7 @@ private fun DataTypeSettingsDialog(
       onDismissRequest = onDismiss,
       title = { Text("Settings for ${getDataTypeDisplayText(dataType)}") },
       text = {
-        Column {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
           availableSettings.settings.forEach { (settingType, values) ->
             if (values.isNotEmpty()) {
               SettingSection(

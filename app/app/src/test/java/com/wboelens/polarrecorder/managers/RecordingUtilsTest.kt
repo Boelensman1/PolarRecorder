@@ -54,10 +54,10 @@ class RecordingUtilsTest {
       every { samples } returns emptyList()
     }
 
-    private fun createPpgMock(lastChannelValue: Int): PolarPpgData {
+    private fun createPpgMock(firstChannelValue: Int): PolarPpgData {
       val sample =
           mockk<PolarPpgData.PolarPpgSample> {
-            every { channelSamples } returns listOf(1000, 2000, lastChannelValue)
+            every { channelSamples } returns listOf(firstChannelValue, 2000, 3000)
           }
       return mockk { every { samples } returns listOf(sample) }
     }
@@ -110,7 +110,7 @@ class RecordingUtilsTest {
             Arguments.of(PolarDeviceDataType.HR, createHrMock(72), 72f),
             Arguments.of(PolarDeviceDataType.PPI, createPpiMock(850), 850f),
             Arguments.of(PolarDeviceDataType.ACC, createAccMock(125), 125f),
-            Arguments.of(PolarDeviceDataType.PPG, createPpgMock(3000), 3000f),
+            Arguments.of(PolarDeviceDataType.PPG, createPpgMock(1000), 1000f),
             Arguments.of(PolarDeviceDataType.ECG, createEcgMock(1500), 1500f),
             Arguments.of(PolarDeviceDataType.GYRO, createGyroMock(45.5f), 45.5f),
             Arguments.of(PolarDeviceDataType.TEMPERATURE, createTempMock(36.5f), 36.5f),
