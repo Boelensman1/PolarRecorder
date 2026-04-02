@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Battery5Bar
 import androidx.compose.material.icons.filled.Battery6Bar
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeviceThermostat
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -248,6 +249,8 @@ private fun getDataTypeIcon(type: PolarDeviceDataType): ImageVector {
     PolarDeviceDataType.PPG -> Icons.Default.Favorite
     PolarDeviceDataType.PPI -> Icons.Default.Favorite
     PolarDeviceDataType.ECG -> Icons.Default.Favorite
+    PolarDeviceDataType.TEMPERATURE -> Icons.Default.DeviceThermostat
+    PolarDeviceDataType.SKIN_TEMPERATURE -> Icons.Default.DeviceThermostat
     else -> Icons.Default.FitnessCenter
   }
 }
