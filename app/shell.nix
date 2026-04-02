@@ -1,4 +1,8 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> {
+    config.android_sdk.accept_license = true;
+    config.allowUnfree = true;
+  }
+}:
 
 let
   androidComposition = pkgs.androidenv.composeAndroidPackages {
