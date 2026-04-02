@@ -36,6 +36,7 @@ import com.wboelens.polarrecorder.dataSavers.DataSavers
 import com.wboelens.polarrecorder.dataSavers.InitializationState
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
 import com.wboelens.polarrecorder.managers.PreferencesManager
+import com.wboelens.polarrecorder.recording.RecordingOrchestrator
 import com.wboelens.polarrecorder.services.RecordingServiceConnection
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
 
@@ -58,6 +59,7 @@ fun DataSaverInitializationScreen(
         val dataTypesWithLog =
             deviceViewModel.getDeviceDataTypes(device.info.deviceId).map { it.name }.toMutableList()
         dataTypesWithLog.add("LOG")
+        dataTypesWithLog.add(RecordingOrchestrator.EVENT_LOG_DATA_TYPE)
 
         device.info.deviceId to DeviceInfoForDataSaver(device.info.name, dataTypesWithLog.toSet())
       }
@@ -103,14 +105,15 @@ fun DataSaverInitializationScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
-        }) { paddingValues ->
-          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            enabledSavers.forEach { saver ->
-              DataSaverInitializationItem(saver = saver)
-              Spacer(modifier = Modifier.height(8.dp))
-            }
-          }
         }
+    ) { paddingValues ->
+      Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+        enabledSavers.forEach { saver ->
+          DataSaverInitializationItem(saver = saver)
+          Spacer(modifier = Modifier.height(8.dp))
+        }
+      }
+    }
   }
 }
 

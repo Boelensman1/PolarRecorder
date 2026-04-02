@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import com.polar.sdk.api.PolarBleApi
 import com.wboelens.polarrecorder.managers.DeviceInfoForDataSaver
+import com.wboelens.polarrecorder.recording.EventLogEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,4 +81,15 @@ class RecordingServiceConnection(private val context: Context) {
 
   val lastDataTimestamps: StateFlow<Map<String, Long>>?
     get() = _binder.value?.lastDataTimestamps
+
+  val eventLogEntries: StateFlow<List<EventLogEntry>>?
+    get() = _binder.value?.eventLogEntries
+
+  fun addEvent() {
+    _binder.value?.addEvent()
+  }
+
+  fun updateEventLabel(index: Int, label: String) {
+    _binder.value?.updateEventLabel(index, label)
+  }
 }

@@ -42,6 +42,7 @@ class RecordingOrchestrator(
 ) {
   companion object {
     private const val RETRY_COUNT = 3L
+    const val EVENT_LOG_DATA_TYPE = "EVENT_LOG"
   }
 
   // Recording state (exposed as read-only)
@@ -54,6 +55,10 @@ class RecordingOrchestrator(
 
   private val _lastDataTimestamps = MutableStateFlow<Map<String, Long>>(emptyMap())
   val lastDataTimestamps: StateFlow<Map<String, Long>> = _lastDataTimestamps
+
+  // Event log state
+  private val _eventLogEntries = MutableStateFlow<List<EventLogEntry>>(emptyList())
+  val eventLogEntries: StateFlow<List<EventLogEntry>> = _eventLogEntries
 
   // RxJava disposables for streams
   private val disposables = mutableMapOf<String, MutableMap<String, Disposable>>()
@@ -86,7 +91,8 @@ class RecordingOrchestrator(
     if (disconnectedDevices.isNotEmpty()) {
       val disconnectedNames = disconnectedDevices.map { it.info.name }.joinToString(", ")
       logState.addLogError(
-          "Cannot start recording: Some selected devices are not connected: $disconnectedNames")
+          "Cannot start recording: Some selected devices are not connected: $disconnectedNames"
+      )
       return StartRecordingResult.DevicesNotConnected(disconnectedNames)
     }
 
@@ -95,7 +101,8 @@ class RecordingOrchestrator(
     if (enabledDataSavers.isEmpty()) {
       logState.addLogError("Cannot start recording: No data savers are enabled")
       return StartRecordingResult.NoDataSaversEnabled(
-          "Cannot start recording: No data savers are enabled")
+          "Cannot start recording: No data savers are enabled"
+      )
     }
 
     val uninitializedSavers =
@@ -103,18 +110,21 @@ class RecordingOrchestrator(
     if (uninitializedSavers.isNotEmpty()) {
       logState.addLogError(
           "Cannot start recording: Data savers are not initialized. " +
-              "Please go through the initialization process first.")
+              "Please go through the initialization process first."
+      )
       return StartRecordingResult.DataSaversNotInitialized(
           "Cannot start recording: Data savers are not initialized. " +
-              "Please go through the initialization process first.")
+              "Please go through the initialization process first."
+      )
     }
 
-    // Clear last data and last data timestamps when starting new recording
+    // Clear last data, timestamps, and event log when starting new recording
     _lastData.value =
         selectedDevices.associate { device ->
           device.info.deviceId to device.dataTypes.associateWith { null }
         }
     _lastDataTimestamps.value = emptyMap()
+    _eventLogEntries.value = emptyList()
 
     // Log app version information
     logDeviceAndAppInfo()
@@ -154,6 +164,9 @@ class RecordingOrchestrator(
     // Save any remaining log messages
     saveUnsavedLogMessages(logState.logMessages.value)
 
+    // Save final event log snapshot
+    saveAllEventLogEntries()
+
     // Dispose all streams
     disposeAllStreams()
 
@@ -165,6 +178,35 @@ class RecordingOrchestrator(
 
     // Clear timestamps
     _lastDataTimestamps.value = emptyMap()
+  }
+
+  /** Adds a new event log entry with the current timestamp and a default label. */
+  fun addEvent() {
+    if (!_recordingState.value.isRecording) return
+
+    val entries = _eventLogEntries.value
+    val newIndex = entries.size + 1
+    val timestamp = clock.currentTimeMillis()
+    val entry = EventLogEntry(index = newIndex, timestamp = timestamp, label = "Event $newIndex")
+
+    _eventLogEntries.value = entries + entry
+    saveEventLogEntry(entry)
+    logState.addLogMessage("Event $newIndex marked")
+  }
+
+  /** Updates the label of an existing event log entry. */
+  fun updateEventLabel(index: Int, label: String) {
+    val entries = _eventLogEntries.value.toMutableList()
+    val entryIndex = entries.indexOfFirst { it.index == index }
+    if (entryIndex == -1) return
+
+    val updated = entries[entryIndex].copy(label = label)
+    entries[entryIndex] = updated
+    _eventLogEntries.value = entries
+
+    if (_recordingState.value.isRecording) {
+      saveEventLogEntry(updated)
+    }
   }
 
   /**
@@ -323,7 +365,8 @@ class RecordingOrchestrator(
           }
       val settingsJoined = settingsParts.joinToString(" | ")
       logState.addLogMessage(
-          "Device: ${device.info.name} (${device.info.deviceId}) with settings $settingsJoined")
+          "Device: ${device.info.name} (${device.info.deviceId}) with settings $settingsJoined"
+      )
     }
   }
 
@@ -344,9 +387,11 @@ class RecordingOrchestrator(
     val selectedDevices = deviceState.selectedDevices.value
     val currentRecordingName = _recordingState.value.currentRecordingName
 
-    if (!_recordingState.value.isRecording ||
-        selectedDevices.isEmpty() ||
-        enabledDataSavers.isEmpty()) {
+    if (
+        !_recordingState.value.isRecording ||
+            selectedDevices.isEmpty() ||
+            enabledDataSavers.isEmpty()
+    ) {
       return
     }
 
@@ -369,6 +414,39 @@ class RecordingOrchestrator(
       }
       lastSavedLogSize = messages.size
     }
+  }
+
+  private fun saveEventLogEntry(entry: EventLogEntry) {
+    val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
+    val selectedDevices = deviceState.selectedDevices.value
+    val currentRecordingName = _recordingState.value.currentRecordingName
+
+    if (selectedDevices.isEmpty() || enabledDataSavers.isEmpty()) return
+
+    val data =
+        listOf(
+            mapOf(
+                "index" to entry.index,
+                "timestamp" to entry.timestamp,
+                "label" to entry.label,
+            ),
+        )
+
+    selectedDevices.forEach { device ->
+      enabledDataSavers.forEach { saver ->
+        saver.saveData(
+            clock.currentTimeMillis(),
+            device.info.deviceId,
+            currentRecordingName,
+            EVENT_LOG_DATA_TYPE,
+            data,
+        )
+      }
+    }
+  }
+
+  private fun saveAllEventLogEntries() {
+    _eventLogEntries.value.forEach { entry -> saveEventLogEntry(entry) }
   }
 
   private fun disposeAllStreams() {

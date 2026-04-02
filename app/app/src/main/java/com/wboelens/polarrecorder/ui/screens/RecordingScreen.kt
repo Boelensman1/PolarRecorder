@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,8 +23,10 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.wboelens.polarrecorder.dataSavers.DataSavers
+import com.wboelens.polarrecorder.recording.EventLogEntry
 import com.wboelens.polarrecorder.services.RecordingServiceConnection
 import com.wboelens.polarrecorder.services.RecordingState
+import com.wboelens.polarrecorder.ui.components.EventLogSection
 import com.wboelens.polarrecorder.ui.components.RecordingControls
 import com.wboelens.polarrecorder.ui.components.SelectedDevicesSection
 import com.wboelens.polarrecorder.viewModels.DeviceViewModel
@@ -57,6 +61,11 @@ fun RecordingScreen(
           ?: androidx.compose.runtime.remember {
             androidx.compose.runtime.mutableStateOf(emptyMap())
           }
+  val eventLogEntries by
+      binder?.eventLogEntries?.collectAsState()
+          ?: androidx.compose.runtime.remember {
+            androidx.compose.runtime.mutableStateOf(emptyList<EventLogEntry>())
+          }
 
   MaterialTheme {
     Scaffold(
@@ -67,26 +76,42 @@ fun RecordingScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
-        }) { paddingValues ->
-          Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            RecordingControls(
-                isRecording = isRecording,
-                isFileSystemEnabled = isFileSystemEnabled,
-                serviceConnection = serviceConnection,
-                dataSavers = dataSavers,
-                onRestartRecording = onRestartRecording,
-            )
-
-            if (isRecording) {
-              Spacer(modifier = Modifier.height(8.dp))
-              SelectedDevicesSection(
-                  selectedDevices = selectedDevices,
-                  lastDataTimestamps = lastDataTimestamps,
-                  batteryLevels = batteryLevels,
-                  lastData = lastData,
-              )
-            }
-          }
         }
+    ) { paddingValues ->
+      Column(
+          modifier =
+              Modifier.fillMaxSize()
+                  .padding(paddingValues)
+                  .padding(16.dp)
+                  .verticalScroll(rememberScrollState()),
+      ) {
+        RecordingControls(
+            isRecording = isRecording,
+            isFileSystemEnabled = isFileSystemEnabled,
+            serviceConnection = serviceConnection,
+            dataSavers = dataSavers,
+            onRestartRecording = onRestartRecording,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        EventLogSection(
+            events = eventLogEntries,
+            recordingStartTime = recordingState.recordingStartTime,
+            isRecording = isRecording,
+            onMarkEvent = { serviceConnection.addEvent() },
+            onUpdateLabel = { index, label -> serviceConnection.updateEventLabel(index, label) },
+        )
+
+        if (isRecording) {
+          Spacer(modifier = Modifier.height(8.dp))
+          SelectedDevicesSection(
+              selectedDevices = selectedDevices,
+              lastDataTimestamps = lastDataTimestamps,
+              batteryLevels = batteryLevels,
+              lastData = lastData,
+          )
+        }
+      }
+    }
   }
 }
