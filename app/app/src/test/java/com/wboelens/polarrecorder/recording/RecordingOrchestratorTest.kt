@@ -369,7 +369,7 @@ class RecordingOrchestratorTest {
     }
 
     @Test
-    fun `stopRecording calls stopSaving on enabled data savers`() {
+    fun `stopRecording does not call stopSaving on data savers`() {
       val dataSaver = createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
       val device = createDevice("DEVICE_001")
       selectedDevicesFlow.value = listOf(device)
@@ -384,7 +384,7 @@ class RecordingOrchestratorTest {
       orchestrator.startRecording("Test Recording")
       orchestrator.stopRecording()
 
-      verify { dataSaver.stopSaving() }
+      verify(exactly = 0) { dataSaver.stopSaving() }
     }
 
     @Test

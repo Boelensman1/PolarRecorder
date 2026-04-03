@@ -95,7 +95,6 @@ fun RecordingScreen(
             Spacer(modifier = Modifier.height(8.dp))
             EventLogSection(
                 events = eventLogEntries,
-                recordingStartTime = recordingState.recordingStartTime,
                 isRecording = isRecording,
                 onMarkEvent = { serviceConnection.addEvent() },
                 onUpdateLabel = { index, label ->

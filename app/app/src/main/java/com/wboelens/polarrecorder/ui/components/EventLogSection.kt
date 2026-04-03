@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun EventLogSection(
     events: List<EventLogEntry>,
-    recordingStartTime: Long,
     isRecording: Boolean,
     onMarkEvent: () -> Unit,
     onUpdateLabel: (Int, String) -> Unit,
@@ -55,7 +54,6 @@ fun EventLogSection(
       events.forEach { event ->
         EventLogItem(
             event = event,
-            recordingStartTime = recordingStartTime,
             onEditClick = { editingEvent = event },
         )
         HorizontalDivider()
@@ -79,10 +77,9 @@ fun EventLogSection(
 @Composable
 private fun EventLogItem(
     event: EventLogEntry,
-    recordingStartTime: Long,
     onEditClick: () -> Unit,
 ) {
-  val elapsed = event.timestamp - recordingStartTime
+  val elapsed = event.timestamp - event.recordingStartTime
   val timeStr = formatElapsedTime(elapsed)
 
   Row(

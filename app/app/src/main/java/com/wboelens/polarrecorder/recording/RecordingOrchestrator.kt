@@ -60,6 +60,9 @@ class RecordingOrchestrator(
   private val _eventLogEntries = MutableStateFlow<List<EventLogEntry>>(emptyList())
   val eventLogEntries: StateFlow<List<EventLogEntry>> = _eventLogEntries
 
+  // Retains the recording name after stop so post-stop event edits can still be saved
+  private var completedRecordingName = ""
+
   // RxJava disposables for streams
   private val disposables = mutableMapOf<String, MutableMap<String, Disposable>>()
   private val messagesLock = Any()
@@ -114,6 +117,9 @@ class RecordingOrchestrator(
               "Please go through the initialization process first.")
     }
 
+    // Reset completed recording name when starting fresh
+    completedRecordingName = ""
+
     // Clear last data, timestamps, and event log when starting new recording
     _lastData.value =
         selectedDevices.associate { device ->
@@ -160,14 +166,11 @@ class RecordingOrchestrator(
     // Save any remaining log messages
     saveUnsavedLogMessages(logState.logMessages.value)
 
-    // Save final event log snapshot
-    saveAllEventLogEntries()
-
     // Dispose all streams
     disposeAllStreams()
 
-    // Tell dataSavers to stop saving
-    dataSavers.asList().filter { it.isEnabled.value }.forEach { saver -> saver.stopSaving() }
+    // Retain the recording name so post-stop event edits can still be saved
+    completedRecordingName = _recordingState.value.currentRecordingName
 
     // Update state
     _recordingState.value = RecordingState(isRecording = false)
@@ -183,7 +186,13 @@ class RecordingOrchestrator(
     val entries = _eventLogEntries.value
     val newIndex = entries.size + 1
     val timestamp = clock.currentTimeMillis()
-    val entry = EventLogEntry(index = newIndex, timestamp = timestamp, label = "Event $newIndex")
+    val entry =
+        EventLogEntry(
+            index = newIndex,
+            timestamp = timestamp,
+            label = "Event $newIndex",
+            recordingStartTime = _recordingState.value.recordingStartTime,
+        )
 
     _eventLogEntries.value = entries + entry
     saveEventLogEntry(entry)
@@ -200,9 +209,7 @@ class RecordingOrchestrator(
     entries[entryIndex] = updated
     _eventLogEntries.value = entries
 
-    if (_recordingState.value.isRecording) {
-      saveEventLogEntry(updated)
-    }
+    saveEventLogEntry(updated)
   }
 
   /**
@@ -412,9 +419,14 @@ class RecordingOrchestrator(
   private fun saveEventLogEntry(entry: EventLogEntry) {
     val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
     val selectedDevices = deviceState.selectedDevices.value
-    val currentRecordingName = _recordingState.value.currentRecordingName
+    // Use the active recording name, falling back to the most recently completed one so that
+    // edits made after stopping are still written to the correct recording files. When reading
+    // event log entries, the entry with the highest phoneTimestamp for a given index wins.
+    val currentRecordingName =
+        _recordingState.value.currentRecordingName.ifEmpty { completedRecordingName }
 
-    if (selectedDevices.isEmpty() || enabledDataSavers.isEmpty()) return
+    if (selectedDevices.isEmpty() || enabledDataSavers.isEmpty() || currentRecordingName.isEmpty())
+        return
 
     val data =
         listOf(
@@ -436,10 +448,6 @@ class RecordingOrchestrator(
         )
       }
     }
-  }
-
-  private fun saveAllEventLogEntries() {
-    _eventLogEntries.value.forEach { entry -> saveEventLogEntry(entry) }
   }
 
   private fun disposeAllStreams() {
