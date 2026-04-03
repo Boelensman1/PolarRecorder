@@ -266,6 +266,7 @@ class RecordingOrchestrator(
   /** Cleanup resources (call on service destroy). */
   fun cleanup() {
     disposeAllStreams()
+    dataSavers.asList().forEach { it.stopSaving() }
   }
 
   private fun startStreamsForDevice(device: Device) {
@@ -434,6 +435,7 @@ class RecordingOrchestrator(
                 "index" to entry.index,
                 "timestamp" to entry.timestamp,
                 "label" to entry.label,
+                "recordingStartTime" to entry.recordingStartTime,
             ),
         )
 
