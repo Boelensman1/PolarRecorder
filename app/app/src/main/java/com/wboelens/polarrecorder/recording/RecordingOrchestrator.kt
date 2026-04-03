@@ -42,6 +42,7 @@ class RecordingOrchestrator(
 ) {
   companion object {
     private const val RETRY_COUNT = 3L
+    const val EVENT_LOG_DATA_TYPE = "EVENT_LOG"
   }
 
   // Recording state (exposed as read-only)
@@ -54,6 +55,13 @@ class RecordingOrchestrator(
 
   private val _lastDataTimestamps = MutableStateFlow<Map<String, Long>>(emptyMap())
   val lastDataTimestamps: StateFlow<Map<String, Long>> = _lastDataTimestamps
+
+  // Event log state
+  private val _eventLogEntries = MutableStateFlow<List<EventLogEntry>>(emptyList())
+  val eventLogEntries: StateFlow<List<EventLogEntry>> = _eventLogEntries
+
+  // Retains the recording name after stop so post-stop event edits can still be saved
+  private var completedRecordingName = ""
 
   // RxJava disposables for streams
   private val disposables = mutableMapOf<String, MutableMap<String, Disposable>>()
@@ -109,12 +117,16 @@ class RecordingOrchestrator(
               "Please go through the initialization process first.")
     }
 
-    // Clear last data and last data timestamps when starting new recording
+    // Reset completed recording name when starting fresh
+    completedRecordingName = ""
+
+    // Clear last data, timestamps, and event log when starting new recording
     _lastData.value =
         selectedDevices.associate { device ->
           device.info.deviceId to device.dataTypes.associateWith { null }
         }
     _lastDataTimestamps.value = emptyMap()
+    _eventLogEntries.value = emptyList()
 
     // Log app version information
     logDeviceAndAppInfo()
@@ -157,14 +169,47 @@ class RecordingOrchestrator(
     // Dispose all streams
     disposeAllStreams()
 
-    // Tell dataSavers to stop saving
-    dataSavers.asList().filter { it.isEnabled.value }.forEach { saver -> saver.stopSaving() }
+    // Retain the recording name so post-stop event edits can still be saved
+    completedRecordingName = _recordingState.value.currentRecordingName
 
     // Update state
     _recordingState.value = RecordingState(isRecording = false)
 
     // Clear timestamps
     _lastDataTimestamps.value = emptyMap()
+  }
+
+  /** Adds a new event log entry with the current timestamp and a default label. */
+  fun addEvent() {
+    if (!_recordingState.value.isRecording) return
+
+    val entries = _eventLogEntries.value
+    val newIndex = entries.size + 1
+    val timestamp = clock.currentTimeMillis()
+    val entry =
+        EventLogEntry(
+            index = newIndex,
+            timestamp = timestamp,
+            label = "Event $newIndex",
+            recordingStartTime = _recordingState.value.recordingStartTime,
+        )
+
+    _eventLogEntries.value = entries + entry
+    saveEventLogEntry(entry)
+    logState.addLogMessage("Event $newIndex marked")
+  }
+
+  /** Updates the label of an existing event log entry. */
+  fun updateEventLabel(index: Int, label: String) {
+    val entries = _eventLogEntries.value.toMutableList()
+    val entryIndex = entries.indexOfFirst { it.index == index }
+    if (entryIndex == -1) return
+
+    val updated = entries[entryIndex].copy(label = label)
+    entries[entryIndex] = updated
+    _eventLogEntries.value = entries
+
+    saveEventLogEntry(updated)
   }
 
   /**
@@ -221,6 +266,7 @@ class RecordingOrchestrator(
   /** Cleanup resources (call on service destroy). */
   fun cleanup() {
     disposeAllStreams()
+    dataSavers.asList().forEach { it.stopSaving() }
   }
 
   private fun startStreamsForDevice(device: Device) {
@@ -368,6 +414,41 @@ class RecordingOrchestrator(
         }
       }
       lastSavedLogSize = messages.size
+    }
+  }
+
+  private fun saveEventLogEntry(entry: EventLogEntry) {
+    val enabledDataSavers = dataSavers.asList().filter { it.isEnabled.value }
+    val selectedDevices = deviceState.selectedDevices.value
+    // Use the active recording name, falling back to the most recently completed one so that
+    // edits made after stopping are still written to the correct recording files. When reading
+    // event log entries, the entry with the highest phoneTimestamp for a given index wins.
+    val currentRecordingName =
+        _recordingState.value.currentRecordingName.ifEmpty { completedRecordingName }
+
+    if (selectedDevices.isEmpty() || enabledDataSavers.isEmpty() || currentRecordingName.isEmpty())
+        return
+
+    val data =
+        listOf(
+            mapOf(
+                "index" to entry.index,
+                "timestamp" to entry.timestamp,
+                "label" to entry.label,
+                "recordingStartTime" to entry.recordingStartTime,
+            ),
+        )
+
+    selectedDevices.forEach { device ->
+      enabledDataSavers.forEach { saver ->
+        saver.saveData(
+            clock.currentTimeMillis(),
+            device.info.deviceId,
+            currentRecordingName,
+            EVENT_LOG_DATA_TYPE,
+            data,
+        )
+      }
     }
   }
 

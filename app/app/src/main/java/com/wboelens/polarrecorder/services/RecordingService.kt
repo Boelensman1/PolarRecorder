@@ -14,6 +14,7 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.polar.sdk.api.PolarBleApi
 import com.wboelens.polarrecorder.PolarRecorderApplication
+import com.wboelens.polarrecorder.recording.EventLogEntry
 import com.wboelens.polarrecorder.recording.RecordingOrchestrator
 import com.wboelens.polarrecorder.recording.StartRecordingResult
 import com.wboelens.polarrecorder.state.LogState
@@ -64,12 +65,23 @@ class RecordingService : Service() {
     val lastDataTimestamps: StateFlow<Map<String, Long>>
       get() = orchestrator.lastDataTimestamps
 
+    val eventLogEntries: StateFlow<List<EventLogEntry>>
+      get() = orchestrator.eventLogEntries
+
     fun startRecording(recordingName: String) {
       this@RecordingService.doStartRecording(recordingName)
     }
 
     fun stopRecording() {
       this@RecordingService.doStopRecording()
+    }
+
+    fun addEvent() {
+      orchestrator.addEvent()
+    }
+
+    fun updateEventLabel(index: Int, label: String) {
+      orchestrator.updateEventLabel(index, label)
     }
 
     fun getService(): RecordingService = this@RecordingService

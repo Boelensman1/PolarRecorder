@@ -75,10 +75,26 @@ class MQTTDataSaver(logState: LogState, preferencesManager: PreferencesManager) 
     setEnabled(false)
   }
 
+  override fun stopSaving() {
+    mqttClient?.let {
+      try {
+        if (it.state.isConnected) {
+          it.disconnect()
+        }
+      } catch (e: Exception) {
+        logState.addLogError("Failed to disconnect from MQTT broker: ${e.message}")
+      }
+    }
+    mqttClient = null
+    super.stopSaving()
+  }
+
   override fun initSaving(
       recordingName: String,
       deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
+    // Disconnect any existing client before creating a new one
+    stopSaving()
     super.initSaving(recordingName, deviceIdsWithInfo)
 
     try {

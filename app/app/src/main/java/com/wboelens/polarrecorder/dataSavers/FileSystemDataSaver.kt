@@ -187,6 +187,8 @@ class FileSystemDataSaver(
       recordingName: String,
       deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
+    // Close any streams left open from a previous session (e.g. when post-stop edits were saved)
+    stopSaving()
     super.initSaving(recordingName, deviceIdsWithInfo)
     filePartNumbers.clear()
 

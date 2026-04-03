@@ -108,6 +108,7 @@ class PolarRecorderApplication : Application() {
       _polarManager?.cleanup()
       deviceState.cleanup()
       _polarManager = null
+      _dataSavers?.asList()?.forEach { it.stopSaving() }
       _dataSavers = null
       _recordingOrchestrator = null
     }
