@@ -3,7 +3,10 @@
     "allow": [
       "Bash(find:*)",
       "Bash(./gradlew:*)",
-      "Bash(ktfmt:*)"
+      "Bash(ktfmt:*)",
+      "WebFetch(domain:dl.google.com)",
+      "WebFetch(domain:repo1.maven.org)",
+      "WebFetch(domain:search.maven.org)"
     ]
   }
 }
