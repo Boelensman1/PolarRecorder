@@ -5,6 +5,17 @@
 }:
 
 let
+  ktfmt = pkgs.runCommand "ktfmt-0.61" {
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    jar = pkgs.fetchurl {
+      url = "https://repo1.maven.org/maven2/com/facebook/ktfmt/0.61/ktfmt-0.61-with-dependencies.jar";
+      hash = "sha256-34PszA1y7Q6sA1JQnXkva7SPfbDPCQKn7bVgkKSAQpA=";
+    };
+  } ''
+    install -Dm644 $jar $out/share/ktfmt/ktfmt.jar
+    makeWrapper ${pkgs.jre_headless}/bin/java $out/bin/ktfmt \
+      --add-flags "-jar $out/share/ktfmt/ktfmt.jar"
+  '';
   androidComposition = pkgs.androidenv.composeAndroidPackages {
     cmdLineToolsVersion = "11.0";
     buildToolsVersions = [ "35.0.0" ];
@@ -19,7 +30,7 @@ in
 pkgs.mkShell {
   buildInputs = [
     pkgs.jdk21
-    pkgs.ktfmt
+    ktfmt
     pkgs.patchelf
     androidSdk
   ];
