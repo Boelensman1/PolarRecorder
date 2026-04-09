@@ -24,7 +24,7 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
-import java.util.Calendar
+import java.time.LocalDateTime
 import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
@@ -40,7 +40,10 @@ data class DeviceStreamCapabilities(
     val settings: Map<PolarDeviceDataType, Pair<PolarSensorSetting, PolarSensorSetting>>,
 )
 
-data class PolarDeviceSettings(val deviceTimeOnConnect: Calendar?, val sdkModeEnabled: Boolean?)
+data class PolarDeviceSettings(
+    val deviceTimeOnConnect: LocalDateTime?,
+    val sdkModeEnabled: Boolean?,
+)
 
 sealed class PolarApiResult<out T> {
   data class Success<out R>(val value: R? = null) : PolarApiResult<R>()
@@ -383,7 +386,7 @@ class PolarManager(
   private fun fetchDeviceSettings(deviceId: String): Single<PolarDeviceSettings> {
     return Single.create { emitter ->
       MainScope().launch {
-        var deviceTime: Calendar? = null
+        var deviceTime: LocalDateTime? = null
         var deviceSdkMode: Boolean? = null
 
         if (
@@ -557,15 +560,15 @@ class PolarManager(
   private fun getAvailableOnlineStreamDataTypes(deviceId: String) =
       api.getAvailableOnlineStreamDataTypes(deviceId)
 
-  private suspend fun getTime(deviceId: String): Calendar {
+  private suspend fun getTime(deviceId: String): LocalDateTime {
     return withContext(Dispatchers.IO) { api.getLocalTime(deviceId).await() }
   }
 
-  suspend fun setTime(deviceId: String, calendar: Calendar): PolarApiResult<Nothing> =
+  suspend fun setTime(deviceId: String, time: LocalDateTime): PolarApiResult<Nothing> =
       withContext(Dispatchers.IO) {
-        logState.addLogMessage("Setting time for $deviceId to ${calendar.time}")
+        logState.addLogMessage("Setting time for $deviceId to $time")
         return@withContext try {
-          api.setLocalTime(deviceId, calendar).await()
+          api.setLocalTime(deviceId, time).await()
           logState.addLogSuccess("Setting time for $deviceId succeeded")
           PolarApiResult.Success()
         } catch (e: Exception) {

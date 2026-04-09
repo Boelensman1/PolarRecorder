@@ -1,9 +1,10 @@
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.android)
-  id("io.gitlab.arturbosch.detekt") version "1.23.7"
+  alias(libs.plugins.compose.compiler)
+  id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 detekt {
@@ -19,12 +20,12 @@ tasks.withType<Detekt>().configureEach {
 
 android {
   namespace = "com.wboelens.polarrecorder"
-  compileSdk = 35
+  compileSdk = 36
 
   defaultConfig {
     applicationId = "com.wboelens.polarrecorder"
     minSdk = 26
-    targetSdk = 35
+    targetSdk = 36
     versionCode = 24
     versionName = "2.0.6"
 
@@ -44,14 +45,12 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
-  kotlinOptions { jvmTarget = "11" }
-
   buildFeatures { compose = true }
-
-  composeOptions { kotlinCompilerExtensionVersion = "1.5.15" }
 
   testOptions { unitTests.all { it.useJUnitPlatform() } }
 }
+
+kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_11) } }
 
 tasks.withType<Test> {
   testLogging {
@@ -71,6 +70,7 @@ dependencies {
 
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.appcompat)
+  implementation(libs.androidx.documentfile)
   implementation(libs.material)
   implementation(libs.androidx.activity)
   implementation(libs.androidx.constraintlayout)

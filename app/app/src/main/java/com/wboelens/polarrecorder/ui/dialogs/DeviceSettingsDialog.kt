@@ -43,7 +43,8 @@ import com.wboelens.polarrecorder.managers.PolarApiResult
 import com.wboelens.polarrecorder.managers.PolarDeviceSettings
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
-import java.util.Calendar
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
 
 val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null, sdkModeEnabled = false)
@@ -76,7 +77,7 @@ fun DeviceSettingsDialog(
   }
 
   var selectedSettingsMap by remember {
-    mutableStateOf(
+    mutableStateOf<Map<PolarDeviceDataType, Map<PolarSensorSetting.SettingType, Int>>>(
         initialDataTypeSettings?.mapValues { (_, sensorSetting) ->
           sensorSetting.settings.mapValues { (_, values) -> values.firstOrNull() ?: 0 }
         } ?: emptyMap()
@@ -128,7 +129,7 @@ fun DeviceSettingsDialog(
   }
 
   // Add this function to handle device settings updates
-  fun updateDeviceSettings(newTime: Calendar? = null, newSdkMode: Boolean? = null) {
+  fun updateDeviceSettings(newTime: LocalDateTime? = null, newSdkMode: Boolean? = null) {
     coroutineScope.launch {
       // Update time if requested
       if (newTime != null) {
@@ -202,7 +203,7 @@ fun DeviceSettingsDialog(
               DeviceSettingsContent(
                   deviceSettings = deviceSettings,
                   isTimeManagementAvailable = polarManager.isTimeManagementAvailable(deviceId),
-                  onSetTime = { updateDeviceSettings(newTime = Calendar.getInstance()) },
+                  onSetTime = { updateDeviceSettings(newTime = LocalDateTime.now()) },
                   onToggleSdkMode = {
                     updateDeviceSettings(newSdkMode = deviceSettings.sdkModeEnabled == false)
                   },
@@ -377,10 +378,9 @@ private fun DeviceSettingsSection(
       SettingItem(
           title = "Time",
           content = {
-            deviceSettings.deviceTimeOnConnect?.let { calendar ->
-              val dateFormat =
-                  java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-              val deviceTimeText = dateFormat.format(calendar.time)
+            deviceSettings.deviceTimeOnConnect?.let { dateTime ->
+              val deviceTimeText =
+                  dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 
               Text(
                   text = "Device time on connect: $deviceTimeText",
