@@ -1,12 +1,18 @@
 package com.wboelens.polarrecorder
 
+import android.content.res.Configuration
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
@@ -60,11 +66,35 @@ class MainActivity : ComponentActivity() {
 
   companion object {
     private const val TAG = "MainActivity"
+    // Matches androidx.activity's internal DefaultLightScrim — a semi-opaque white used as the
+    // navigation bar scrim on API 26, where light-appearance nav bar icons aren't supported.
+    private const val API_26_LIGHT_NAV_SCRIM: Int = 0xe6ffffff.toInt()
   }
 
   @Suppress("LongMethod")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    // Use light/dark SystemBarStyle (not auto) so contrast enforcement stays off and the
+    // app's background shows through truly transparent system bars.
+    val isDark =
+        (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+    val statusBarStyle =
+        if (isDark) SystemBarStyle.dark(Color.TRANSPARENT)
+        else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+    // On API 26, isAppearanceLightNavigationBars is a no-op (requires API 27), so nav bar icons
+    // stay white. Apply a semi-opaque white scrim on API 26 only so they remain visible over
+    // light app content; API 27+ gets the fully transparent bar.
+    val navBarStyle =
+        if (isDark) {
+          SystemBarStyle.dark(Color.TRANSPARENT)
+        } else {
+          val lightNavScrim =
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) Color.TRANSPARENT
+              else API_26_LIGHT_NAV_SCRIM
+          SystemBarStyle.light(lightNavScrim, lightNavScrim)
+        }
+    enableEdgeToEdge(statusBarStyle = statusBarStyle, navigationBarStyle = navBarStyle)
     Log.d(TAG, "onCreate: Initializing MainActivity")
 
     // Get preferences from Application (always available)
@@ -113,7 +143,7 @@ class MainActivity : ComponentActivity() {
           NavHost(
               navController = navController,
               startDestination = startDestination,
-              modifier = Modifier.padding(paddingValues),
+              modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues),
           ) {
             composable("deviceSelection") {
               DeviceSelectionScreen(

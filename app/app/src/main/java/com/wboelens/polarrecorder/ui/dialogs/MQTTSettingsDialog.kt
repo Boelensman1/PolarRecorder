@@ -89,7 +89,7 @@ fun MQTTSettingsDialog(
               keyboardOptions =
                   KeyboardOptions(
                       capitalization = KeyboardCapitalization.None,
-                      autoCorrect = false,
+                      autoCorrectEnabled = false,
                   ),
           )
           Spacer(modifier = Modifier.height(8.dp))
@@ -102,7 +102,7 @@ fun MQTTSettingsDialog(
               keyboardOptions =
                   KeyboardOptions(
                       capitalization = KeyboardCapitalization.None,
-                      autoCorrect = false,
+                      autoCorrectEnabled = false,
                   ),
               visualTransformation = PasswordVisualTransformation(),
           )
@@ -116,7 +116,7 @@ fun MQTTSettingsDialog(
               keyboardOptions =
                   KeyboardOptions(
                       capitalization = KeyboardCapitalization.None,
-                      autoCorrect = false,
+                      autoCorrectEnabled = false,
                   ),
           )
           Text(
@@ -135,7 +135,7 @@ fun MQTTSettingsDialog(
               keyboardOptions =
                   KeyboardOptions(
                       capitalization = KeyboardCapitalization.None,
-                      autoCorrect = false,
+                      autoCorrectEnabled = false,
                   ),
           )
           Text(
