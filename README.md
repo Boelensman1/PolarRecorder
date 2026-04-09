@@ -8,6 +8,7 @@ Polar Recorder is an open-source application designed for researchers, developer
 - **Supports All Polar Devices** – Compatible with all Polar hardware capable of streaming raw data (tested with H10, H7, and OH1+)
 - **Flexible Data Storage** – Save recordings to a file for offline analysis
 - **Live Data Streaming** – Transmit data in real-time via MQTT
+- **Event Logging** – Mark timestamped events during a recording to annotate moments of interest
 - **Resilient** – Auto-reconnects on connection failures and continues the recording
 - **Fully Open Source** – Developed with transparency and collaboration in mind
 
