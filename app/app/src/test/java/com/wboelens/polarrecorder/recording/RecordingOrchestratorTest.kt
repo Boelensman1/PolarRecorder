@@ -331,6 +331,19 @@ class RecordingOrchestratorTest {
         logState.addLogSuccess(match { it.contains("My Recording") && it.contains("1 data saver") })
       }
     }
+
+    @Test
+    fun `startRecording clears event log entries`() {
+      setupValidRecordingConditions()
+      orchestrator.startRecording("First Recording")
+      orchestrator.addEvent()
+      assertEquals(1, orchestrator.eventLogEntries.value.size)
+
+      orchestrator.stopRecording()
+      orchestrator.startRecording("Second Recording")
+
+      assertTrue(orchestrator.eventLogEntries.value.isEmpty())
+    }
   }
 
   // ==================== stopRecording() Tests ====================
@@ -440,6 +453,40 @@ class RecordingOrchestratorTest {
             match { data ->
               @Suppress("UNCHECKED_CAST")
               (data as List<Map<String, String>>).any { it["message"] == "Recording stopped" }
+            },
+        )
+      }
+    }
+
+    @Test
+    fun `stopRecording preserves recording name for post-stop event edits`() {
+      val dataSaver = createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      val device = createDevice("DEVICE_001")
+      selectedDevicesFlow.value = listOf(device)
+      connectedDevicesFlow.value = listOf(device)
+      every { dataSavers.asList() } returns listOf(dataSaver)
+      every { dataSavers.enabledCount } returns 1
+      every { deviceState.getDeviceDataTypes("DEVICE_001") } returns setOf(PolarDeviceDataType.HR)
+      every { deviceState.getDeviceSensorSettingsForDataType(any(), any()) } returns
+          PolarSensorSetting(emptyMap())
+      every { polarManager.startStreaming(any(), any(), any()) } returns Flowable.never<Any>()
+
+      orchestrator.startRecording("My Session")
+      orchestrator.addEvent()
+      orchestrator.stopRecording()
+
+      // Edit event label after recording stopped
+      orchestrator.updateEventLabel(1, "Edited after stop")
+
+      verify {
+        dataSaver.saveData(
+            any(),
+            "DEVICE_001",
+            "My Session",
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            match { data ->
+              @Suppress("UNCHECKED_CAST") val list = data as List<Map<String, Any>>
+              list.any { it["label"] == "Edited after stop" }
             },
         )
       }
@@ -677,6 +724,304 @@ class RecordingOrchestratorTest {
 
       // Should not throw
       orchestrator.cleanup()
+    }
+  }
+
+  // ==================== addEvent() Tests ====================
+
+  @Nested
+  inner class AddEvent {
+
+    @Test
+    fun `addEvent when not recording does not add entry`() {
+      orchestrator.addEvent()
+
+      assertTrue(orchestrator.eventLogEntries.value.isEmpty())
+    }
+
+    @Test
+    fun `addEvent while recording creates entry with correct fields`() {
+      setupValidRecordingConditions()
+      clock.time = 5000L
+      orchestrator.startRecording("Test Recording")
+
+      clock.time = 6000L
+      orchestrator.addEvent()
+
+      val entries = orchestrator.eventLogEntries.value
+      assertEquals(1, entries.size)
+      val entry = entries[0]
+      assertEquals(1, entry.index)
+      assertEquals(6000L, entry.timestamp)
+      assertEquals("Event 1", entry.label)
+      assertEquals(5000L, entry.recordingStartTime)
+    }
+
+    @Test
+    fun `addEvent creates sequential indices for multiple events`() {
+      setupValidRecordingConditions()
+      orchestrator.startRecording("Test Recording")
+
+      clock.time = 1001L
+      orchestrator.addEvent()
+      clock.time = 1002L
+      orchestrator.addEvent()
+      clock.time = 1003L
+      orchestrator.addEvent()
+
+      val entries = orchestrator.eventLogEntries.value
+      assertEquals(3, entries.size)
+      assertEquals(1, entries[0].index)
+      assertEquals(2, entries[1].index)
+      assertEquals(3, entries[2].index)
+      assertEquals("Event 1", entries[0].label)
+      assertEquals("Event 2", entries[1].label)
+      assertEquals("Event 3", entries[2].label)
+      assertEquals(1001L, entries[0].timestamp)
+      assertEquals(1002L, entries[1].timestamp)
+      assertEquals(1003L, entries[2].timestamp)
+    }
+
+    @Test
+    fun `addEvent logs message with event index`() {
+      setupValidRecordingConditions()
+      orchestrator.startRecording("Test Recording")
+
+      orchestrator.addEvent()
+
+      verify { logState.addLogMessage("Event 1 marked") }
+    }
+
+    @Test
+    fun `addEvent saves entry to enabled data savers`() {
+      val dataSaver = createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      val device = createDevice("DEVICE_001")
+      selectedDevicesFlow.value = listOf(device)
+      connectedDevicesFlow.value = listOf(device)
+      every { dataSavers.asList() } returns listOf(dataSaver)
+      every { dataSavers.enabledCount } returns 1
+      every { deviceState.getDeviceDataTypes("DEVICE_001") } returns setOf(PolarDeviceDataType.HR)
+      every { deviceState.getDeviceSensorSettingsForDataType(any(), any()) } returns
+          PolarSensorSetting(emptyMap())
+      every { polarManager.startStreaming(any(), any(), any()) } returns Flowable.never<Any>()
+
+      clock.time = 5000L
+      orchestrator.startRecording("My Recording")
+      clock.time = 6000L
+      orchestrator.addEvent()
+
+      verify {
+        dataSaver.saveData(
+            any(),
+            "DEVICE_001",
+            "My Recording",
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            match { data ->
+              @Suppress("UNCHECKED_CAST") val list = data as List<Map<String, Any>>
+              list.size == 1 &&
+                  list[0]["index"] == 1 &&
+                  list[0]["timestamp"] == 6000L &&
+                  list[0]["label"] == "Event 1" &&
+                  list[0]["recordingStartTime"] == 5000L
+            },
+        )
+      }
+    }
+
+    @Test
+    fun `addEvent saves entry to all devices and savers`() {
+      val dataSaver1 =
+          createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      val dataSaver2 =
+          createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      val device1 = createDevice("DEVICE_001", name = "Device 1")
+      val device2 = createDevice("DEVICE_002", name = "Device 2")
+      selectedDevicesFlow.value = listOf(device1, device2)
+      connectedDevicesFlow.value = listOf(device1, device2)
+      every { dataSavers.asList() } returns listOf(dataSaver1, dataSaver2)
+      every { dataSavers.enabledCount } returns 2
+      every { deviceState.getDeviceDataTypes(any()) } returns setOf(PolarDeviceDataType.HR)
+      every { deviceState.getDeviceSensorSettingsForDataType(any(), any()) } returns
+          PolarSensorSetting(emptyMap())
+      every { polarManager.startStreaming(any(), any(), any()) } returns Flowable.never<Any>()
+
+      orchestrator.startRecording("Test Recording")
+      orchestrator.addEvent()
+
+      // Each saver should receive a call for each device
+      verify {
+        dataSaver1.saveData(
+            any(), "DEVICE_001", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+      }
+      verify {
+        dataSaver1.saveData(
+            any(), "DEVICE_002", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+      }
+      verify {
+        dataSaver2.saveData(
+            any(), "DEVICE_001", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+      }
+      verify {
+        dataSaver2.saveData(
+            any(), "DEVICE_002", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+      }
+    }
+  }
+
+  // ==================== updateEventLabel() Tests ====================
+
+  @Nested
+  inner class UpdateEventLabel {
+
+    @Test
+    fun `updateEventLabel with non-existent index does nothing`() {
+      setupValidRecordingConditions()
+      orchestrator.startRecording("Test Recording")
+      orchestrator.addEvent()
+
+      orchestrator.updateEventLabel(99, "New Label")
+
+      assertEquals("Event 1", orchestrator.eventLogEntries.value[0].label)
+    }
+
+    @Test
+    fun `updateEventLabel updates label of existing entry`() {
+      setupValidRecordingConditions()
+      clock.time = 5000L
+      orchestrator.startRecording("Test Recording")
+      clock.time = 6000L
+      orchestrator.addEvent()
+
+      orchestrator.updateEventLabel(1, "Custom Label")
+
+      val entry = orchestrator.eventLogEntries.value[0]
+      assertEquals("Custom Label", entry.label)
+      assertEquals(1, entry.index)
+      assertEquals(6000L, entry.timestamp)
+      assertEquals(5000L, entry.recordingStartTime)
+    }
+
+    @Test
+    fun `updateEventLabel saves updated entry to data savers`() {
+      val dataSaver = createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      val device = createDevice("DEVICE_001")
+      selectedDevicesFlow.value = listOf(device)
+      connectedDevicesFlow.value = listOf(device)
+      every { dataSavers.asList() } returns listOf(dataSaver)
+      every { dataSavers.enabledCount } returns 1
+      every { deviceState.getDeviceDataTypes("DEVICE_001") } returns setOf(PolarDeviceDataType.HR)
+      every { deviceState.getDeviceSensorSettingsForDataType(any(), any()) } returns
+          PolarSensorSetting(emptyMap())
+      every { polarManager.startStreaming(any(), any(), any()) } returns Flowable.never<Any>()
+
+      orchestrator.startRecording("Test Recording")
+      orchestrator.addEvent()
+      orchestrator.updateEventLabel(1, "Renamed")
+
+      verify {
+        dataSaver.saveData(
+            any(),
+            "DEVICE_001",
+            "Test Recording",
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            match { data ->
+              @Suppress("UNCHECKED_CAST") val list = data as List<Map<String, Any>>
+              list.any { it["label"] == "Renamed" }
+            },
+        )
+      }
+    }
+
+    @Test
+    fun `updateEventLabel finds entry by index field not list position`() {
+      setupValidRecordingConditions()
+      orchestrator.startRecording("Test Recording")
+      orchestrator.addEvent() // index=1
+      orchestrator.addEvent() // index=2
+      orchestrator.addEvent() // index=3
+
+      orchestrator.updateEventLabel(2, "Middle Event")
+
+      val entries = orchestrator.eventLogEntries.value
+      assertEquals("Event 1", entries[0].label)
+      assertEquals("Middle Event", entries[1].label)
+      assertEquals("Event 3", entries[2].label)
+    }
+
+    @Test
+    fun `updateEventLabel after recording stopped uses completedRecordingName`() {
+      val dataSaver = createMockDataSaver(enabled = true, initialized = InitializationState.SUCCESS)
+      val device = createDevice("DEVICE_001")
+      selectedDevicesFlow.value = listOf(device)
+      connectedDevicesFlow.value = listOf(device)
+      every { dataSavers.asList() } returns listOf(dataSaver)
+      every { dataSavers.enabledCount } returns 1
+      every { deviceState.getDeviceDataTypes("DEVICE_001") } returns setOf(PolarDeviceDataType.HR)
+      every { deviceState.getDeviceSensorSettingsForDataType(any(), any()) } returns
+          PolarSensorSetting(emptyMap())
+      every { polarManager.startStreaming(any(), any(), any()) } returns Flowable.never<Any>()
+
+      orchestrator.startRecording("My Session")
+      orchestrator.addEvent()
+      orchestrator.stopRecording()
+
+      orchestrator.updateEventLabel(1, "Post-stop edit")
+
+      verify {
+        dataSaver.saveData(
+            any(),
+            "DEVICE_001",
+            "My Session",
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            match { data ->
+              @Suppress("UNCHECKED_CAST") val list = data as List<Map<String, Any>>
+              list.any { it["label"] == "Post-stop edit" }
+            },
+        )
+      }
+    }
+  }
+
+  // ==================== Event Log StateFlow Tests ====================
+
+  @Nested
+  inner class EventLogStateFlow {
+
+    @Test
+    fun `eventLogEntries initial value is empty list`() {
+      assertTrue(orchestrator.eventLogEntries.value.isEmpty())
+    }
+
+    @Test
+    fun `eventLogEntries emits updates when events added`() = runTest {
+      setupValidRecordingConditions()
+      orchestrator.startRecording("Test Recording")
+
+      orchestrator.eventLogEntries.test {
+        assertEquals(0, awaitItem().size)
+
+        orchestrator.addEvent()
+        assertEquals(1, awaitItem().size)
+
+        orchestrator.addEvent()
+        assertEquals(2, awaitItem().size)
+
+        cancelAndIgnoreRemainingEvents()
+      }
+    }
+
+    @Test
+    fun `eventLogEntries cleared when new recording starts`() {
+      setupValidRecordingConditions()
+      orchestrator.startRecording("First Recording")
+      orchestrator.addEvent()
+      orchestrator.addEvent()
+      assertEquals(2, orchestrator.eventLogEntries.value.size)
+
+      orchestrator.stopRecording()
+      orchestrator.startRecording("Second Recording")
+
+      assertTrue(orchestrator.eventLogEntries.value.isEmpty())
     }
   }
 }
