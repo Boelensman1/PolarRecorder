@@ -194,7 +194,9 @@ class RecordingOrchestratorTest {
 
       assertTrue(result is StartRecordingResult.DevicesNotConnected)
       assertEquals(
-          "My Polar H10", (result as StartRecordingResult.DevicesNotConnected).disconnectedNames)
+          "My Polar H10",
+          (result as StartRecordingResult.DevicesNotConnected).disconnectedNames,
+      )
     }
 
     @Test
@@ -258,7 +260,9 @@ class RecordingOrchestratorTest {
     fun `startRecording initializes lastData map for selected devices`() {
       val device =
           createDevice(
-              "DEVICE_001", dataTypes = setOf(PolarDeviceDataType.HR, PolarDeviceDataType.ACC))
+              "DEVICE_001",
+              dataTypes = setOf(PolarDeviceDataType.HR, PolarDeviceDataType.ACC),
+          )
       selectedDevicesFlow.value = listOf(device)
       connectedDevicesFlow.value = listOf(device)
 
@@ -851,19 +855,39 @@ class RecordingOrchestratorTest {
       // Each saver should receive a call for each device
       verify {
         dataSaver1.saveData(
-            any(), "DEVICE_001", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+            any(),
+            "DEVICE_001",
+            any(),
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            any(),
+        )
       }
       verify {
         dataSaver1.saveData(
-            any(), "DEVICE_002", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+            any(),
+            "DEVICE_002",
+            any(),
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            any(),
+        )
       }
       verify {
         dataSaver2.saveData(
-            any(), "DEVICE_001", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+            any(),
+            "DEVICE_001",
+            any(),
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            any(),
+        )
       }
       verify {
         dataSaver2.saveData(
-            any(), "DEVICE_002", any(), RecordingOrchestrator.EVENT_LOG_DATA_TYPE, any())
+            any(),
+            "DEVICE_002",
+            any(),
+            RecordingOrchestrator.EVENT_LOG_DATA_TYPE,
+            any(),
+        )
       }
     }
   }

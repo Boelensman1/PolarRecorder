@@ -22,7 +22,10 @@ class RecordingStateTest {
   fun `data class copy works correctly`() {
     val original =
         RecordingState(
-            isRecording = true, currentRecordingName = "Test", recordingStartTime = 12345L)
+            isRecording = true,
+            currentRecordingName = "Test",
+            recordingStartTime = 12345L,
+        )
 
     val copy = original.copy(isRecording = false)
 
@@ -35,13 +38,22 @@ class RecordingStateTest {
   fun `data class equals works correctly`() {
     val state1 =
         RecordingState(
-            isRecording = true, currentRecordingName = "Test", recordingStartTime = 12345L)
+            isRecording = true,
+            currentRecordingName = "Test",
+            recordingStartTime = 12345L,
+        )
     val state2 =
         RecordingState(
-            isRecording = true, currentRecordingName = "Test", recordingStartTime = 12345L)
+            isRecording = true,
+            currentRecordingName = "Test",
+            recordingStartTime = 12345L,
+        )
     val state3 =
         RecordingState(
-            isRecording = false, currentRecordingName = "Test", recordingStartTime = 12345L)
+            isRecording = false,
+            currentRecordingName = "Test",
+            recordingStartTime = 12345L,
+        )
 
     assertEquals(state1, state2)
     assertNotEquals(state1, state3)
@@ -51,10 +63,16 @@ class RecordingStateTest {
   fun `data class hashCode works correctly`() {
     val state1 =
         RecordingState(
-            isRecording = true, currentRecordingName = "Test", recordingStartTime = 12345L)
+            isRecording = true,
+            currentRecordingName = "Test",
+            recordingStartTime = 12345L,
+        )
     val state2 =
         RecordingState(
-            isRecording = true, currentRecordingName = "Test", recordingStartTime = 12345L)
+            isRecording = true,
+            currentRecordingName = "Test",
+            recordingStartTime = 12345L,
+        )
 
     assertEquals(state1.hashCode(), state2.hashCode())
   }
@@ -65,7 +83,8 @@ class RecordingStateTest {
         RecordingState(
             isRecording = true,
             currentRecordingName = "MyRecording",
-            recordingStartTime = 9876543210L)
+            recordingStartTime = 9876543210L,
+        )
 
     assertTrue(state.isRecording)
     assertEquals("MyRecording", state.currentRecordingName)
@@ -76,7 +95,10 @@ class RecordingStateTest {
   fun `copy with single field change preserves other fields`() {
     val original =
         RecordingState(
-            isRecording = true, currentRecordingName = "Original", recordingStartTime = 11111L)
+            isRecording = true,
+            currentRecordingName = "Original",
+            recordingStartTime = 11111L,
+        )
 
     val copiedName = original.copy(currentRecordingName = "Changed")
     assertEquals("Changed", copiedName.currentRecordingName)

@@ -76,42 +76,41 @@ fun RecordingScreen(
                 IconButton(onClick = onBackPressed) { Icon(Icons.Default.ArrowBack, "Back") }
               },
           )
-        }) { paddingValues ->
-          Column(
-              modifier =
-                  Modifier.fillMaxSize()
-                      .padding(paddingValues)
-                      .padding(16.dp)
-                      .verticalScroll(rememberScrollState()),
-          ) {
-            RecordingControls(
-                isRecording = isRecording,
-                isFileSystemEnabled = isFileSystemEnabled,
-                serviceConnection = serviceConnection,
-                dataSavers = dataSavers,
-                onRestartRecording = onRestartRecording,
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            EventLogSection(
-                events = eventLogEntries,
-                isRecording = isRecording,
-                onMarkEvent = { serviceConnection.addEvent() },
-                onUpdateLabel = { index, label ->
-                  serviceConnection.updateEventLabel(index, label)
-                },
-            )
-
-            if (isRecording) {
-              Spacer(modifier = Modifier.height(8.dp))
-              SelectedDevicesSection(
-                  selectedDevices = selectedDevices,
-                  lastDataTimestamps = lastDataTimestamps,
-                  batteryLevels = batteryLevels,
-                  lastData = lastData,
-              )
-            }
-          }
         }
+    ) { paddingValues ->
+      Column(
+          modifier =
+              Modifier.fillMaxSize()
+                  .padding(paddingValues)
+                  .padding(16.dp)
+                  .verticalScroll(rememberScrollState()),
+      ) {
+        RecordingControls(
+            isRecording = isRecording,
+            isFileSystemEnabled = isFileSystemEnabled,
+            serviceConnection = serviceConnection,
+            dataSavers = dataSavers,
+            onRestartRecording = onRestartRecording,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+        EventLogSection(
+            events = eventLogEntries,
+            isRecording = isRecording,
+            onMarkEvent = { serviceConnection.addEvent() },
+            onUpdateLabel = { index, label -> serviceConnection.updateEventLabel(index, label) },
+        )
+
+        if (isRecording) {
+          Spacer(modifier = Modifier.height(8.dp))
+          SelectedDevicesSection(
+              selectedDevices = selectedDevices,
+              lastDataTimestamps = lastDataTimestamps,
+              batteryLevels = batteryLevels,
+              lastData = lastData,
+          )
+        }
+      }
+    }
   }
 }

@@ -92,9 +92,11 @@ fun FileSystemSettingsDialog(
               value = splitAtSizeMb,
               onValueChange = { newValue ->
                 // Only allow positive numeric input
-                if (newValue.isEmpty() ||
-                    (newValue.all { it.isDigit() } &&
-                        newValue.toIntOrNull()?.let { it >= 0 } == true)) {
+                if (
+                    newValue.isEmpty() ||
+                        (newValue.all { it.isDigit() } &&
+                            newValue.toIntOrNull()?.let { it >= 0 } == true)
+                ) {
                   splitAtSizeMb = newValue
                 }
               },
@@ -121,9 +123,10 @@ fun FileSystemSettingsDialog(
             onClick = {
               onSave(baseDirectory, splitAtSizeMb.toIntOrNull() ?: 0)
               onDismiss()
-            }) {
-              Text("Save")
             }
+        ) {
+          Text("Save")
+        }
       },
       dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
   )

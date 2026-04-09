@@ -168,7 +168,8 @@ class MQTTDataSaver(logState: LogState, preferencesManager: PreferencesManager) 
 
         if (!firstMessageSaved["$deviceId/$dataType"]!!) {
           logState.addLogMessage(
-              "Successfully published first $dataType data to MQTT topic: $topic")
+              "Successfully published first $dataType data to MQTT topic: $topic"
+          )
           firstMessageSaved["$deviceId/$dataType"] = true
         }
       } ?: run { logState.addLogError("MQTT client not initialized") }

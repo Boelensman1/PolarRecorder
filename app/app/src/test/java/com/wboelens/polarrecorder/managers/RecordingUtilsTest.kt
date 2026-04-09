@@ -149,7 +149,7 @@ class RecordingUtilsTest {
   fun `getDataFragment returns correct value for data type`(
       dataType: PolarDeviceDataType,
       mockData: Any,
-      expectedValue: Float
+      expectedValue: Float,
   ) {
     val result = getDataFragment(dataType, mockData)
 
@@ -160,7 +160,7 @@ class RecordingUtilsTest {
   @MethodSource("emptyDataTestCases")
   fun `getDataFragment returns null for empty samples`(
       dataType: PolarDeviceDataType,
-      emptyMockData: Any
+      emptyMockData: Any,
   ) {
     val result = getDataFragment(dataType, emptyMockData)
 
@@ -172,7 +172,7 @@ class RecordingUtilsTest {
   fun `getDataFragment returns last sample when multiple samples`(
       dataType: PolarDeviceDataType,
       mockData: Any,
-      expectedValue: Float
+      expectedValue: Float,
   ) {
     val result = getDataFragment(dataType, mockData)
 

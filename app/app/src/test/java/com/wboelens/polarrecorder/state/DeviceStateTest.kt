@@ -201,7 +201,8 @@ class DeviceStateTest : BaseRobolectricTest() {
             PolarDeviceDataType.ACC to
                 mapOf(
                     PolarSensorSetting.SettingType.SAMPLE_RATE to 50,
-                    PolarSensorSetting.SettingType.RESOLUTION to 16),
+                    PolarSensorSetting.SettingType.RESOLUTION to 16,
+                ),
         )
 
     deviceState.updateDeviceSensorSettings("DEVICE_001", settings)

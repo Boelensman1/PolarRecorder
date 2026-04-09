@@ -37,7 +37,8 @@ fun MQTTSettingsDialog(
   var host by remember { mutableStateOf(initialConfig.host) }
   var port by remember {
     mutableStateOf(
-        (initialConfig.port.takeIf { it > 0 } ?: MQTTConfig.DEFAULT_MQTT_PORT).toString())
+        (initialConfig.port.takeIf { it > 0 } ?: MQTTConfig.DEFAULT_MQTT_PORT).toString()
+    )
   }
   var useSSL by remember { mutableStateOf(initialConfig.useSSL) }
   var username by remember { mutableStateOf(initialConfig.username ?: "") }
@@ -159,9 +160,10 @@ fun MQTTSettingsDialog(
                   clientId,
               )
               onDismiss()
-            }) {
-              Text("Save")
             }
+        ) {
+          Text("Save")
+        }
       },
       dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
   )

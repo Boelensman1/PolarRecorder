@@ -204,7 +204,8 @@ class MainActivity : ComponentActivity() {
                   binder?.recordingState?.collectAsState()
                       ?: androidx.compose.runtime.remember {
                         androidx.compose.runtime.mutableStateOf(
-                            com.wboelens.polarrecorder.services.RecordingState())
+                            com.wboelens.polarrecorder.services.RecordingState()
+                        )
                       }
 
               // skip data saver initialisation screen

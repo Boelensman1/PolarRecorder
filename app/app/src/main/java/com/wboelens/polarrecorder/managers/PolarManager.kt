@@ -147,11 +147,14 @@ class PolarManager(
                           waitTime += pollInterval
 
                           val readyFeatures = deviceFeatureReadiness[polarDeviceInfo.deviceId]
-                          if (readyFeatures?.contains(
-                              PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO) == true ||
+                          if (
                               readyFeatures?.contains(
-                                  PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_ONLINE_STREAMING) ==
-                                  true) {
+                                  PolarBleApi.PolarBleSdkFeature.FEATURE_DEVICE_INFO
+                              ) == true ||
+                                  readyFeatures?.contains(
+                                      PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_ONLINE_STREAMING
+                                  ) == true
+                          ) {
                             break
                           }
                         }
@@ -172,7 +175,8 @@ class PolarManager(
                         }
 
                         logState.addLogMessage(
-                            "Fetching settings for device ${polarDeviceInfo.deviceId}")
+                            "Fetching settings for device ${polarDeviceInfo.deviceId}"
+                        )
                         deviceState.updateConnectionState(
                             polarDeviceInfo.deviceId,
                             ConnectionState.FETCHING_SETTINGS,
@@ -188,7 +192,8 @@ class PolarManager(
                               ConnectionState.FAILED,
                           )
                           logState.addLogMessage(
-                              "Failed to connect to device, could not fetch capabilities.")
+                              "Failed to connect to device, could not fetch capabilities."
+                          )
                           api.disconnectFromDevice(polarDeviceInfo.deviceId)
                         }
                       }
@@ -207,8 +212,10 @@ class PolarManager(
           override fun deviceDisconnected(polarDeviceInfo: PolarDeviceInfo) {
             deviceCapabilities.remove(polarDeviceInfo.deviceId)
             deviceModelNumbers.remove(polarDeviceInfo.deviceId)
-            if (deviceState.getConnectionState(polarDeviceInfo.deviceId) ===
-                ConnectionState.DISCONNECTING) {
+            if (
+                deviceState.getConnectionState(polarDeviceInfo.deviceId) ===
+                    ConnectionState.DISCONNECTING
+            ) {
               // a disconnect was requested, so this disconnect is expected
               logState.addLogMessage("Device ${polarDeviceInfo.deviceId} disconnected")
             } else {
@@ -233,29 +240,35 @@ class PolarManager(
             when (uuid) {
               BleDisClient.SOFTWARE_REVISION_STRING -> {
                 logState.addLogMessage(
-                    "DIS info received for device $identifier: [FirmwareVersion]: $value")
+                    "DIS info received for device $identifier: [FirmwareVersion]: $value"
+                )
                 deviceState.updateFirmwareVersion(identifier, value)
               }
               BleDisClient.FIRMWARE_REVISION_STRING -> {
                 logState.addLogMessage(
-                    "DIS info received for device $identifier: [FirmwareRevision]: $value")
+                    "DIS info received for device $identifier: [FirmwareRevision]: $value"
+                )
               }
               BleDisClient.HARDWARE_REVISION_STRING -> {
                 logState.addLogMessage(
-                    "DIS info received for device $identifier: [HardwareRevision]: $value")
+                    "DIS info received for device $identifier: [HardwareRevision]: $value"
+                )
               }
               BleDisClient.MODEL_NUMBER_STRING -> {
                 logState.addLogMessage(
-                    "DIS info received for device $identifier: [ModelNumber]: $value")
+                    "DIS info received for device $identifier: [ModelNumber]: $value"
+                )
                 deviceModelNumbers[identifier] = value
               }
               BleDisClient.SERIAL_NUMBER_STRING -> {
                 logState.addLogMessage(
-                    "DIS info received for device $identifier: [SerialNumber]: $value")
+                    "DIS info received for device $identifier: [SerialNumber]: $value"
+                )
               }
               BleDisClient.MANUFACTURER_NAME_STRING -> {
                 logState.addLogMessage(
-                    "DIS info received for device $identifier: [ManufacturerName]: $value")
+                    "DIS info received for device $identifier: [ManufacturerName]: $value"
+                )
               }
               else -> {
                 Log.d(TAG, "DIS info received for device $identifier: [$uuid]: $value")
@@ -279,7 +292,8 @@ class PolarManager(
             deviceBatteryLevels[identifier] = level
             deviceState.updateBatteryLevel(identifier, level)
           }
-        })
+        }
+    )
   }
 
   private fun fetchDeviceCapabilities(deviceId: String): Single<DeviceStreamCapabilities> {
@@ -301,7 +315,8 @@ class PolarManager(
                 // Check if model number is now available and indicates fallback-only device
                 if (shouldUseFallbackCapabilities(deviceId)) {
                   logState.addLogMessage(
-                      "Model number received indicates fallback-only device, skipping retries")
+                      "Model number received indicates fallback-only device, skipping retries"
+                  )
                   return@flatMap Flowable.error<Long>(error)
                 }
 
@@ -371,10 +386,12 @@ class PolarManager(
         var deviceTime: Calendar? = null
         var deviceSdkMode: Boolean? = null
 
-        if (isFeatureAvailable(
-            deviceId,
-            PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
-        )) {
+        if (
+            isFeatureAvailable(
+                deviceId,
+                PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
+            )
+        ) {
           try {
             deviceTime = getTime(deviceId)
           } catch (e: Exception) {
