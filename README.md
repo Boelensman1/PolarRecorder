@@ -26,6 +26,8 @@ The `code_examples/` directory contains sample code for processing recorded data
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+Kotlin sources are formatted with [ktfmt](https://github.com/facebook/ktfmt) **0.61**. Please run `ktfmt .` from the `app/` directory before submitting a PR so the diff stays clean.
+
 ## Citing This Project
 
 If you use Polar Recorder in your research, please cite it using the information provided in the repository's `citation.cff` file. You can cite this project directly from GitHub by:
