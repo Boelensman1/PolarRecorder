@@ -43,11 +43,11 @@ import com.wboelens.polarrecorder.managers.PolarApiResult
 import com.wboelens.polarrecorder.managers.PolarDeviceSettings
 import com.wboelens.polarrecorder.managers.PolarManager
 import com.wboelens.polarrecorder.ui.components.CheckboxWithLabel
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
 
-val emptyDeviceSettings = PolarDeviceSettings(deviceTimeOnConnect = null, sdkModeEnabled = false)
+val emptyDeviceSettings = PolarDeviceSettings(lastKnownDeviceTime = null, sdkModeEnabled = false)
 
 data class DeviceSettingState(
     val isLoading: Boolean = false,
@@ -129,13 +129,14 @@ fun DeviceSettingsDialog(
   }
 
   // Add this function to handle device settings updates
-  fun updateDeviceSettings(newTime: LocalDateTime? = null, newSdkMode: Boolean? = null) {
+  fun updateDeviceSettings(newTime: ZonedDateTime? = null, newSdkMode: Boolean? = null) {
     coroutineScope.launch {
       // Update time if requested
       if (newTime != null) {
         timeSetState = timeSetState.copy(isLoading = true, resultMessage = null)
-        when (val timeResult = polarManager.setTime(deviceId, newTime)) {
+        when (val timeResult = polarManager.setTime(deviceId, newTime.toLocalDateTime())) {
           is PolarApiResult.Success -> {
+            deviceSettings = deviceSettings.copy(lastKnownDeviceTime = newTime)
             timeSetState =
                 timeSetState.copy(
                     isLoading = false,
@@ -203,7 +204,7 @@ fun DeviceSettingsDialog(
               DeviceSettingsContent(
                   deviceSettings = deviceSettings,
                   isTimeManagementAvailable = polarManager.isTimeManagementAvailable(deviceId),
-                  onSetTime = { updateDeviceSettings(newTime = LocalDateTime.now()) },
+                  onSetTime = { updateDeviceSettings(newTime = ZonedDateTime.now()) },
                   onToggleSdkMode = {
                     updateDeviceSettings(newSdkMode = deviceSettings.sdkModeEnabled == false)
                   },
@@ -378,12 +379,12 @@ private fun DeviceSettingsSection(
       SettingItem(
           title = "Time",
           content = {
-            deviceSettings.deviceTimeOnConnect?.let { dateTime ->
+            deviceSettings.lastKnownDeviceTime?.let { dateTime ->
               val deviceTimeText =
                   dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 
               Text(
-                  text = "Device time on connect: $deviceTimeText",
+                  text = "Last known device time: $deviceTimeText",
                   style = MaterialTheme.typography.bodyMedium,
               )
             }

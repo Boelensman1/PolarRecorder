@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
@@ -41,7 +42,7 @@ data class DeviceStreamCapabilities(
 )
 
 data class PolarDeviceSettings(
-    val deviceTimeOnConnect: LocalDateTime?,
+    val lastKnownDeviceTime: ZonedDateTime?,
     val sdkModeEnabled: Boolean?,
 )
 
@@ -386,7 +387,7 @@ class PolarManager(
   private fun fetchDeviceSettings(deviceId: String): Single<PolarDeviceSettings> {
     return Single.create { emitter ->
       MainScope().launch {
-        var deviceTime: LocalDateTime? = null
+        var deviceTime: ZonedDateTime? = null
         var deviceSdkMode: Boolean? = null
 
         if (
@@ -560,8 +561,8 @@ class PolarManager(
   private fun getAvailableOnlineStreamDataTypes(deviceId: String) =
       api.getAvailableOnlineStreamDataTypes(deviceId)
 
-  private suspend fun getTime(deviceId: String): LocalDateTime {
-    return withContext(Dispatchers.IO) { api.getLocalTime(deviceId).await() }
+  private suspend fun getTime(deviceId: String): ZonedDateTime {
+    return withContext(Dispatchers.IO) { api.getLocalTimeWithZone(deviceId).await() }
   }
 
   suspend fun setTime(deviceId: String, time: LocalDateTime): PolarApiResult<Nothing> =
