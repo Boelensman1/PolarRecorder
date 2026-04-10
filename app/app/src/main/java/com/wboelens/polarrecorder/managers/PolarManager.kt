@@ -186,7 +186,18 @@ class PolarManager(
                             ConnectionState.FETCHING_SETTINGS,
                         )
 
-                        val settings = fetchDeviceSettings(polarDeviceInfo.deviceId).await()
+                        val settings =
+                            try {
+                              fetchDeviceSettings(polarDeviceInfo.deviceId).await()
+                            } catch (error: Throwable) {
+                              Log.e(TAG, "Failed to fetch device settings", error)
+                              logState.addLogError(
+                                  "Failed to fetch device settings for " +
+                                      "${polarDeviceInfo.deviceId} (${error.message})",
+                                  false,
+                              )
+                              PolarDeviceSettings(null, null)
+                            }
                         if (capabilities !== null && capabilities.availableTypes.isNotEmpty()) {
                           finishConnectDevice(polarDeviceInfo, capabilities, settings)
                         } else {
@@ -387,32 +398,37 @@ class PolarManager(
   private fun fetchDeviceSettings(deviceId: String): Single<PolarDeviceSettings> {
     return Single.create { emitter ->
       MainScope().launch {
-        var deviceTime: ZonedDateTime? = null
-        var deviceSdkMode: Boolean? = null
+        try {
+          var deviceTime: ZonedDateTime? = null
+          var deviceSdkMode: Boolean? = null
 
-        if (
-            isFeatureAvailable(
-                deviceId,
-                PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
-            )
-        ) {
-          try {
-            deviceTime = getTime(deviceId)
-          } catch (e: Exception) {
-            logState.addLogError("Failed to fetch device time (${e.message})", false)
+          if (
+              isFeatureAvailable(
+                  deviceId,
+                  PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_DEVICE_TIME_SETUP,
+              )
+          ) {
+            try {
+              deviceTime = getTime(deviceId)
+            } catch (e: Throwable) {
+              logState.addLogError("Failed to fetch device time (${e.message})", false)
+            }
           }
-        }
 
-        if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_SDK_MODE)) {
-          try {
-            deviceSdkMode = getSdkMode(deviceId)
-          } catch (e: Exception) {
-            logState.addLogError("Failed to fetch device sdk mode (${e.message})", false)
+          if (isFeatureAvailable(deviceId, PolarBleApi.PolarBleSdkFeature.FEATURE_POLAR_SDK_MODE)) {
+            try {
+              deviceSdkMode = getSdkMode(deviceId)
+            } catch (e: Throwable) {
+              logState.addLogError("Failed to fetch device sdk mode (${e.message})", false)
+            }
           }
-        }
 
-        val deviceSettings = PolarDeviceSettings(deviceTime, deviceSdkMode)
-        emitter.onSuccess(deviceSettings)
+          val deviceSettings = PolarDeviceSettings(deviceTime, deviceSdkMode)
+          emitter.onSuccess(deviceSettings)
+        } catch (e: Throwable) {
+          Log.e(TAG, "Failed to fetch device settings", e)
+          emitter.tryOnError(e)
+        }
       }
     }
   }
@@ -562,7 +578,14 @@ class PolarManager(
       api.getAvailableOnlineStreamDataTypes(deviceId)
 
   private suspend fun getTime(deviceId: String): ZonedDateTime {
-    return withContext(Dispatchers.IO) { api.getLocalTimeWithZone(deviceId).await() }
+    return withContext(Dispatchers.IO) {
+      try {
+        api.getLocalTimeWithZone(deviceId).await()
+      } catch (e: Throwable) {
+        Log.w(TAG, "getLocalTimeWithZone failed, falling back to getLocalTime", e)
+        api.getLocalTime(deviceId).await().atZone(java.time.ZoneId.systemDefault())
+      }
+    }
   }
 
   suspend fun setTime(deviceId: String, time: LocalDateTime): PolarApiResult<Nothing> =
