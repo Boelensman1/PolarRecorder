@@ -26,8 +26,8 @@ android {
     applicationId = "com.wboelens.polarrecorder"
     minSdk = 26
     targetSdk = 36
-    versionCode = 25
-    versionName = "2.1.0"
+    versionCode = 26
+    versionName = "2.1.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
