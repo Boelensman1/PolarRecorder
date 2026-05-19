@@ -91,11 +91,12 @@ class MQTTDataSaver(logState: LogState, preferencesManager: PreferencesManager) 
 
   override fun initSaving(
       recordingName: String,
+      activityName: String,
       deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     // Disconnect any existing client before creating a new one
     stopSaving()
-    super.initSaving(recordingName, deviceIdsWithInfo)
+    super.initSaving(recordingName, activityName, deviceIdsWithInfo)
 
     try {
       // Create the MQTT client using the separate host, port and SSL settings
@@ -151,11 +152,13 @@ class MQTTDataSaver(logState: LogState, preferencesManager: PreferencesManager) 
       phoneTimestamp: Long,
       deviceId: String,
       recordingName: String,
+
+      activityName: String,
       dataType: String,
       data: Any,
   ) {
     val topic = "${config.topicPrefix}/$dataType/$deviceId"
-    val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, dataType, data)
+    val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, activityName, dataType, data)
 
     try {
       mqttClient?.let { client ->

@@ -44,6 +44,8 @@ abstract class DataSaver(
       phoneTimestamp: Long,
       deviceId: String,
       recordingName: String,
+
+      activityName: String,
       dataType: String,
       data: Any,
   )
@@ -52,6 +54,8 @@ abstract class DataSaver(
       phoneTimestamp: Long,
       deviceId: String,
       recordingName: String,
+
+      activityName: String,
       dataType: String,
       data: Any,
   ): String {
@@ -60,6 +64,7 @@ abstract class DataSaver(
             "phoneTimestamp" to phoneTimestamp,
             "deviceId" to deviceId,
             "recordingName" to recordingName,
+            "activityName" to activityName,
             "dataType" to dataType,
             "data" to data,
         ),
@@ -69,6 +74,9 @@ abstract class DataSaver(
   // Initialise if needed
   open fun initSaving(
       recordingName: String,
+
+      activityName: String,
+
       deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     // Reset initialization state when starting a new initialization

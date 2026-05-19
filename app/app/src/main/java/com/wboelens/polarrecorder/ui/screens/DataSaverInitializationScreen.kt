@@ -77,9 +77,14 @@ fun DataSaverInitializationScreen(
     }
   }
 
+  // Compute activity name
+  val activityName = remember {
+    preferencesManager.recordingName
+  }
+
   // Initialize data savers
   LaunchedEffect(Unit) {
-    enabledSavers.forEach { saver -> saver.initSaving(recordingName, deviceIdsWithInfo) }
+    enabledSavers.forEach { saver -> saver.initSaving(recordingName, activityName, deviceIdsWithInfo) }
   }
 
   // Check if all savers are initialized

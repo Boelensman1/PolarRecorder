@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build Commands
 
-```bash
+```bash./gradlew :app:assembleDebug
 # Format code
 ktfmt .
 

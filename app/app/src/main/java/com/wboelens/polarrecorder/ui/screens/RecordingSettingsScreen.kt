@@ -46,6 +46,7 @@ fun RecordingSettingsScreen(
 ) {
   val connectedDevices = deviceViewModel.connectedDevices.observeAsState(emptySet()).value
   var recordingName by remember { mutableStateOf(preferencesManager.recordingName) }
+  var activityName by remember {mutableStateOf(preferencesManager.activityName)}
   var appendTimestamp by remember {
     mutableStateOf(preferencesManager.recordingNameAppendTimestamp)
   }
@@ -92,6 +93,23 @@ fun RecordingSettingsScreen(
             supportingText = {
               if (recordingName.isEmpty()) {
                 Text("Recording name is required", color = MaterialTheme.colorScheme.error)
+              }
+            },
+        )
+
+        TextField(
+            value = activityName,
+            onValueChange = {
+              activityName = it
+              preferencesManager.activityName = it
+            },
+            label = { Text("Activity Name") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = activityName.isEmpty(),
+            supportingText = {
+              if (recordingName.isEmpty()) {
+                Text("Activity name is required", color = MaterialTheme.colorScheme.error)
               }
             },
         )

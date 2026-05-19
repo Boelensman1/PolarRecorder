@@ -144,13 +144,15 @@ class FileSystemDataSaver(
       phoneTimestamp: Long,
       deviceId: String,
       recordingName: String,
+
+      activityName: String,
       dataType: String,
       data: Any,
   ) {
     val key = "$deviceId/$dataType"
     val lock = rotationLocks.getOrPut(key) { Any() }
 
-    val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, dataType, data)
+    val payload = this.createJSONPayload(phoneTimestamp, deviceId, recordingName, activityName, dataType, data)
 
     synchronized(lock) {
       try {
@@ -189,11 +191,14 @@ class FileSystemDataSaver(
   )
   override fun initSaving(
       recordingName: String,
+
+      activityName: String,
+
       deviceIdsWithInfo: Map<String, DeviceInfoForDataSaver>,
   ) {
     // Close any streams left open from a previous session (e.g. when post-stop edits were saved)
     stopSaving()
-    super.initSaving(recordingName, deviceIdsWithInfo)
+    super.initSaving(recordingName, activityName, deviceIdsWithInfo)
     filePartNumbers.clear()
 
     try {

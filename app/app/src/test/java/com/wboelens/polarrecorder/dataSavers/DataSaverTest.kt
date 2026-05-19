@@ -76,6 +76,7 @@ class DataSaverTest {
             phoneTimestamp = 1234567890L,
             deviceId = "DEVICE_001",
             recordingName = "TestRecording",
+            activityName = "TestActivity",
             dataType = "HR",
             data = mapOf("hr" to 72),
         )
@@ -85,6 +86,7 @@ class DataSaverTest {
     assertTrue(json.has("phoneTimestamp"))
     assertTrue(json.has("deviceId"))
     assertTrue(json.has("recordingName"))
+    assertTrue(json.has("activityName"))
     assertTrue(json.has("dataType"))
     assertTrue(json.has("data"))
   }
@@ -96,6 +98,7 @@ class DataSaverTest {
             phoneTimestamp = 9876543210L,
             deviceId = "DEVICE_001",
             recordingName = "TestRecording",
+            activityName = "TestActivity",
             dataType = "HR",
             data = mapOf("hr" to 72),
         )
@@ -112,6 +115,7 @@ class DataSaverTest {
             phoneTimestamp = 1234567890L,
             deviceId = "MY_DEVICE_123",
             recordingName = "TestRecording",
+            activityName = "TestActivity",
             dataType = "HR",
             data = mapOf("hr" to 72),
         )
@@ -128,6 +132,7 @@ class DataSaverTest {
             phoneTimestamp = 1234567890L,
             deviceId = "DEVICE_001",
             recordingName = "CustomRecordingName",
+            activityName = "TestActivity",
             dataType = "HR",
             data = mapOf("hr" to 72),
         )
@@ -138,12 +143,30 @@ class DataSaverTest {
   }
 
   @Test
+  fun `createJSONPayload activityName is correct`() {
+    val payload =
+        dataSaver.createJSONPayload(
+            phoneTimestamp = 1234567890L,
+            deviceId = "DEVICE_001",
+            recordingName = "TestRecording",
+            activityName = "CustomActivityName",
+            dataType = "HR",
+            data = mapOf("hr" to 72),
+        )
+
+    val json = JsonParser.parseString(payload).asJsonObject
+
+    assertEquals("CustomActivityName", json.get("activityName").asString)
+  }
+
+  @Test
   fun `createJSONPayload dataType is correct`() {
     val payload =
         dataSaver.createJSONPayload(
             phoneTimestamp = 1234567890L,
             deviceId = "DEVICE_001",
             recordingName = "TestRecording",
+            activityName = "TestActivity",
             dataType = "ACC",
             data = mapOf("x" to 100),
         )
@@ -162,6 +185,7 @@ class DataSaverTest {
             phoneTimestamp = 1234567890L,
             deviceId = "DEVICE_001",
             recordingName = "TestRecording",
+            activityName = "TestActivity",
             dataType = "HR",
             data = testData,
         )

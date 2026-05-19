@@ -341,6 +341,7 @@ class RecordingOrchestrator(
                         phoneTimestamp,
                         deviceId,
                         currentRecordingName,
+                        preferencesManager.activityName,
                         dataType.name,
                         batchData,
                     )
@@ -414,6 +415,7 @@ class RecordingOrchestrator(
                 entry.timestamp,
                 device.info.deviceId,
                 currentRecordingName,
+                preferencesManager.activityName,
                 "LOG",
                 data,
             )
@@ -452,6 +454,7 @@ class RecordingOrchestrator(
             clock.currentTimeMillis(),
             device.info.deviceId,
             currentRecordingName,
+            preferencesManager.activityName,
             EVENT_LOG_DATA_TYPE,
             data,
         )

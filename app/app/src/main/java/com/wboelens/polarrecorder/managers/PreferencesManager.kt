@@ -25,6 +25,8 @@ object Preferences {
   val FILE_SYSTEM_ENABLED = PreferenceConfig("file_system_enabled", false)
 
   val RECORDING_NAME = PreferenceConfig("recording_name", "PolarRecording")
+
+  val ACTIVITY_NAME = PreferenceConfig("activity_name", "Default")
   val RECORDING_NAME_APPEND_TIMESTAMP = PreferenceConfig("recording_name_append_timestamp", true)
   val RECORDING_STOP_ON_DISCONNECT = PreferenceConfig("recording_stop_on_disconnect", false)
 }
@@ -123,6 +125,13 @@ class PreferencesManager(context: Context) {
         mPref.getString(Preferences.RECORDING_NAME.key, Preferences.RECORDING_NAME.defaultValue)!!
     set(name) {
       mPref.edit().putString(Preferences.RECORDING_NAME.key, name).apply()
+    }
+
+  var activityName: String
+    get() =
+      mPref.getString(Preferences.ACTIVITY_NAME.key, Preferences.ACTIVITY_NAME.defaultValue)!!
+    set(name) {
+      mPref.edit().putString(Preferences.ACTIVITY_NAME.key, name).apply()
     }
 
   var recordingNameAppendTimestamp: Boolean
