@@ -18,8 +18,8 @@ let
   '';
   androidComposition = pkgs.androidenv.composeAndroidPackages {
     cmdLineToolsVersion = "11.0";
-    buildToolsVersions = [ "35.0.0" ];
-    platformVersions = [ "35" ];
+    buildToolsVersions = [ "36.0.0" ];
+    platformVersions = [ "36" ];
     includeEmulator = false;
     includeSystemImages = false;
     includeSources = false;
