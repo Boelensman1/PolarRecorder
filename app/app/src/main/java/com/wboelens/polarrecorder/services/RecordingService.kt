@@ -147,6 +147,17 @@ class RecordingService : Service() {
 
   override fun onBind(intent: Intent?): IBinder = binder
 
+  // Called by Android 15+ when a foreground service type hits its runtime limit. The service must
+  // stop within a few seconds or the app crashes, so end the recording cleanly.
+  override fun onTimeout(startId: Int, fgsType: Int) {
+    if (orchestrator.recordingState.value.isRecording) {
+      logState.addLogError("Recording stopped: Android foreground service time limit reached")
+      doStopRecording()
+    } else {
+      stopServiceAfterRecordingEnded()
+    }
+  }
+
   private fun doStartRecording(recordingName: String) {
     val result = orchestrator.startRecording(recordingName)
 

@@ -46,7 +46,6 @@
 
     <!-- Permissions needed for staying active in the background, for long running recordings -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -74,7 +73,7 @@
         </activity>
         <service
             android:name=".services.RecordingService"
-            android:foregroundServiceType="dataSync|connectedDevice"
+            android:foregroundServiceType="connectedDevice"
             android:exported="false"
             android:description="@string/recording_service_description" />
     </application>
